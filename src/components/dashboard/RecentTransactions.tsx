@@ -69,7 +69,9 @@ const TransactionItem: React.FC<{ transaction: Transaction }> = ({
     <View style={styles.textGroup}>
       <Text style={styles.title}>{transaction.title}</Text>
       <Text style={styles.subtitle}>
-        {transaction.subtitle} \u2022 {transaction.time}
+        {transaction.subtitle}
+        {' \u2022 '}
+        {transaction.time}
       </Text>
     </View>
     <Text

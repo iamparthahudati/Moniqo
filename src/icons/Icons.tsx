@@ -303,6 +303,134 @@ export const TransportIcon: React.FC<{ size?: number }> = ({ size = 28 }) => (
   </View>
 );
 
+export const MenuIcon: React.FC<IconProps> = ({
+  size = 22,
+  color = '#0F172A',
+}) => (
+  <View style={[styles.container, { width: size, height: size }]}>
+    <View style={styles.menuWrapper}>
+      {[0, 1, 2].map(i => (
+        <View
+          key={i}
+          style={[
+            styles.menuLine,
+            { backgroundColor: color, width: i === 2 ? '60%' : '100%' },
+          ]}
+        />
+      ))}
+    </View>
+  </View>
+);
+
+export const ChevronRightIcon: React.FC<IconProps> = ({
+  size = 16,
+  color = '#94A3B8',
+}) => (
+  <View style={[styles.container, { width: size, height: size }]}>
+    <Text
+      style={{
+        color,
+        fontSize: size * 0.9,
+        fontWeight: '600',
+        includeFontPadding: false,
+        lineHeight: size,
+      }}
+    >
+      {'\u203A'}
+    </Text>
+  </View>
+);
+
+export const TrendLineIcon: React.FC<IconProps> = ({
+  size = 28,
+  color = '#22C55E',
+}) => (
+  <View style={[styles.container, { width: size, height: size }]}>
+    <Text
+      style={{
+        color,
+        fontSize: size * 0.85,
+        fontWeight: '700',
+        includeFontPadding: false,
+        lineHeight: size,
+      }}
+    >
+      {'\u2197'}
+    </Text>
+  </View>
+);
+
+export const BitcoinIcon: React.FC<IconProps> = ({
+  size = 28,
+  color = '#2B3FE8',
+}) => (
+  <View style={[styles.container, { width: size, height: size }]}>
+    <Text
+      style={{
+        color,
+        fontSize: size * 0.85,
+        fontWeight: '700',
+        includeFontPadding: false,
+        lineHeight: size,
+      }}
+    >
+      {'\u20BF'}
+    </Text>
+  </View>
+);
+
+export const PiggyIcon: React.FC<IconProps> = ({
+  size = 28,
+  color: _color = '#1E40AF',
+}) => (
+  <View style={[styles.container, { width: size, height: size }]}>
+    <Text
+      style={{
+        fontSize: size * 0.8,
+        includeFontPadding: false,
+        lineHeight: size,
+        textAlign: 'center',
+      }}
+    >
+      {' \uD83D\uDC37'}
+    </Text>
+  </View>
+);
+
+export const CreditCardIcon: React.FC<IconProps> = ({
+  size = 28,
+  color = '#EF4444',
+}) => (
+  <View style={[styles.container, { width: size, height: size }]}>
+    <View style={[styles.cardOuter, { borderColor: color }]}>
+      <View style={[styles.cardStripe, { backgroundColor: color }]} />
+    </View>
+  </View>
+);
+
+export const AccountsNavIcon: React.FC<IconProps> = ({
+  size = 24,
+  color = '#94A3B8',
+}) => (
+  <View style={[styles.container, { width: size, height: size }]}>
+    <View style={[styles.walletOuter, { borderColor: color }]}>
+      <View style={[styles.walletInner, { backgroundColor: color }]} />
+    </View>
+  </View>
+);
+
+export const AnalyticsNavIcon: React.FC<IconProps> = ({
+  size = 24,
+  color = '#94A3B8',
+}) => (
+  <View style={[styles.container, { width: size, height: size }]}>
+    <View style={styles.lineChartWrapper}>
+      <View style={[styles.lineChartBase, { borderColor: color }]} />
+      <View style={[styles.lineChartLine, { borderColor: color }]} />
+    </View>
+  </View>
+);
+
 const styles = StyleSheet.create({
   container: {
     alignItems: 'center',
@@ -466,5 +594,46 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '18%',
     borderRadius: 1,
+  },
+  menuWrapper: {
+    width: '80%',
+    height: '70%',
+    justifyContent: 'space-between',
+  },
+  menuLine: {
+    height: 2,
+    borderRadius: 1,
+  },
+  cardOuter: {
+    width: '90%',
+    height: '65%',
+    borderWidth: 1.5,
+    borderRadius: 4,
+    overflow: 'hidden',
+    justifyContent: 'flex-end',
+  },
+  cardStripe: {
+    width: '100%',
+    height: '35%',
+  },
+  lineChartWrapper: {
+    width: '85%',
+    height: '85%',
+    justifyContent: 'flex-end',
+  },
+  lineChartBase: {
+    width: '100%',
+    height: 0,
+    borderBottomWidth: 1.5,
+  },
+  lineChartLine: {
+    position: 'absolute',
+    bottom: 2,
+    left: 0,
+    right: 0,
+    height: 0,
+    borderTopWidth: 1.5,
+    borderStyle: 'dashed',
+    transform: [{ rotate: '-15deg' }],
   },
 });

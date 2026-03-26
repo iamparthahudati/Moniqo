@@ -4,13 +4,19 @@ import {
   SafeAreaProvider,
   useSafeAreaInsets,
 } from 'react-native-safe-area-context';
-import AddTransactionModal from './src/components/common/AddTransactionModal';
+import AddTransactionModal, {
+  TransactionType,
+} from './src/components/common/AddTransactionModal';
+import FabActionSheet, {
+  FabAction,
+} from './src/components/common/FabActionSheet';
+import TransferModal from './src/components/common/TransferModal';
 import BottomNavBar from './src/components/navigation/BottomNavBar';
 import { PlusIcon } from './src/icons/Icons';
+import AccountsScreen from './src/screens/AccountsScreen';
 import AnalyticsScreen from './src/screens/AnalyticsScreen';
 import DashboardScreen from './src/screens/DashboardScreen';
 import SettingsScreen from './src/screens/SettingsScreen';
-import WalletsScreen from './src/screens/WalletsScreen';
 import { Colors } from './src/theme/colors';
 import { TabName } from './src/types';
 
@@ -20,8 +26,8 @@ const renderScreen = (tab: TabName) => {
       return <DashboardScreen />;
     case 'Analytics':
       return <AnalyticsScreen />;
-    case 'Wallets':
-      return <WalletsScreen />;
+    case 'Accounts':
+      return <AccountsScreen />;
     case 'Settings':
       return <SettingsScreen />;
   }
@@ -29,18 +35,44 @@ const renderScreen = (tab: TabName) => {
 
 function AppContent() {
   const [activeTab, setActiveTab] = useState<TabName>('Dashboard');
-  const [modalVisible, setModalVisible] = useState(false);
   const insets = useSafeAreaInsets();
+
+  // Action sheet state
+  const [sheetVisible, setSheetVisible] = useState(false);
+
+  // Add transaction modal state
+  const [txModalVisible, setTxModalVisible] = useState(false);
+  const [txInitialType, setTxInitialType] =
+    useState<TransactionType>('expense');
+
+  // Transfer modal state
+  const [transferVisible, setTransferVisible] = useState(false);
 
   const handleTabPress = useCallback((tab: TabName) => {
     setActiveTab(tab);
   }, []);
 
-  const openModal = useCallback(() => setModalVisible(true), []);
-  const closeModal = useCallback(() => setModalVisible(false), []);
+  // FAB tapped — open action sheet
+  const handleFabPress = useCallback(() => {
+    setSheetVisible(true);
+  }, []);
 
-  // FAB floats above the nav bar: nav height ~64 + safe area + breathing room
+  // User picked an action from the sheet
+  const handleActionSelect = useCallback((action: FabAction) => {
+    setSheetVisible(false);
+    // Small delay so sheet closes before next modal opens
+    setTimeout(() => {
+      if (action === 'transfer') {
+        setTransferVisible(true);
+      } else {
+        setTxInitialType(action); // 'expense' | 'income'
+        setTxModalVisible(true);
+      }
+    }, 300);
+  }, []);
+
   const fabBottom = 64 + insets.bottom + 16;
+  const isDashboard = activeTab === 'Dashboard';
 
   return (
     <View style={[styles.root, { paddingTop: insets.top }]}>
@@ -56,17 +88,36 @@ function AppContent() {
       {/* Bottom navigation */}
       <BottomNavBar activeTab={activeTab} onTabPress={handleTabPress} />
 
-      {/* Floating Action Button */}
-      <TouchableOpacity
-        style={[styles.fab, { bottom: fabBottom }]}
-        onPress={openModal}
-        activeOpacity={0.85}
-      >
-        <PlusIcon size={26} color="#FFFFFF" />
-      </TouchableOpacity>
+      {/* FAB — Dashboard only */}
+      {isDashboard && (
+        <TouchableOpacity
+          style={[styles.fab, { bottom: fabBottom }]}
+          onPress={handleFabPress}
+          activeOpacity={0.85}
+        >
+          <PlusIcon size={26} color="#FFFFFF" />
+        </TouchableOpacity>
+      )}
 
-      {/* Add Transaction Modal */}
-      <AddTransactionModal visible={modalVisible} onClose={closeModal} />
+      {/* Action sheet */}
+      <FabActionSheet
+        visible={sheetVisible}
+        onClose={() => setSheetVisible(false)}
+        onSelect={handleActionSelect}
+      />
+
+      {/* Add Expense / Income modal */}
+      <AddTransactionModal
+        visible={txModalVisible}
+        onClose={() => setTxModalVisible(false)}
+        initialType={txInitialType}
+      />
+
+      {/* Transfer modal */}
+      <TransferModal
+        visible={transferVisible}
+        onClose={() => setTransferVisible(false)}
+      />
     </View>
   );
 }

@@ -3,22 +3,24 @@ import { Colors } from '../theme/colors';
 import { Spacing } from '../theme/spacing';
 
 export const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: Colors.background,
+  container: { flex: 1, backgroundColor: Colors.background },
+  header: {
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    padding: Spacing.xl,
+    justifyContent: 'space-between',
+    paddingHorizontal: Spacing.base,
+    paddingVertical: Spacing.md,
+    backgroundColor: Colors.surface,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.border,
   },
-  title: {
-    fontSize: 24,
+  headerTitle: {
+    fontSize: 20,
     fontWeight: '700',
     color: Colors.textPrimary,
-    marginBottom: Spacing.sm,
+    letterSpacing: -0.3,
   },
-  subtitle: {
-    fontSize: 15,
-    color: Colors.textSecondary,
-    textAlign: 'center',
-  },
+  headerPlaceholder: { width: 40 },
+  scrollContent: { paddingBottom: Spacing.xxxl + 20 },
+  groupSpacing: { height: Spacing.base },
 });

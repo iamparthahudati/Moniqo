@@ -22,7 +22,7 @@ import { styles } from './AddTransactionModal.styles';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
-type TransactionType = 'expense' | 'income';
+export type TransactionType = 'expense' | 'income';
 type PaymentMethod = 'cash' | 'bank';
 
 interface Category {
@@ -88,28 +88,34 @@ const CategoryItem: React.FC<CategoryItemProps> = ({
 interface AddTransactionModalProps {
   visible: boolean;
   onClose: () => void;
+  initialType?: TransactionType;
 }
 
 const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
   visible,
   onClose,
+  initialType = 'expense',
 }) => {
   const insets = useSafeAreaInsets();
 
-  const [txType, setTxType] = useState<TransactionType>('expense');
+  const [txType, setTxType] = useState<TransactionType>(initialType);
   const [amount, setAmount] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('food');
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('cash');
   const [note, setNote] = useState('');
 
+  // Sync type when modal opens with a different initialType
+  React.useEffect(() => {
+    if (visible) {
+      setTxType(initialType);
+    }
+  }, [visible, initialType]);
+
   const handleSave = () => {
-    // Future: persist transaction
     onClose();
   };
 
   const handleClose = () => {
-    // Reset state on close
-    setTxType('expense');
     setAmount('');
     setSelectedCategory('food');
     setPaymentMethod('cash');
