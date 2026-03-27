@@ -4,7 +4,6 @@ import {
   SafeAreaProvider,
   useSafeAreaInsets,
 } from 'react-native-safe-area-context';
-import { AccountsProvider } from './src/store/accountsStore';
 import AddTransactionModal, {
   TransactionType,
 } from './src/components/common/AddTransactionModal';
@@ -14,10 +13,11 @@ import FabActionSheet, {
 import TransferModal from './src/components/common/TransferModal';
 import BottomNavBar from './src/components/navigation/BottomNavBar';
 import { PlusIcon } from './src/icons/Icons';
-import AccountsScreen from './src/screens/AccountsScreen';
+import AccountsScreen from './src/screens/AccountScreen';
 import AnalyticsScreen from './src/screens/AnalyticsScreen';
 import DashboardScreen from './src/screens/DashboardScreen';
 import SettingsScreen from './src/screens/SettingsScreen';
+import { AccountsProvider } from './src/store/accountsStore';
 import { Colors } from './src/theme/colors';
 import { TabName } from './src/types';
 

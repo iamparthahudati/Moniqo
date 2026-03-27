@@ -1,11 +1,11 @@
 import React, { useCallback, useMemo, useState } from 'react';
 import { Alert, ScrollView, Text, TouchableOpacity, View } from 'react-native';
-import AddBankModal from '../components/accounts/AddBankModal';
-import AddCardModal from '../components/accounts/AddCardModal';
-import AddCashModal from '../components/accounts/AddCashModal';
-import AddInvestmentModal from '../components/accounts/AddInvestmentModal';
-import IconCircle from '../components/ui/IconCircle';
-import ScreenHeader from '../components/ui/ScreenHeader';
+import AddBankModal from '../../components/accounts/AddBankModal';
+import AddCardModal from '../../components/accounts/AddCardModal';
+import AddCashModal from '../../components/accounts/AddCashModal';
+import AddInvestmentModal from '../../components/accounts/AddInvestmentModal';
+import IconCircle from '../../components/ui/IconCircle';
+import ScreenHeader from '../../components/ui/ScreenHeader';
 import {
   BankIcon,
   BitcoinIcon,
@@ -15,12 +15,12 @@ import {
   PiggyIcon,
   PlusIcon,
   TrendLineIcon,
-} from '../icons/Icons';
-import { computeTotalBalance, useAccounts } from '../store/accountsStore';
-import { Colors } from '../theme/colors';
-import { BankAccount, CardAccount, CashEntry, Investment } from '../types';
-import { formatCurrency, formatCurrencyFull } from '../utils/formatters';
-import { styles } from './AccountsScreen.styles';
+} from '../../icons/Icons';
+import { computeTotalBalance, useAccounts } from '../../store/accountsStore';
+import { Colors } from '../../theme/colors';
+import { BankAccount, CardAccount, CashEntry, Investment } from '../../types';
+import { formatCurrency, formatCurrencyFull } from '../../utils/formatters';
+import { styles } from './styles';
 
 // ── Icon helpers ──────────────────────────────────────────────────────────────
 
