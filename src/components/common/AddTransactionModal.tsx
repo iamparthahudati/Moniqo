@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import {
   Modal,
   ScrollView,
@@ -10,7 +10,6 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
-  BackIcon,
   BankIcon,
   CalendarIcon,
   CashIcon,
@@ -18,6 +17,8 @@ import {
   NoteIcon,
 } from '../../icons/Icons';
 import { Colors } from '../../theme/colors';
+import { getTodayLabel } from '../../utils/formatters';
+import ModalHeader from '../ui/ModalHeader';
 import { styles } from './AddTransactionModal.styles';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -42,13 +43,6 @@ const CATEGORIES: Category[] = [
   { id: 'others', label: 'OTHERS', emoji: '\u2022\u2022\u2022' },
 ];
 
-const getTodayLabel = (): string => {
-  const now = new Date();
-  return `Today, ${now.getDate()} ${now.toLocaleString('default', {
-    month: 'short',
-  })}`;
-};
-
 // ── Sub-components ────────────────────────────────────────────────────────────
 
 interface CategoryItemProps {
@@ -57,30 +51,28 @@ interface CategoryItemProps {
   onPress: () => void;
 }
 
-const CategoryItem: React.FC<CategoryItemProps> = ({
-  category,
-  isActive,
-  onPress,
-}) => (
-  <TouchableOpacity
-    style={[styles.categoryItem, isActive && styles.categoryItemActive]}
-    onPress={onPress}
-    activeOpacity={0.75}
-  >
-    <View
-      style={[
-        styles.categoryIconCircle,
-        isActive && styles.categoryIconCircleActive,
-      ]}
+const CategoryItem: React.FC<CategoryItemProps> = React.memo(
+  ({ category, isActive, onPress }) => (
+    <TouchableOpacity
+      style={[styles.categoryItem, isActive && styles.categoryItemActive]}
+      onPress={onPress}
+      activeOpacity={0.75}
     >
-      <Text style={{ fontSize: 22 }}>{category.emoji}</Text>
-    </View>
-    <Text
-      style={[styles.categoryLabel, isActive && styles.categoryLabelActive]}
-    >
-      {category.label}
-    </Text>
-  </TouchableOpacity>
+      <View
+        style={[
+          styles.categoryIconCircle,
+          isActive && styles.categoryIconCircleActive,
+        ]}
+      >
+        <Text style={styles.categoryEmoji}>{category.emoji}</Text>
+      </View>
+      <Text
+        style={[styles.categoryLabel, isActive && styles.categoryLabelActive]}
+      >
+        {category.label}
+      </Text>
+    </TouchableOpacity>
+  ),
 );
 
 // ── Main component ────────────────────────────────────────────────────────────
@@ -111,17 +103,17 @@ const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
     }
   }, [visible, initialType]);
 
-  const handleSave = () => {
+  const handleSave = useCallback(() => {
     onClose();
-  };
+  }, [onClose]);
 
-  const handleClose = () => {
+  const handleClose = useCallback(() => {
     setAmount('');
     setSelectedCategory('food');
     setPaymentMethod('cash');
     setNote('');
     onClose();
-  };
+  }, [onClose]);
 
   const isExpense = txType === 'expense';
 
@@ -137,19 +129,11 @@ const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
 
       <View style={[styles.overlay, { paddingTop: insets.top }]}>
         {/* ── Header ── */}
-        <View style={styles.header}>
-          <TouchableOpacity
-            style={styles.headerBack}
-            onPress={handleClose}
-            activeOpacity={0.7}
-          >
-            <BackIcon size={22} color={Colors.textPrimary} />
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>Add Transaction</Text>
-          <TouchableOpacity onPress={handleSave} activeOpacity={0.7}>
-            <Text style={styles.headerSave}>Save</Text>
-          </TouchableOpacity>
-        </View>
+        <ModalHeader
+          title="Add Transaction"
+          onBack={handleClose}
+          onSave={handleSave}
+        />
 
         <ScrollView
           showsVerticalScrollIndicator={false}
@@ -242,7 +226,7 @@ const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
           {/* ── Payment method ── */}
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Payment Method</Text>
-            <View style={[styles.paymentRow, { marginTop: 12 }]}>
+            <View style={styles.paymentRow}>
               <TouchableOpacity
                 style={[
                   styles.paymentBtn,

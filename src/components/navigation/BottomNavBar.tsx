@@ -29,40 +29,39 @@ interface BottomNavBarProps {
   onTabPress: (tab: TabName) => void;
 }
 
-const BottomNavBar: React.FC<BottomNavBarProps> = ({
-  activeTab,
-  onTabPress,
-}) => {
-  const insets = useSafeAreaInsets();
+const BottomNavBar: React.FC<BottomNavBarProps> = React.memo(
+  ({ activeTab, onTabPress }) => {
+    const insets = useSafeAreaInsets();
 
-  return (
-    <View style={[styles.wrapper, { paddingBottom: insets.bottom }]}>
-      <View style={styles.container}>
-        {NAV_TABS.map(tab => {
-          const isActive = activeTab === tab.name;
-          const color = isActive ? Colors.navActive : Colors.navInactive;
-          return (
-            <TouchableOpacity
-              key={tab.name}
-              style={styles.tab}
-              onPress={() => onTabPress(tab.name)}
-              activeOpacity={0.7}
-            >
-              <tab.Icon size={24} color={color} />
-              <Text
-                style={[
-                  styles.tabLabel,
-                  isActive ? styles.tabLabelActive : styles.tabLabelInactive,
-                ]}
+    return (
+      <View style={[styles.wrapper, { paddingBottom: insets.bottom }]}>
+        <View style={styles.container}>
+          {NAV_TABS.map(tab => {
+            const isActive = activeTab === tab.name;
+            const color = isActive ? Colors.primary : Colors.navInactive;
+            return (
+              <TouchableOpacity
+                key={tab.name}
+                style={styles.tab}
+                onPress={() => onTabPress(tab.name)}
+                activeOpacity={0.7}
               >
-                {tab.label}
-              </Text>
-            </TouchableOpacity>
-          );
-        })}
+                <tab.Icon size={24} color={color} />
+                <Text
+                  style={[
+                    styles.tabLabel,
+                    isActive ? styles.tabLabelActive : styles.tabLabelInactive,
+                  ]}
+                >
+                  {tab.label}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
       </View>
-    </View>
-  );
-};
+    );
+  },
+);
 
 export default BottomNavBar;

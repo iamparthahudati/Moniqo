@@ -42,6 +42,16 @@ export interface SummaryItem {
 }
 
 // Accounts screen types
+export type AccountColor =
+  | '#003087'
+  | '#F97316'
+  | '#1E40AF'
+  | '#22C55E'
+  | '#EF4444'
+  | '#8B5CF6'
+  | '#0F172A'
+  | '#F59E0B';
+
 export interface BankAccount {
   id: string;
   bankName: string;
@@ -50,6 +60,7 @@ export interface BankAccount {
   color: string;
   status: 'ACTIVE' | 'INACTIVE';
   icon: 'bank' | 'piggy';
+  note?: string;
 }
 
 export interface CardAccount {
@@ -59,6 +70,7 @@ export interface CardAccount {
   dueAmount: number;
   dueLabel: string;
   color: string;
+  note?: string;
 }
 
 export interface Investment {
@@ -67,6 +79,7 @@ export interface Investment {
   amount: number;
   icon: 'trend' | 'bitcoin' | 'gold' | 'other';
   color: string;
+  note?: string;
 }
 
 export interface CashEntry {

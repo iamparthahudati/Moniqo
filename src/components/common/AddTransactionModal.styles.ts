@@ -165,6 +165,9 @@ export const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  categoryEmoji: {
+    fontSize: 22,
+  },
   categoryIconCircleActive: {
     backgroundColor: 'rgba(255,255,255,0.25)',
   },
@@ -183,6 +186,7 @@ export const styles = StyleSheet.create({
   paymentRow: {
     flexDirection: 'row',
     gap: Spacing.md,
+    marginTop: Spacing.md,
   },
   paymentBtn: {
     flexDirection: 'row',

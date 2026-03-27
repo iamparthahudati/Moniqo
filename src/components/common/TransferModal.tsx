@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import {
   Modal,
   ScrollView,
@@ -11,7 +11,6 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BANK_ACCOUNTS } from '../../data/mockData';
 import {
-  BackIcon,
   BankIcon,
   CalendarIcon,
   ChevronDownIcon,
@@ -19,14 +18,9 @@ import {
 } from '../../icons/Icons';
 import { Colors } from '../../theme/colors';
 import { BankAccount } from '../../types';
+import { getTodayLabel } from '../../utils/formatters';
+import ModalHeader from '../ui/ModalHeader';
 import { styles } from './TransferModal.styles';
-
-const getTodayLabel = (): string => {
-  const now = new Date();
-  return `Today, ${now.getDate()} ${now.toLocaleString('default', {
-    month: 'short',
-  })}`;
-};
 
 interface TransferModalProps {
   visible: boolean;
@@ -77,22 +71,22 @@ const TransferModal: React.FC<TransferModalProps> = ({ visible, onClose }) => {
   const fromAccount = BANK_ACCOUNTS[fromIndex % BANK_ACCOUNTS.length];
   const toAccount = BANK_ACCOUNTS[toIndex % BANK_ACCOUNTS.length];
 
-  const handleSwap = () => {
+  const handleSwap = useCallback(() => {
     setFromIndex(toIndex);
     setToIndex(fromIndex);
-  };
+  }, [fromIndex, toIndex]);
 
-  const handleSave = () => {
+  const handleSave = useCallback(() => {
     setAmount('');
     setNote('');
     onClose();
-  };
+  }, [onClose]);
 
-  const handleClose = () => {
+  const handleClose = useCallback(() => {
     setAmount('');
     setNote('');
     onClose();
-  };
+  }, [onClose]);
 
   return (
     <Modal
@@ -105,19 +99,11 @@ const TransferModal: React.FC<TransferModalProps> = ({ visible, onClose }) => {
       <StatusBar barStyle="dark-content" backgroundColor={Colors.surface} />
       <View style={[styles.overlay, { paddingTop: insets.top }]}>
         {/* Header */}
-        <View style={styles.header}>
-          <TouchableOpacity
-            style={styles.headerBack}
-            onPress={handleClose}
-            activeOpacity={0.7}
-          >
-            <BackIcon size={22} color={Colors.textPrimary} />
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>Transfer</Text>
-          <TouchableOpacity onPress={handleSave} activeOpacity={0.7}>
-            <Text style={styles.headerSave}>Save</Text>
-          </TouchableOpacity>
-        </View>
+        <ModalHeader
+          title="Transfer"
+          onBack={handleClose}
+          onSave={handleSave}
+        />
 
         <ScrollView
           showsVerticalScrollIndicator={false}

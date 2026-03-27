@@ -100,7 +100,6 @@ export const TRANSACTIONS: Transaction[] = [
   },
 ];
 
-export const USER_NAME = 'Good Evening';
 export const APP_TITLE = 'Expense Tracker';
 
 // ── Accounts screen data ──────────────────────────────────────────────────────

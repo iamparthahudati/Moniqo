@@ -6,6 +6,11 @@ interface IconProps {
   color?: string;
 }
 
+// Helper: returns a square style object for DashboardIcon squares
+function squareStyle(sq: number, color: string) {
+  return { width: sq, height: sq, borderRadius: 2, backgroundColor: color };
+}
+
 export const DashboardIcon: React.FC<IconProps> = ({
   size = 24,
   color = '#94A3B8',
@@ -16,40 +21,12 @@ export const DashboardIcon: React.FC<IconProps> = ({
     <View style={[styles.container, { width: size, height: size }]}>
       <View style={{ flexDirection: 'column', gap }}>
         <View style={{ flexDirection: 'row', gap }}>
-          <View
-            style={{
-              width: sq,
-              height: sq,
-              borderRadius: 2,
-              backgroundColor: color,
-            }}
-          />
-          <View
-            style={{
-              width: sq,
-              height: sq,
-              borderRadius: 2,
-              backgroundColor: color,
-            }}
-          />
+          <View style={squareStyle(sq, color)} />
+          <View style={squareStyle(sq, color)} />
         </View>
         <View style={{ flexDirection: 'row', gap }}>
-          <View
-            style={{
-              width: sq,
-              height: sq,
-              borderRadius: 2,
-              backgroundColor: color,
-            }}
-          />
-          <View
-            style={{
-              width: sq,
-              height: sq,
-              borderRadius: 2,
-              backgroundColor: color,
-            }}
-          />
+          <View style={squareStyle(sq, color)} />
+          <View style={squareStyle(sq, color)} />
         </View>
       </View>
     </View>
@@ -80,6 +57,8 @@ export const WalletsIcon: React.FC<IconProps> = ({
     </View>
   </View>
 );
+
+export const AccountsNavIcon = WalletsIcon;
 
 export const SettingsIcon: React.FC<IconProps> = ({
   size = 24,
@@ -142,14 +121,15 @@ export const PlusIcon: React.FC<IconProps> = ({
 }) => (
   <View style={[styles.container, { width: size, height: size }]}>
     <Text
-      style={{
-        color,
-        fontSize: size * 0.85,
-        fontWeight: '300',
-        textAlign: 'center',
-        lineHeight: size * 0.95,
-        includeFontPadding: false,
-      }}
+      style={[
+        styles.textIcon,
+        {
+          color,
+          fontSize: size * 0.85,
+          fontWeight: '300',
+          lineHeight: size * 0.95,
+        },
+      ]}
     >
       {'+'}
     </Text>
@@ -173,14 +153,10 @@ export const ChevronDownIcon: React.FC<IconProps> = ({
 }) => (
   <View style={[styles.container, { width: size, height: size }]}>
     <Text
-      style={{
-        color,
-        fontSize: size * 0.8,
-        fontWeight: '700',
-        textAlign: 'center',
-        lineHeight: size,
-        includeFontPadding: false,
-      }}
+      style={[
+        styles.textIcon,
+        { color, fontSize: size * 0.8, lineHeight: size },
+      ]}
     >
       {'\u2304'}
     </Text>
@@ -193,14 +169,10 @@ export const BackIcon: React.FC<IconProps> = ({
 }) => (
   <View style={[styles.container, { width: size, height: size }]}>
     <Text
-      style={{
-        color,
-        fontSize: size,
-        fontWeight: '400',
-        textAlign: 'center',
-        lineHeight: size,
-        includeFontPadding: false,
-      }}
+      style={[
+        styles.textIcon,
+        { color, fontSize: size, fontWeight: '400', lineHeight: size },
+      ]}
     >
       {'\u2190'}
     </Text>
@@ -328,13 +300,10 @@ export const ChevronRightIcon: React.FC<IconProps> = ({
 }) => (
   <View style={[styles.container, { width: size, height: size }]}>
     <Text
-      style={{
-        color,
-        fontSize: size * 0.9,
-        fontWeight: '600',
-        includeFontPadding: false,
-        lineHeight: size,
-      }}
+      style={[
+        styles.textIcon,
+        { color, fontSize: size * 0.9, fontWeight: '600', lineHeight: size },
+      ]}
     >
       {'\u203A'}
     </Text>
@@ -347,13 +316,10 @@ export const TrendLineIcon: React.FC<IconProps> = ({
 }) => (
   <View style={[styles.container, { width: size, height: size }]}>
     <Text
-      style={{
-        color,
-        fontSize: size * 0.85,
-        fontWeight: '700',
-        includeFontPadding: false,
-        lineHeight: size,
-      }}
+      style={[
+        styles.textIcon,
+        { color, fontSize: size * 0.85, lineHeight: size },
+      ]}
     >
       {'\u2197'}
     </Text>
@@ -366,13 +332,10 @@ export const BitcoinIcon: React.FC<IconProps> = ({
 }) => (
   <View style={[styles.container, { width: size, height: size }]}>
     <Text
-      style={{
-        color,
-        fontSize: size * 0.85,
-        fontWeight: '700',
-        includeFontPadding: false,
-        lineHeight: size,
-      }}
+      style={[
+        styles.textIcon,
+        { color, fontSize: size * 0.85, lineHeight: size },
+      ]}
     >
       {'\u20BF'}
     </Text>
@@ -404,17 +367,6 @@ export const CreditCardIcon: React.FC<IconProps> = ({
   <View style={[styles.container, { width: size, height: size }]}>
     <View style={[styles.cardOuter, { borderColor: color }]}>
       <View style={[styles.cardStripe, { backgroundColor: color }]} />
-    </View>
-  </View>
-);
-
-export const AccountsNavIcon: React.FC<IconProps> = ({
-  size = 24,
-  color = '#94A3B8',
-}) => (
-  <View style={[styles.container, { width: size, height: size }]}>
-    <View style={[styles.walletOuter, { borderColor: color }]}>
-      <View style={[styles.walletInner, { backgroundColor: color }]} />
     </View>
   </View>
 );
@@ -499,10 +451,10 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: undefined,
   },
-  plusText: {
-    fontWeight: '300',
+  textIcon: {
+    fontWeight: '700',
     textAlign: 'center',
-    lineHeight: undefined,
+    includeFontPadding: false,
   },
   dotsRow: {
     flexDirection: 'row',

@@ -2,17 +2,19 @@ import React from 'react';
 import { Text, View } from 'react-native';
 import { SUMMARY_ITEMS } from '../../data/mockData';
 import { ArrowDownIcon, ArrowUpIcon, WalletsIcon } from '../../icons/Icons';
+import { Colors } from '../../theme/colors';
 import { SummaryItem } from '../../types';
+import { formatShort } from '../../utils/formatters';
 import { styles } from './SummaryStats.styles';
 
 const getIcon = (type: SummaryItem['type']) => {
   switch (type) {
     case 'income':
-      return <ArrowDownIcon size={20} color="#22C55E" />;
+      return <ArrowDownIcon size={20} color={Colors.incomeGreen} />;
     case 'expense':
-      return <ArrowUpIcon size={20} color="#EF4444" />;
+      return <ArrowUpIcon size={20} color={Colors.expenseRed} />;
     case 'savings':
-      return <WalletsIcon size={20} color="#3B82F6" />;
+      return <WalletsIcon size={20} color={Colors.savingsBlue} />;
   }
 };
 
@@ -38,14 +40,7 @@ const getAmountStyle = (type: SummaryItem['type']) => {
   }
 };
 
-const formatShort = (amount: number): string => {
-  if (amount >= 1000) {
-    return `\u20B9${(amount / 1000).toFixed(0)}k`;
-  }
-  return `\u20B9${amount}`;
-};
-
-const SummaryStats: React.FC = () => {
+const SummaryStats: React.FC = React.memo(() => {
   return (
     <View style={styles.container}>
       {SUMMARY_ITEMS.map(item => (
@@ -61,6 +56,6 @@ const SummaryStats: React.FC = () => {
       ))}
     </View>
   );
-};
+});
 
 export default SummaryStats;

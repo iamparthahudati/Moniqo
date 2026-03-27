@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Alert, ScrollView, Text, View } from 'react-native';
+import React from 'react';
+import { Alert, ScrollView, View } from 'react-native';
 import CategoryManager from '../components/settings/CategoryManager';
 import PremiumBanner from '../components/settings/PremiumBanner';
 import ProfileCard from '../components/settings/ProfileCard';
@@ -7,16 +7,18 @@ import {
   SettingGroup,
   SettingRowData,
 } from '../components/settings/SettingRow';
+import ScreenHeader from '../components/ui/ScreenHeader';
+import { useToggle } from '../hooks/useToggle';
 import { styles } from './SettingsScreen.styles';
 
 // ── Settings screen ───────────────────────────────────────────────────────────
 
 const SettingsScreen: React.FC = () => {
   // Notification toggles
-  const [txAlerts, setTxAlerts] = useState(true);
-  const [monthlyReport, setMonthlyReport] = useState(true);
-  const [budgetWarnings, setBudgetWarnings] = useState(false);
-  const [weeklyDigest, setWeeklyDigest] = useState(false);
+  const [txAlerts, toggleTxAlerts] = useToggle(true);
+  const [monthlyReport, toggleMonthlyReport] = useToggle(true);
+  const [budgetWarnings, toggleBudgetWarnings] = useToggle(false);
+  const [weeklyDigest, toggleWeeklyDigest] = useToggle(false);
 
   // ── Row definitions ─────────────────────────────────────────────────────────
 
@@ -69,7 +71,7 @@ const SettingsScreen: React.FC = () => {
       label: 'Transaction Alerts',
       type: 'toggle',
       toggleValue: txAlerts,
-      onToggle: () => setTxAlerts(v => !v),
+      onToggle: toggleTxAlerts,
     },
     {
       id: 'monthly',
@@ -78,7 +80,7 @@ const SettingsScreen: React.FC = () => {
       label: 'Monthly Report',
       type: 'toggle',
       toggleValue: monthlyReport,
-      onToggle: () => setMonthlyReport(v => !v),
+      onToggle: toggleMonthlyReport,
     },
     {
       id: 'budget',
@@ -87,7 +89,7 @@ const SettingsScreen: React.FC = () => {
       label: 'Budget Warnings',
       type: 'toggle',
       toggleValue: budgetWarnings,
-      onToggle: () => setBudgetWarnings(v => !v),
+      onToggle: toggleBudgetWarnings,
     },
     {
       id: 'weekly',
@@ -96,7 +98,7 @@ const SettingsScreen: React.FC = () => {
       label: 'Weekly Digest',
       type: 'toggle',
       toggleValue: weeklyDigest,
-      onToggle: () => setWeeklyDigest(v => !v),
+      onToggle: toggleWeeklyDigest,
     },
   ];
 
@@ -269,12 +271,7 @@ const SettingsScreen: React.FC = () => {
 
   return (
     <View style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <View style={styles.headerPlaceholder} />
-        <Text style={styles.headerTitle}>Settings</Text>
-        <View style={styles.headerPlaceholder} />
-      </View>
+      <ScreenHeader title="Settings" />
 
       <ScrollView
         showsVerticalScrollIndicator={false}

@@ -9,6 +9,6 @@ export const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingTop: Spacing.sm,
-    paddingBottom: Spacing.xxxl,
+    paddingBottom: Spacing.xxxl + 20,
   },
 });

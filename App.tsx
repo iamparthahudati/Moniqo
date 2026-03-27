@@ -4,6 +4,7 @@ import {
   SafeAreaProvider,
   useSafeAreaInsets,
 } from 'react-native-safe-area-context';
+import { AccountsProvider } from './src/store/accountsStore';
 import AddTransactionModal, {
   TransactionType,
 } from './src/components/common/AddTransactionModal';
@@ -125,7 +126,9 @@ function AppContent() {
 function App() {
   return (
     <SafeAreaProvider>
-      <AppContent />
+      <AccountsProvider>
+        <AppContent />
+      </AccountsProvider>
     </SafeAreaProvider>
   );
 }

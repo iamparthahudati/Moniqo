@@ -4,7 +4,7 @@ import { Radius, Spacing } from '../../theme/spacing';
 
 export const styles = StyleSheet.create({
   card: {
-    backgroundColor: Colors.balanceCardBg,
+    backgroundColor: Colors.primary,
     borderRadius: Radius.xl,
     marginHorizontal: Spacing.base,
     padding: Spacing.xl,

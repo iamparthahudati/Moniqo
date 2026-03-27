@@ -1,5 +1,8 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import IconCircle from '../components/ui/IconCircle';
+import ScreenHeader from '../components/ui/ScreenHeader';
+import TabSwitcher from '../components/ui/TabSwitcher';
 import {
   ANALYTICS_SAVINGS_RATE,
   ANALYTICS_TOTAL_EXPENSE,
@@ -8,49 +11,17 @@ import {
   SPENDING_CATEGORIES,
   TRANSACTIONS,
 } from '../data/mockData';
-import { Colors } from '../theme/colors';
 import { AnalyticsPeriod, MonthlyData, SpendingCategory } from '../types';
+import { formatShort } from '../utils/formatters';
 import { styles } from './AnalyticsScreen.styles';
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
-
-const formatShort = (n: number): string => {
-  if (n >= 1000) return `\u20B9${(n / 1000).toFixed(0)}k`;
-  return `\u20B9${n}`;
-};
+// ── Constants ─────────────────────────────────────────────────────────────────
 
 const PERIODS: AnalyticsPeriod[] = ['Week', 'Month', 'Year'];
 
 // ── Sub-components ────────────────────────────────────────────────────────────
 
-const PeriodSelector: React.FC<{
-  active: AnalyticsPeriod;
-  onSelect: (p: AnalyticsPeriod) => void;
-}> = ({ active, onSelect }) => (
-  <View style={styles.periodWrapper}>
-    <View style={styles.periodRow}>
-      {PERIODS.map(p => (
-        <TouchableOpacity
-          key={p}
-          style={[styles.periodBtn, active === p && styles.periodBtnActive]}
-          onPress={() => onSelect(p)}
-          activeOpacity={0.8}
-        >
-          <Text
-            style={[
-              styles.periodBtnText,
-              active === p && styles.periodBtnTextActive,
-            ]}
-          >
-            {p}
-          </Text>
-        </TouchableOpacity>
-      ))}
-    </View>
-  </View>
-);
-
-const SummaryRow: React.FC = () => (
+const SummaryRow: React.FC = React.memo(() => (
   <View style={styles.summaryRow}>
     <View style={[styles.summaryCard, styles.summaryCardIncome]}>
       <Text style={styles.summaryLabel}>Income</Text>
@@ -71,10 +42,13 @@ const SummaryRow: React.FC = () => (
       </Text>
     </View>
   </View>
-);
+));
 
-const BarChart: React.FC<{ data: MonthlyData[] }> = ({ data }) => {
-  const maxVal = Math.max(...data.map(d => Math.max(d.income, d.expense)));
+const BarChart: React.FC<{ data: MonthlyData[] }> = React.memo(({ data }) => {
+  const maxVal = useMemo(
+    () => Math.max(...data.map(d => Math.max(d.income, d.expense))),
+    [data],
+  );
   return (
     <View style={styles.chartCard}>
       <Text style={styles.chartTitle}>Income vs Expense</Text>
@@ -95,23 +69,19 @@ const BarChart: React.FC<{ data: MonthlyData[] }> = ({ data }) => {
       </View>
       <View style={styles.chartLegend}>
         <View style={styles.legendItem}>
-          <View
-            style={[styles.legendDot, { backgroundColor: Colors.incomeGreen }]}
-          />
+          <View style={[styles.legendDot, styles.legendDotIncome]} />
           <Text style={styles.legendText}>Income</Text>
         </View>
         <View style={styles.legendItem}>
-          <View
-            style={[styles.legendDot, { backgroundColor: Colors.expenseRed }]}
-          />
+          <View style={[styles.legendDot, styles.legendDotExpense]} />
           <Text style={styles.legendText}>Expense</Text>
         </View>
       </View>
     </View>
   );
-};
+});
 
-const SavingsRateCard: React.FC = () => (
+const SavingsRateCard: React.FC = React.memo(() => (
   <View style={styles.savingsCard}>
     <Text style={styles.savingsLabel}>Savings Rate</Text>
     <View style={styles.savingsRow}>
@@ -125,37 +95,36 @@ const SavingsRateCard: React.FC = () => (
       />
     </View>
   </View>
-);
+));
 
-const CategoryBreakdown: React.FC<{ categories: SpendingCategory[] }> = ({
-  categories,
-}) => (
-  <View style={styles.categoryCard}>
-    <Text style={styles.categoryTitle}>Spending by Category</Text>
-    {categories.map(cat => (
-      <View key={cat.id} style={styles.categoryRow}>
-        <Text style={styles.categoryEmoji}>{cat.emoji}</Text>
-        <View style={styles.categoryInfo}>
-          <Text style={styles.categoryLabel}>{cat.label}</Text>
-          <View style={styles.categoryBarBg}>
-            <View
-              style={[
-                styles.categoryBarFill,
-                { width: `${cat.percentage}%`, backgroundColor: cat.color },
-              ]}
-            />
+const CategoryBreakdown: React.FC<{ categories: SpendingCategory[] }> =
+  React.memo(({ categories }) => (
+    <View style={styles.categoryCard}>
+      <Text style={styles.categoryTitle}>Spending by Category</Text>
+      {categories.map(cat => (
+        <View key={cat.id} style={styles.categoryRow}>
+          <Text style={styles.categoryEmoji}>{cat.emoji}</Text>
+          <View style={styles.categoryInfo}>
+            <Text style={styles.categoryLabel}>{cat.label}</Text>
+            <View style={styles.categoryBarBg}>
+              <View
+                style={[
+                  styles.categoryBarFill,
+                  { width: `${cat.percentage}%`, backgroundColor: cat.color },
+                ]}
+              />
+            </View>
+          </View>
+          <View style={styles.categoryRight}>
+            <Text style={styles.categoryAmount}>{formatShort(cat.amount)}</Text>
+            <Text style={styles.categoryPct}>{cat.percentage}%</Text>
           </View>
         </View>
-        <View style={styles.categoryRight}>
-          <Text style={styles.categoryAmount}>{formatShort(cat.amount)}</Text>
-          <Text style={styles.categoryPct}>{cat.percentage}%</Text>
-        </View>
-      </View>
-    ))}
-  </View>
-);
+      ))}
+    </View>
+  ));
 
-const TopTransactions: React.FC = () => {
+const TopTransactions: React.FC = React.memo(() => {
   const expenses = TRANSACTIONS.filter(t => t.type === 'expense').slice(0, 3);
   const categoryColors: Record<string, string> = {
     dining: '#EF4444',
@@ -178,11 +147,9 @@ const TopTransactions: React.FC = () => {
         const absAmount = Math.abs(t.amount).toLocaleString('en-IN');
         return (
           <View key={t.id} style={styles.topRow}>
-            <View
-              style={[styles.topIconCircle, { backgroundColor: `${color}18` }]}
-            >
-              <Text style={{ fontSize: 18 }}>{emoji}</Text>
-            </View>
+            <IconCircle size={40} backgroundColor={`${color}18`}>
+              <Text style={styles.topEmojiText}>{emoji}</Text>
+            </IconCircle>
             <View style={styles.topInfo}>
               <Text style={styles.topName}>{t.title}</Text>
               <Text style={styles.topSub}>
@@ -200,7 +167,7 @@ const TopTransactions: React.FC = () => {
       })}
     </View>
   );
-};
+});
 
 // ── Screen ────────────────────────────────────────────────────────────────────
 
@@ -209,18 +176,26 @@ const AnalyticsScreen: React.FC = () => {
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Analytics</Text>
-        <TouchableOpacity activeOpacity={0.7}>
-          <Text style={styles.headerPeriod}>Dec 2024</Text>
-        </TouchableOpacity>
-      </View>
+      <ScreenHeader
+        title="Analytics"
+        rightSlot={
+          <TouchableOpacity activeOpacity={0.7}>
+            <Text style={styles.headerPeriod}>Dec 2024</Text>
+          </TouchableOpacity>
+        }
+      />
 
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
       >
-        <PeriodSelector active={period} onSelect={setPeriod} />
+        <View style={styles.periodWrapper}>
+          <TabSwitcher
+            tabs={PERIODS}
+            activeTab={period}
+            onSelect={p => setPeriod(p as AnalyticsPeriod)}
+          />
+        </View>
         <SummaryRow />
         <BarChart data={MONTHLY_DATA} />
         <SavingsRateCard />

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import {
   Alert,
   Modal,
@@ -9,6 +9,8 @@ import {
   View,
 } from 'react-native';
 import { Colors } from '../../theme/colors';
+import IconCircle from '../ui/IconCircle';
+import TabSwitcher from '../ui/TabSwitcher';
 import { styles } from './CategoryManager.styles';
 
 type CategoryType = 'expense' | 'income';
@@ -78,27 +80,34 @@ const CategoryManager: React.FC = () => {
   const [newName, setNewName] = useState('');
   const [selectedEmoji, setSelectedEmoji] = useState(EMOJI_OPTIONS[0]);
 
-  const categories =
-    activeTab === 'expense' ? expenseCategories : incomeCategories;
-  const setCategories =
-    activeTab === 'expense' ? setExpenseCategories : setIncomeCategories;
+  const { categories, setCategories } = useMemo(
+    () =>
+      activeTab === 'expense'
+        ? { categories: expenseCategories, setCategories: setExpenseCategories }
+        : { categories: incomeCategories, setCategories: setIncomeCategories },
+    [activeTab, expenseCategories, incomeCategories],
+  );
 
-  const handleDelete = (cat: Category) => {
-    if (cat.isDefault) {
-      Alert.alert('Cannot Delete', 'Default categories cannot be removed.');
-      return;
-    }
-    Alert.alert('Delete Category', `Remove "${cat.name}"?`, [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Delete',
-        style: 'destructive',
-        onPress: () => setCategories(prev => prev.filter(c => c.id !== cat.id)),
-      },
-    ]);
-  };
+  const handleDelete = useCallback(
+    (cat: Category) => {
+      if (cat.isDefault) {
+        Alert.alert('Cannot Delete', 'Default categories cannot be removed.');
+        return;
+      }
+      Alert.alert('Delete Category', `Remove "${cat.name}"?`, [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: () =>
+            setCategories(prev => prev.filter(c => c.id !== cat.id)),
+        },
+      ]);
+    },
+    [setCategories],
+  );
 
-  const handleAdd = () => {
+  const handleAdd = useCallback(() => {
     if (!newName.trim()) {
       Alert.alert('Name required', 'Please enter a category name.');
       return;
@@ -117,60 +126,40 @@ const CategoryManager: React.FC = () => {
     setNewName('');
     setSelectedEmoji(EMOJI_OPTIONS[0]);
     setModalVisible(false);
-  };
+  }, [newName, selectedEmoji, modalType]);
 
-  const openModal = () => {
+  const openModal = useCallback(() => {
     setModalType(activeTab);
     setNewName('');
     setSelectedEmoji(EMOJI_OPTIONS[0]);
     setModalVisible(true);
-  };
+  }, [activeTab]);
 
   return (
     <View style={styles.wrapper}>
       <Text style={styles.groupTitle}>Categories</Text>
       <View style={styles.card}>
         {/* Tab switcher */}
-        <View style={styles.sectionHeader}>
-          {(['expense', 'income'] as CategoryType[]).map(tab => (
-            <TouchableOpacity
-              key={tab}
-              style={[
-                styles.sectionTab,
-                activeTab === tab && styles.sectionTabActive,
-              ]}
-              onPress={() => setActiveTab(tab)}
-              activeOpacity={0.7}
-            >
-              <Text
-                style={[
-                  styles.sectionTabText,
-                  activeTab === tab && styles.sectionTabTextActive,
-                ]}
-              >
-                {tab === 'expense' ? 'Expense' : 'Income'}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </View>
+        <TabSwitcher
+          tabs={['expense', 'income']}
+          activeTab={activeTab}
+          onSelect={t => setActiveTab(t as CategoryType)}
+        />
 
         {/* Category list */}
         {categories.map((cat, i) => (
           <React.Fragment key={cat.id}>
             <View style={styles.categoryRow}>
-              <View
-                style={[
-                  styles.emojiCircle,
-                  {
-                    backgroundColor:
-                      activeTab === 'expense'
-                        ? 'rgba(239,68,68,0.1)'
-                        : 'rgba(34,197,94,0.1)',
-                  },
-                ]}
+              <IconCircle
+                size={40}
+                backgroundColor={
+                  activeTab === 'expense'
+                    ? 'rgba(239,68,68,0.1)'
+                    : 'rgba(34,197,94,0.1)'
+                }
               >
                 <Text style={styles.categoryEmoji}>{cat.emoji}</Text>
-              </View>
+              </IconCircle>
               <Text style={styles.categoryName}>{cat.name}</Text>
               {cat.isDefault ? (
                 <View style={styles.defaultBadge}>
@@ -222,28 +211,12 @@ const CategoryManager: React.FC = () => {
                 <Text style={styles.modalTitle}>Add Category</Text>
 
                 {/* Type toggle inside modal */}
-                <View style={styles.modalTypeRow}>
-                  {(['expense', 'income'] as CategoryType[]).map(t => (
-                    <TouchableOpacity
-                      key={t}
-                      style={[
-                        styles.modalTypeBtn,
-                        modalType === t && styles.modalTypeBtnActive,
-                      ]}
-                      onPress={() => setModalType(t)}
-                      activeOpacity={0.8}
-                    >
-                      <Text
-                        style={[
-                          styles.modalTypeBtnText,
-                          modalType === t && styles.modalTypeBtnTextActive,
-                        ]}
-                      >
-                        {t === 'expense' ? 'Expense' : 'Income'}
-                      </Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
+                <TabSwitcher
+                  tabs={['expense', 'income']}
+                  activeTab={modalType}
+                  onSelect={t => setModalType(t as CategoryType)}
+                  style={styles.modalTypeRow}
+                />
 
                 {/* Emoji picker */}
                 <Text style={styles.emojiPickerLabel}>Choose Icon</Text>

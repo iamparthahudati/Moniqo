@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Text, TouchableOpacity, View } from 'react-native';
 import { TRANSACTIONS } from '../../data/mockData';
 import {
@@ -57,37 +57,37 @@ const formatDateLabel = (date: string): string => {
   return date.toUpperCase();
 };
 
-const TransactionItem: React.FC<{ transaction: Transaction }> = ({
-  transaction,
-}) => (
-  <View style={styles.transactionCard}>
-    <View
-      style={[styles.iconWrapper, getCategoryIconStyle(transaction.category)]}
-    >
-      {getCategoryIcon(transaction.category)}
-    </View>
-    <View style={styles.textGroup}>
-      <Text style={styles.title}>{transaction.title}</Text>
-      <Text style={styles.subtitle}>
-        {transaction.subtitle}
-        {' \u2022 '}
-        {transaction.time}
+const TransactionItem: React.FC<{ transaction: Transaction }> = React.memo(
+  ({ transaction }) => (
+    <View style={styles.transactionCard}>
+      <View
+        style={[styles.iconWrapper, getCategoryIconStyle(transaction.category)]}
+      >
+        {getCategoryIcon(transaction.category)}
+      </View>
+      <View style={styles.textGroup}>
+        <Text style={styles.title}>{transaction.title}</Text>
+        <Text style={styles.subtitle}>
+          {transaction.subtitle}
+          {' \u2022 '}
+          {transaction.time}
+        </Text>
+      </View>
+      <Text
+        style={
+          transaction.type === 'income'
+            ? styles.amountIncome
+            : styles.amountExpense
+        }
+      >
+        {formatAmount(transaction.amount)}
       </Text>
     </View>
-    <Text
-      style={
-        transaction.type === 'income'
-          ? styles.amountIncome
-          : styles.amountExpense
-      }
-    >
-      {formatAmount(transaction.amount)}
-    </Text>
-  </View>
+  ),
 );
 
-const RecentTransactions: React.FC = () => {
-  const groups = groupByDate(TRANSACTIONS);
+const RecentTransactions: React.FC = React.memo(() => {
+  const groups = useMemo(() => groupByDate(TRANSACTIONS), []);
   const dateOrder = ['today', 'yesterday'];
 
   return (
@@ -111,6 +111,6 @@ const RecentTransactions: React.FC = () => {
       )}
     </View>
   );
-};
+});
 
 export default RecentTransactions;

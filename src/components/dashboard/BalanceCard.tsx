@@ -9,7 +9,7 @@ import { TrendUpIcon } from '../../icons/Icons';
 import { formatCurrency } from '../../utils/formatters';
 import { styles } from './BalanceCard.styles';
 
-const BalanceCard: React.FC = () => {
+const BalanceCard: React.FC = React.memo(() => {
   return (
     <View style={styles.card}>
       <View style={styles.topRow}>
@@ -33,6 +33,6 @@ const BalanceCard: React.FC = () => {
       </View>
     </View>
   );
-};
+});
 
 export default BalanceCard;

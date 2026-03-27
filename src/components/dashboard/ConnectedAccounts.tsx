@@ -2,10 +2,11 @@ import React from 'react';
 import { ScrollView, Text, View } from 'react-native';
 import { ACCOUNTS } from '../../data/mockData';
 import { DotsIcon } from '../../icons/Icons';
+import { Colors } from '../../theme/colors';
 import { formatCurrencyFull } from '../../utils/formatters';
 import { styles } from './ConnectedAccounts.styles';
 
-const ConnectedAccounts: React.FC = () => {
+const ConnectedAccounts: React.FC = React.memo(() => {
   return (
     <View style={styles.container}>
       <Text style={styles.sectionTitle}>Connected Accounts</Text>
@@ -22,7 +23,7 @@ const ConnectedAccounts: React.FC = () => {
               >
                 <Text style={styles.bankCode}>{account.bankCode}</Text>
               </View>
-              <DotsIcon size={18} color="#94A3B8" />
+              <DotsIcon size={18} color={Colors.textMuted} />
             </View>
             <Text style={styles.accountType}>{account.accountType}</Text>
             <Text style={styles.balance}>
@@ -33,6 +34,6 @@ const ConnectedAccounts: React.FC = () => {
       </ScrollView>
     </View>
   );
-};
+});
 
 export default ConnectedAccounts;

@@ -5,23 +5,6 @@ import { Radius, Shadow, Spacing } from '../theme/spacing';
 export const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.background },
 
-  // Header
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: Spacing.base,
-    paddingVertical: Spacing.md,
-    backgroundColor: Colors.surface,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.border,
-  },
-  headerTitle: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: Colors.textPrimary,
-    letterSpacing: -0.3,
-  },
   headerIconBtn: {
     width: 36,
     height: 36,
@@ -31,7 +14,7 @@ export const styles = StyleSheet.create({
 
   scrollContent: { paddingBottom: Spacing.xxxl + 20 },
 
-  // Total balance card
+  // ── Total balance card ────────────────────────────────────────────────────
   totalCard: {
     margin: Spacing.base,
     backgroundColor: Colors.surface,
@@ -48,13 +31,17 @@ export const styles = StyleSheet.create({
     marginBottom: Spacing.sm,
   },
   totalAmount: {
-    fontSize: 38,
+    fontSize: 36,
     fontWeight: '700',
     color: Colors.textPrimary,
     letterSpacing: -1.5,
     marginBottom: Spacing.sm,
   },
-  totalSubRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm },
+  totalSubRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+  },
   totalSubText: { fontSize: 14, color: Colors.textSecondary },
   totalBadge: {
     flexDirection: 'row',
@@ -71,7 +58,7 @@ export const styles = StyleSheet.create({
     color: Colors.incomeGreen,
   },
 
-  // Section
+  // ── Section ───────────────────────────────────────────────────────────────
   section: { paddingHorizontal: Spacing.base, marginTop: Spacing.lg },
   sectionHeader: {
     flexDirection: 'row',
@@ -79,10 +66,14 @@ export const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: Spacing.md,
   },
-  sectionTitle: { fontSize: 18, fontWeight: '700', color: Colors.textPrimary },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: Colors.textPrimary,
+  },
   viewAll: { fontSize: 14, fontWeight: '600', color: Colors.primary },
 
-  // Account row card
+  // ── Account row card ──────────────────────────────────────────────────────
   accountCard: {
     backgroundColor: Colors.surface,
     borderRadius: Radius.lg,
@@ -90,15 +81,8 @@ export const styles = StyleSheet.create({
     marginBottom: Spacing.sm,
     flexDirection: 'row',
     alignItems: 'center',
+    gap: Spacing.md,
     ...Shadow.sm,
-  },
-  accountIconCircle: {
-    width: 48,
-    height: 48,
-    borderRadius: Radius.full,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: Spacing.md,
   },
   accountInfo: { flex: 1 },
   accountName: {
@@ -120,6 +104,12 @@ export const styles = StyleSheet.create({
     letterSpacing: 0.6,
     color: Colors.incomeGreen,
   },
+  accountStatusInactive: {
+    fontSize: 10,
+    fontWeight: '700',
+    letterSpacing: 0.6,
+    color: Colors.textMuted,
+  },
   accountStatusDue: {
     fontSize: 10,
     fontWeight: '700',
@@ -131,46 +121,49 @@ export const styles = StyleSheet.create({
     fontWeight: '700',
     color: Colors.expenseRed,
   },
-  accountDueDash: { fontSize: 15, fontWeight: '700', color: Colors.expenseRed },
-  chevron: { marginLeft: Spacing.sm },
+  accountDueDash: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: Colors.expenseRed,
+  },
+  chevron: { marginLeft: Spacing.xs },
 
-  // Investment grid
-  investGrid: { flexDirection: 'row', gap: Spacing.md },
+  // ── Investment grid ───────────────────────────────────────────────────────
+  investGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: Spacing.md,
+  },
   investCard: {
     flex: 1,
+    minWidth: '45%',
     backgroundColor: Colors.surface,
     borderRadius: Radius.lg,
     padding: Spacing.base,
     ...Shadow.sm,
     gap: Spacing.md,
   },
-  investIconCircle: {
-    width: 40,
-    height: 40,
-    borderRadius: Radius.full,
-    alignItems: 'center',
-    justifyContent: 'center',
+  investName: {
+    fontSize: 13,
+    color: Colors.textSecondary,
+    marginBottom: 2,
   },
-  investName: { fontSize: 13, color: Colors.textSecondary, marginBottom: 2 },
-  investAmount: { fontSize: 16, fontWeight: '700', color: Colors.textPrimary },
+  investAmount: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: Colors.textPrimary,
+  },
 
-  // Cash row
+  // ── Cash row ──────────────────────────────────────────────────────────────
   cashCard: {
     backgroundColor: Colors.surface,
     borderRadius: Radius.lg,
     padding: Spacing.base,
     flexDirection: 'row',
     alignItems: 'center',
+    gap: Spacing.md,
+    marginBottom: Spacing.sm,
     ...Shadow.sm,
-  },
-  cashIconCircle: {
-    width: 48,
-    height: 48,
-    borderRadius: Radius.full,
-    backgroundColor: 'rgba(43,63,232,0.08)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: Spacing.md,
   },
   cashInfo: { flex: 1 },
   cashLabel: {
@@ -186,5 +179,35 @@ export const styles = StyleSheet.create({
     color: Colors.textMuted,
     textTransform: 'uppercase',
   },
-  cashAmount: { fontSize: 16, fontWeight: '700', color: Colors.textPrimary },
+  cashAmount: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: Colors.textPrimary,
+  },
+
+  // ── Empty state ───────────────────────────────────────────────────────────
+  emptyState: {
+    backgroundColor: Colors.surface,
+    borderRadius: Radius.lg,
+    padding: Spacing.xl,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: Colors.border,
+    borderStyle: 'dashed',
+  },
+  emptyText: {
+    fontSize: 14,
+    color: Colors.textMuted,
+    fontWeight: '500',
+  },
+
+  // ── Hint ──────────────────────────────────────────────────────────────────
+  hintText: {
+    fontSize: 11,
+    color: Colors.textMuted,
+    textAlign: 'center',
+    marginTop: Spacing.xl,
+    marginBottom: Spacing.sm,
+    letterSpacing: 0.3,
+  },
 });

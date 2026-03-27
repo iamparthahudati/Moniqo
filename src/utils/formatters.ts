@@ -1,7 +1,24 @@
+const RUPEE = '\u20B9';
+
+const MONTH_NAMES = [
+  'Jan',
+  'Feb',
+  'Mar',
+  'Apr',
+  'May',
+  'Jun',
+  'Jul',
+  'Aug',
+  'Sep',
+  'Oct',
+  'Nov',
+  'Dec',
+];
+
 export const formatCurrency = (amount: number): string => {
   const absAmount = Math.abs(amount);
   if (absAmount >= 100000) {
-    return `\u20B9${(absAmount / 1000)
+    return `${RUPEE}${(absAmount / 1000)
       .toFixed(0)
       .replace(/\B(?=(\d{3})+(?!\d))/g, ',')}k`;
   }
@@ -10,9 +27,9 @@ export const formatCurrency = (amount: number): string => {
       minimumFractionDigits: 0,
       maximumFractionDigits: 2,
     });
-    return `\u20B9${formatted}`;
+    return `${RUPEE}${formatted}`;
   }
-  return `\u20B9${absAmount}`;
+  return `${RUPEE}${absAmount}`;
 };
 
 export const formatCurrencyFull = (amount: number): string => {
@@ -21,7 +38,7 @@ export const formatCurrencyFull = (amount: number): string => {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   });
-  return `\u20B9${formatted}`;
+  return `${RUPEE}${formatted}`;
 };
 
 export const formatAmount = (amount: number): string => {
@@ -32,7 +49,32 @@ export const formatAmount = (amount: number): string => {
       minimumFractionDigits: 0,
       maximumFractionDigits: 0,
     });
-    return `${prefix}\u20B9${formatted}`;
+    return `${prefix}${RUPEE}${formatted}`;
   }
-  return `${prefix}\u20B9${absAmount}`;
+  return `${prefix}${RUPEE}${absAmount}`;
+};
+
+export const formatShort = (n: number): string => {
+  if (n >= 1000) {
+    return `${RUPEE}${(n / 1000).toFixed(0)}k`;
+  }
+  return `${RUPEE}${n}`;
+};
+
+export const getTodayLabel = (): string => {
+  const now = new Date();
+  const day = now.getDate();
+  const month = MONTH_NAMES[now.getMonth()];
+  return `Today, ${day} ${month}`;
+};
+
+export const getGreeting = (): string => {
+  const hour = new Date().getHours();
+  if (hour < 12) {
+    return 'Good Morning';
+  }
+  if (hour < 17) {
+    return 'Good Afternoon';
+  }
+  return 'Good Evening';
 };

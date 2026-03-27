@@ -46,6 +46,9 @@ export const styles = StyleSheet.create({
     fontWeight: '500',
     color: Colors.textPrimary,
   },
+  rowLabelDestructive: {
+    color: Colors.expenseRed,
+  },
   rowValue: { fontSize: 14, color: Colors.textMuted, fontWeight: '400' },
   chevron: { marginLeft: 2 },
   toggle: {

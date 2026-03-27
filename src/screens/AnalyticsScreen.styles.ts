@@ -6,22 +6,6 @@ export const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.background },
 
   // Header
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: Spacing.base,
-    paddingVertical: Spacing.md,
-    backgroundColor: Colors.surface,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.border,
-  },
-  headerTitle: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: Colors.textPrimary,
-    letterSpacing: -0.3,
-  },
   headerPeriod: { fontSize: 14, fontWeight: '600', color: Colors.primary },
 
   scrollContent: { paddingBottom: Spacing.xxxl + 20 },
@@ -34,22 +18,6 @@ export const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: Colors.border,
   },
-  periodRow: {
-    flexDirection: 'row',
-    backgroundColor: Colors.background,
-    borderRadius: Radius.full,
-    padding: 3,
-  },
-  periodBtn: {
-    flex: 1,
-    paddingVertical: Spacing.sm,
-    borderRadius: Radius.full,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  periodBtnActive: { backgroundColor: Colors.primary },
-  periodBtnText: { fontSize: 13, fontWeight: '600', color: Colors.textMuted },
-  periodBtnTextActive: { color: Colors.white },
 
   // Summary cards row
   summaryRow: {
@@ -132,6 +100,8 @@ export const styles = StyleSheet.create({
   },
   legendItem: { flexDirection: 'row', alignItems: 'center', gap: 5 },
   legendDot: { width: 8, height: 8, borderRadius: 4 },
+  legendDotIncome: { backgroundColor: Colors.incomeGreen },
+  legendDotExpense: { backgroundColor: Colors.expenseRed },
   legendText: { fontSize: 12, color: Colors.textSecondary, fontWeight: '500' },
 
   // Savings rate card
@@ -246,14 +216,7 @@ export const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: Spacing.md,
   },
-  topIconCircle: {
-    width: 40,
-    height: 40,
-    borderRadius: Radius.full,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: Spacing.md,
-  },
+  topEmojiText: { fontSize: 18 },
   topInfo: { flex: 1 },
   topName: { fontSize: 14, fontWeight: '600', color: Colors.textPrimary },
   topSub: { fontSize: 12, color: Colors.textMuted, marginTop: 2 },
