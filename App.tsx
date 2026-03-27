@@ -18,6 +18,7 @@ import AnalyticsScreen from './src/screens/AnalyticsScreen';
 import DashboardScreen from './src/screens/DashboardScreen';
 import SettingsScreen from './src/screens/SettingsScreen';
 import { AccountsProvider } from './src/store/accountsStore';
+import { TransactionsProvider } from './src/store/transactionsStore';
 import { Colors } from './src/theme/colors';
 import { TabName } from './src/types';
 
@@ -127,7 +128,9 @@ function App() {
   return (
     <SafeAreaProvider>
       <AccountsProvider>
-        <AppContent />
+        <TransactionsProvider>
+          <AppContent />
+        </TransactionsProvider>
       </AccountsProvider>
     </SafeAreaProvider>
   );

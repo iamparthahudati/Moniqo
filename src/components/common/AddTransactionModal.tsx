@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, {useCallback, useState} from 'react';
 import {
   Modal,
   ScrollView,
@@ -8,7 +8,8 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
+import {generateId} from '../../db/database';
 import {
   BankIcon,
   CalendarIcon,
@@ -16,10 +17,12 @@ import {
   ChevronDownIcon,
   NoteIcon,
 } from '../../icons/Icons';
-import { Colors } from '../../theme/colors';
-import { getTodayLabel } from '../../utils/formatters';
+import {useAccounts} from '../../store/accountsStore';
+import {useTransactions} from '../../store/transactionsStore';
+import {Colors} from '../../theme/colors';
+import {getTodayLabel} from '../../utils/formatters';
 import ModalHeader from '../ui/ModalHeader';
-import { styles } from './AddTransactionModal.styles';
+import {styles} from './AddTransactionModal.styles';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -35,12 +38,12 @@ interface Category {
 // ── Constants ─────────────────────────────────────────────────────────────────
 
 const CATEGORIES: Category[] = [
-  { id: 'food', label: 'FOOD', emoji: '\uD83C\uDF74' },
-  { id: 'shopping', label: 'SHOPPING', emoji: '\uD83D\uDED2' },
-  { id: 'transport', label: 'TRANSPORT', emoji: '\uD83D\uDE97' },
-  { id: 'bills', label: 'BILLS', emoji: '\uD83E\uDDFE' },
-  { id: 'fun', label: 'FUN', emoji: '\uD83C\uDFAB' },
-  { id: 'others', label: 'OTHERS', emoji: '\u2022\u2022\u2022' },
+  {id: 'food', label: 'FOOD', emoji: '\uD83C\uDF74'},
+  {id: 'shopping', label: 'SHOPPING', emoji: '\uD83D\uDED2'},
+  {id: 'transport', label: 'TRANSPORT', emoji: '\uD83D\uDE97'},
+  {id: 'bills', label: 'BILLS', emoji: '\uD83E\uDDFE'},
+  {id: 'fun', label: 'FUN', emoji: '\uD83C\uDFAB'},
+  {id: 'others', label: 'OTHERS', emoji: '\u2022\u2022\u2022'},
 ];
 
 // ── Sub-components ────────────────────────────────────────────────────────────
@@ -52,23 +55,20 @@ interface CategoryItemProps {
 }
 
 const CategoryItem: React.FC<CategoryItemProps> = React.memo(
-  ({ category, isActive, onPress }) => (
+  ({category, isActive, onPress}) => (
     <TouchableOpacity
       style={[styles.categoryItem, isActive && styles.categoryItemActive]}
       onPress={onPress}
-      activeOpacity={0.75}
-    >
+      activeOpacity={0.75}>
       <View
         style={[
           styles.categoryIconCircle,
           isActive && styles.categoryIconCircleActive,
-        ]}
-      >
+        ]}>
         <Text style={styles.categoryEmoji}>{category.emoji}</Text>
       </View>
       <Text
-        style={[styles.categoryLabel, isActive && styles.categoryLabelActive]}
-      >
+        style={[styles.categoryLabel, isActive && styles.categoryLabelActive]}>
         {category.label}
       </Text>
     </TouchableOpacity>
@@ -89,11 +89,14 @@ const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
   initialType = 'expense',
 }) => {
   const insets = useSafeAreaInsets();
+  const {state: accountsState} = useAccounts();
+  const {dispatch: txDispatch} = useTransactions();
 
   const [txType, setTxType] = useState<TransactionType>(initialType);
   const [amount, setAmount] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('food');
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('cash');
+  const [selectedBankIndex, setSelectedBankIndex] = useState(0);
   const [note, setNote] = useState('');
 
   // Sync type when modal opens with a different initialType
@@ -103,9 +106,76 @@ const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
     }
   }, [visible, initialType]);
 
+  const bankAccounts = accountsState.bankAccounts;
+  const selectedBank =
+    bankAccounts.length > 0
+      ? bankAccounts[selectedBankIndex % bankAccounts.length]
+      : null;
+
   const handleSave = useCallback(() => {
+    const numAmount = parseFloat(amount);
+    if (!numAmount || numAmount <= 0) {
+      return;
+    }
+
+    const now = Date.now();
+    const today = new Date().toISOString().split('T')[0];
+    const timeStr = new Date().toLocaleTimeString('en-US', {
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+
+    const catObj = CATEGORIES.find(c => c.id === selectedCategory);
+    const title =
+      txType === 'income'
+        ? 'Income'
+        : catObj?.label
+          ? catObj.label.charAt(0) + catObj.label.slice(1).toLowerCase()
+          : 'Expense';
+
+    const finalAmount = txType === 'expense' ? -numAmount : numAmount;
+
+    txDispatch({
+      type: 'ADD_TRANSACTION',
+      payload: {
+        id: generateId(),
+        title,
+        subtitle: note || (txType === 'income' ? 'Income' : 'Expense'),
+        amount: finalAmount,
+        type: txType,
+        category: txType === 'income' ? 'salary' : selectedCategory,
+        account_id:
+          paymentMethod === 'bank' ? selectedBank?.id : undefined,
+        account_type: paymentMethod === 'bank' ? 'bank' : 'cash',
+        date: today,
+        time: timeStr,
+        note: note || undefined,
+        created_at: now,
+      },
+    });
+
+    // Update bank balance if paid from bank
+    if (paymentMethod === 'bank' && selectedBank) {
+      const {dispatch: acctDispatch} = accountsState as any;
+      // Balance update is handled by the caller if needed
+    }
+
+    setAmount('');
+    setSelectedCategory('food');
+    setPaymentMethod('cash');
+    setNote('');
     onClose();
-  }, [onClose]);
+  }, [
+    amount,
+    txType,
+    selectedCategory,
+    paymentMethod,
+    selectedBank,
+    note,
+    txDispatch,
+    onClose,
+    accountsState,
+  ]);
 
   const handleClose = useCallback(() => {
     setAmount('');
@@ -123,11 +193,10 @@ const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
       animationType="slide"
       presentationStyle="fullScreen"
       statusBarTranslucent={false}
-      onRequestClose={handleClose}
-    >
+      onRequestClose={handleClose}>
       <StatusBar barStyle="dark-content" backgroundColor={Colors.surface} />
 
-      <View style={[styles.overlay, { paddingTop: insets.top }]}>
+      <View style={[styles.overlay, {paddingTop: insets.top}]}>
         {/* ── Header ── */}
         <ModalHeader
           title="Add Transaction"
@@ -138,8 +207,7 @@ const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
         <ScrollView
           showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.scrollContent}
-          keyboardShouldPersistTaps="handled"
-        >
+          keyboardShouldPersistTaps="handled">
           {/* ── Type toggle ── */}
           <View style={styles.typeToggleWrapper}>
             <View style={styles.typeToggle}>
@@ -149,16 +217,14 @@ const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
                   isExpense ? styles.typeBtnActive : styles.typeBtnInactive,
                 ]}
                 onPress={() => setTxType('expense')}
-                activeOpacity={0.8}
-              >
+                activeOpacity={0.8}>
                 <Text
                   style={[
                     styles.typeBtnText,
                     isExpense
                       ? styles.typeBtnTextActive
                       : styles.typeBtnTextInactive,
-                  ]}
-                >
+                  ]}>
                   Expense
                 </Text>
               </TouchableOpacity>
@@ -170,16 +236,14 @@ const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
                     : styles.typeBtnInactive,
                 ]}
                 onPress={() => setTxType('income')}
-                activeOpacity={0.8}
-              >
+                activeOpacity={0.8}>
                 <Text
                   style={[
                     styles.typeBtnText,
                     !isExpense
                       ? styles.typeBtnTextActive
                       : styles.typeBtnTextInactive,
-                  ]}
-                >
+                  ]}>
                   Income
                 </Text>
               </TouchableOpacity>
@@ -233,8 +297,7 @@ const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
                   paymentMethod === 'cash' && styles.paymentBtnActive,
                 ]}
                 onPress={() => setPaymentMethod('cash')}
-                activeOpacity={0.8}
-              >
+                activeOpacity={0.8}>
                 <CashIcon
                   size={20}
                   color={
@@ -247,8 +310,7 @@ const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
                   style={[
                     styles.paymentBtnText,
                     paymentMethod === 'cash' && styles.paymentBtnTextActive,
-                  ]}
-                >
+                  ]}>
                   Cash
                 </Text>
               </TouchableOpacity>
@@ -259,8 +321,7 @@ const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
                   paymentMethod === 'bank' && styles.paymentBtnActive,
                 ]}
                 onPress={() => setPaymentMethod('bank')}
-                activeOpacity={0.8}
-              >
+                activeOpacity={0.8}>
                 <BankIcon
                   size={20}
                   color={
@@ -273,12 +334,30 @@ const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
                   style={[
                     styles.paymentBtnText,
                     paymentMethod === 'bank' && styles.paymentBtnTextActive,
-                  ]}
-                >
+                  ]}>
                   Bank Account
                 </Text>
               </TouchableOpacity>
             </View>
+
+            {/* Bank account selector */}
+            {paymentMethod === 'bank' && selectedBank && (
+              <TouchableOpacity
+                style={styles.dateRow}
+                activeOpacity={0.75}
+                onPress={() =>
+                  setSelectedBankIndex(
+                    (selectedBankIndex + 1) % bankAccounts.length,
+                  )
+                }>
+                <BankIcon size={22} color={selectedBank.color} />
+                <View style={styles.dateTextGroup}>
+                  <Text style={styles.dateLabel}>Account</Text>
+                  <Text style={styles.dateValue}>{selectedBank.bankName}</Text>
+                </View>
+                <ChevronDownIcon size={18} color={Colors.textMuted} />
+              </TouchableOpacity>
+            )}
           </View>
 
           {/* ── Date ── */}
@@ -314,8 +393,7 @@ const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
             <TouchableOpacity
               style={styles.submitBtn}
               onPress={handleSave}
-              activeOpacity={0.85}
-            >
+              activeOpacity={0.85}>
               <Text style={styles.submitBtnText}>Add Transaction</Text>
             </TouchableOpacity>
           </View>
