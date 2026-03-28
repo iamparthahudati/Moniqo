@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import {
   Alert,
   Modal,
@@ -8,6 +8,8 @@ import {
   TouchableWithoutFeedback,
   View,
 } from 'react-native';
+import { AppCategory } from '../../db/repositories/categoryRepository';
+import { useCategories } from '../../store/categoriesStore';
 import { Colors } from '../../theme/colors';
 import IconCircle from '../ui/IconCircle';
 import TabSwitcher from '../ui/TabSwitcher';
@@ -15,35 +17,17 @@ import { styles } from './CategoryManager.styles';
 
 type CategoryType = 'expense' | 'income';
 
-interface Category {
-  id: string;
-  name: string;
-  emoji: string;
-  isDefault: boolean;
-}
-
-const DEFAULT_EXPENSE: Category[] = [
-  { id: 'e1', name: 'Food & Dining', emoji: '\uD83C\uDF74', isDefault: true },
-  { id: 'e2', name: 'Shopping', emoji: '\uD83D\uDED2', isDefault: true },
-  { id: 'e3', name: 'Transport', emoji: '\uD83D\uDE97', isDefault: true },
-  {
-    id: 'e4',
-    name: 'Bills & Utilities',
-    emoji: '\uD83E\uDDFE',
-    isDefault: true,
-  },
-  { id: 'e5', name: 'Entertainment', emoji: '\uD83C\uDFAB', isDefault: true },
-  { id: 'e6', name: 'Health', emoji: '\uD83C\uDFE5', isDefault: true },
-  { id: 'e7', name: 'Education', emoji: '\uD83D\uDCDA', isDefault: true },
-  { id: 'e8', name: 'Others', emoji: '\uD83D\uDCCB', isDefault: true },
-];
-
-const DEFAULT_INCOME: Category[] = [
-  { id: 'i1', name: 'Salary', emoji: '\uD83D\uDCB0', isDefault: true },
-  { id: 'i2', name: 'Freelance', emoji: '\uD83D\uDCBB', isDefault: true },
-  { id: 'i3', name: 'Investment', emoji: '\uD83D\uDCC8', isDefault: true },
-  { id: 'i4', name: 'Gift', emoji: '\uD83C\uDF81', isDefault: true },
-  { id: 'i5', name: 'Other Income', emoji: '\uD83D\uDCB5', isDefault: true },
+const COLORS = [
+  '#EF4444',
+  '#3B82F6',
+  '#F97316',
+  '#8B5CF6',
+  '#14B8A6',
+  '#EC4899',
+  '#F59E0B',
+  '#94A3B8',
+  '#22C55E',
+  '#6366F1',
 ];
 
 const EMOJI_OPTIONS = [
@@ -70,26 +54,20 @@ const EMOJI_OPTIONS = [
 ];
 
 const CategoryManager: React.FC = () => {
+  const { expenseCategories, incomeCategories, addCategory, deleteCategory } =
+    useCategories();
+
   const [activeTab, setActiveTab] = useState<CategoryType>('expense');
-  const [expenseCategories, setExpenseCategories] =
-    useState<Category[]>(DEFAULT_EXPENSE);
-  const [incomeCategories, setIncomeCategories] =
-    useState<Category[]>(DEFAULT_INCOME);
   const [modalVisible, setModalVisible] = useState(false);
   const [modalType, setModalType] = useState<CategoryType>('expense');
   const [newName, setNewName] = useState('');
   const [selectedEmoji, setSelectedEmoji] = useState(EMOJI_OPTIONS[0]);
 
-  const { categories, setCategories } = useMemo(
-    () =>
-      activeTab === 'expense'
-        ? { categories: expenseCategories, setCategories: setExpenseCategories }
-        : { categories: incomeCategories, setCategories: setIncomeCategories },
-    [activeTab, expenseCategories, incomeCategories],
-  );
+  const categories =
+    activeTab === 'expense' ? expenseCategories : incomeCategories;
 
   const handleDelete = useCallback(
-    (cat: Category) => {
+    (cat: AppCategory) => {
       if (cat.isDefault) {
         Alert.alert('Cannot Delete', 'Default categories cannot be removed.');
         return;
@@ -99,12 +77,11 @@ const CategoryManager: React.FC = () => {
         {
           text: 'Delete',
           style: 'destructive',
-          onPress: () =>
-            setCategories(prev => prev.filter(c => c.id !== cat.id)),
+          onPress: () => deleteCategory(cat.id),
         },
       ]);
     },
-    [setCategories],
+    [deleteCategory],
   );
 
   const handleAdd = useCallback(() => {
@@ -112,21 +89,20 @@ const CategoryManager: React.FC = () => {
       Alert.alert('Name required', 'Please enter a category name.');
       return;
     }
-    const newCat: Category = {
-      id: `custom_${Date.now()}`,
+    const emojiIndex = EMOJI_OPTIONS.indexOf(selectedEmoji);
+    const color = COLORS[(emojiIndex >= 0 ? emojiIndex : 0) % COLORS.length];
+    addCategory({
       name: newName.trim(),
       emoji: selectedEmoji,
+      type: modalType,
+      color,
       isDefault: false,
-    };
-    if (modalType === 'expense') {
-      setExpenseCategories(prev => [...prev, newCat]);
-    } else {
-      setIncomeCategories(prev => [...prev, newCat]);
-    }
+      sortOrder: 999,
+    });
     setNewName('');
     setSelectedEmoji(EMOJI_OPTIONS[0]);
     setModalVisible(false);
-  }, [newName, selectedEmoji, modalType]);
+  }, [newName, selectedEmoji, modalType, addCategory]);
 
   const openModal = useCallback(() => {
     setModalType(activeTab);

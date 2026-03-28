@@ -5,18 +5,54 @@ import { Radius, Shadow, Spacing } from '../theme/spacing';
 export const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.background },
 
-  // Header
-  headerPeriod: { fontSize: 14, fontWeight: '600', color: Colors.primary },
-
   scrollContent: { paddingBottom: Spacing.xxxl + 20 },
 
-  // Period selector
+  // Tab switcher wrapper
   periodWrapper: {
     backgroundColor: Colors.surface,
     paddingVertical: Spacing.md,
     paddingHorizontal: Spacing.base,
     borderBottomWidth: 1,
     borderBottomColor: Colors.border,
+  },
+
+  // Period navigator (< March 2026 >)
+  periodNav: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: Spacing.base,
+    paddingVertical: Spacing.md,
+    backgroundColor: Colors.surface,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.border,
+  },
+  periodNavBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: Radius.full,
+    backgroundColor: Colors.background,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  periodNavBtnDisabled: {
+    opacity: 0.35,
+  },
+  periodNavChevron: {
+    fontSize: 22,
+    fontWeight: '600',
+    color: Colors.primary,
+    lineHeight: 26,
+  },
+  periodNavChevronDisabled: {
+    color: Colors.textMuted,
+  },
+  periodNavLabel: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: Colors.textPrimary,
+    flex: 1,
+    textAlign: 'center',
   },
 
   // Summary cards row
@@ -63,34 +99,43 @@ export const styles = StyleSheet.create({
     color: Colors.textPrimary,
     marginBottom: Spacing.base,
   },
+  // Fixed height container — bars + label fit inside
   chartArea: {
-    height: 160,
+    height: 140,
     flexDirection: 'row',
     alignItems: 'flex-end',
     justifyContent: 'space-between',
+    paddingBottom: 20, // reserve space for labels
   },
-  chartBarGroup: { flex: 1, alignItems: 'center', gap: 3 },
+  chartBarGroup: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    height: '100%',
+  },
   chartBarPair: {
     flexDirection: 'row',
     alignItems: 'flex-end',
     gap: 2,
-    height: 120,
   },
   chartBarIncome: {
-    width: 8,
+    width: 7,
     borderRadius: 4,
     backgroundColor: Colors.incomeGreen,
+    minHeight: 2,
   },
   chartBarExpense: {
-    width: 8,
+    width: 7,
     borderRadius: 4,
     backgroundColor: Colors.expenseRed,
+    minHeight: 2,
   },
   chartMonthLabel: {
-    fontSize: 10,
+    fontSize: 9,
     fontWeight: '600',
     color: Colors.textMuted,
     marginTop: 4,
+    textAlign: 'center',
   },
   chartLegend: {
     flexDirection: 'row',
@@ -217,8 +262,16 @@ export const styles = StyleSheet.create({
     marginBottom: Spacing.md,
   },
   topEmojiText: { fontSize: 18 },
-  topInfo: { flex: 1 },
+  topInfo: { flex: 1, marginLeft: Spacing.sm },
   topName: { fontSize: 14, fontWeight: '600', color: Colors.textPrimary },
   topSub: { fontSize: 12, color: Colors.textMuted, marginTop: 2 },
   topAmount: { fontSize: 14, fontWeight: '700', color: Colors.expenseRed },
+
+  // Empty state
+  emptyText: {
+    fontSize: 13,
+    color: Colors.textMuted,
+    textAlign: 'center',
+    paddingVertical: Spacing.md,
+  },
 });

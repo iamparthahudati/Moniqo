@@ -17,14 +17,17 @@ import AccountsScreen from './src/screens/AccountScreen';
 import AnalyticsScreen from './src/screens/AnalyticsScreen';
 import DashboardScreen from './src/screens/DashboardScreen';
 import SettingsScreen from './src/screens/SettingsScreen';
+import TransactionHistoryScreen from './src/screens/TransactionHistoryScreen';
 import { AccountsProvider } from './src/store/accountsStore';
+import { CategoriesProvider } from './src/store/categoriesStore';
+import { TransactionsProvider } from './src/store/transactionsStore';
 import { Colors } from './src/theme/colors';
 import { TabName } from './src/types';
 
-const renderScreen = (tab: TabName) => {
+const renderScreen = (tab: TabName, onSeeAll: () => void) => {
   switch (tab) {
     case 'Dashboard':
-      return <DashboardScreen />;
+      return <DashboardScreen onSeeAll={onSeeAll} />;
     case 'Analytics':
       return <AnalyticsScreen />;
     case 'Accounts':
@@ -48,6 +51,10 @@ function AppContent() {
 
   // Transfer modal state
   const [transferVisible, setTransferVisible] = useState(false);
+
+  // Transaction history screen state
+  const [transactionHistoryVisible, setTransactionHistoryVisible] =
+    useState(false);
 
   const handleTabPress = useCallback((tab: TabName) => {
     setActiveTab(tab);
@@ -84,7 +91,9 @@ function AppContent() {
       />
 
       {/* Screen content */}
-      <View style={styles.screenContainer}>{renderScreen(activeTab)}</View>
+      <View style={styles.screenContainer}>
+        {renderScreen(activeTab, () => setTransactionHistoryVisible(true))}
+      </View>
 
       {/* Bottom navigation */}
       <BottomNavBar activeTab={activeTab} onTabPress={handleTabPress} />
@@ -119,6 +128,12 @@ function AppContent() {
         visible={transferVisible}
         onClose={() => setTransferVisible(false)}
       />
+
+      {/* Transaction history screen */}
+      <TransactionHistoryScreen
+        visible={transactionHistoryVisible}
+        onClose={() => setTransactionHistoryVisible(false)}
+      />
     </View>
   );
 }
@@ -126,9 +141,13 @@ function AppContent() {
 function App() {
   return (
     <SafeAreaProvider>
-      <AccountsProvider>
-        <AppContent />
-      </AccountsProvider>
+      <CategoriesProvider>
+        <AccountsProvider>
+          <TransactionsProvider>
+            <AppContent />
+          </TransactionsProvider>
+        </AccountsProvider>
+      </CategoriesProvider>
     </SafeAreaProvider>
   );
 }
