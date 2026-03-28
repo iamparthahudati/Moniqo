@@ -383,6 +383,81 @@ export const AnalyticsNavIcon: React.FC<IconProps> = ({
   </View>
 );
 
+export const SplitsIcon: React.FC<IconProps> = ({
+  size = 24,
+  color = '#94A3B8',
+}) => (
+  <View style={[styles.container, { width: size, height: size }]}>
+    <View
+      style={{
+        alignItems: 'center',
+        justifyContent: 'center',
+        width: size,
+        height: size,
+      }}
+    >
+      {/* Top person */}
+      <View
+        style={{
+          width: size * 0.28,
+          height: size * 0.28,
+          borderRadius: size * 0.14,
+          backgroundColor: color,
+          position: 'absolute',
+          top: 0,
+          left: size * 0.36,
+        }}
+      />
+      {/* Bottom left person */}
+      <View
+        style={{
+          width: size * 0.22,
+          height: size * 0.22,
+          borderRadius: size * 0.11,
+          backgroundColor: color,
+          position: 'absolute',
+          bottom: size * 0.05,
+          left: size * 0.05,
+        }}
+      />
+      {/* Bottom right person */}
+      <View
+        style={{
+          width: size * 0.22,
+          height: size * 0.22,
+          borderRadius: size * 0.11,
+          backgroundColor: color,
+          position: 'absolute',
+          bottom: size * 0.05,
+          right: size * 0.05,
+        }}
+      />
+      {/* Connecting line vertical */}
+      <View
+        style={{
+          width: 1.5,
+          height: size * 0.22,
+          backgroundColor: color,
+          position: 'absolute',
+          top: size * 0.28,
+          left: size * 0.5 - 0.75,
+        }}
+      />
+      {/* Connecting line horizontal */}
+      <View
+        style={{
+          width: size * 0.4,
+          height: 1.5,
+          backgroundColor: color,
+          position: 'absolute',
+          bottom: size * 0.27,
+          left: size * 0.3,
+        }}
+      />
+    </View>
+  </View>
+);
+
 const styles = StyleSheet.create({
   container: {
     alignItems: 'center',

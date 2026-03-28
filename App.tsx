@@ -17,6 +17,7 @@ import AccountsScreen from './src/screens/AccountScreen';
 import AnalyticsScreen from './src/screens/AnalyticsScreen';
 import DashboardScreen from './src/screens/DashboardScreen';
 import SettingsScreen from './src/screens/SettingsScreen';
+import SplitsScreen from './src/screens/SplitsScreen';
 import TransactionHistoryScreen from './src/screens/TransactionHistoryScreen';
 import { AccountsProvider } from './src/store/accountsStore';
 import { CategoriesProvider } from './src/store/categoriesStore';
@@ -30,6 +31,8 @@ const renderScreen = (tab: TabName, onSeeAll: () => void) => {
       return <DashboardScreen onSeeAll={onSeeAll} />;
     case 'Analytics':
       return <AnalyticsScreen />;
+    case 'Splits':
+      return <SplitsScreen />;
     case 'Accounts':
       return <AccountsScreen />;
     case 'Settings':
