@@ -1,5 +1,5 @@
-import {BankAccount} from '../../types';
-import {db} from '../database';
+import { BankAccount } from '../../types';
+import { db } from '../database';
 
 function mapRow(row: Record<string, any>): BankAccount {
   return {
@@ -55,6 +55,13 @@ export function updateBank(account: BankAccount): void {
       account.note ?? null,
       account.id,
     ],
+  );
+}
+
+export function updateBankBalance(id: string, delta: number): void {
+  db.executeSync(
+    'UPDATE accounts_bank SET balance = balance + ? WHERE id = ?',
+    [delta, id],
   );
 }
 

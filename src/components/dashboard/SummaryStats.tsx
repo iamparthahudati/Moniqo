@@ -1,7 +1,7 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Text, View } from 'react-native';
-import { SUMMARY_ITEMS } from '../../data/mockData';
 import { ArrowDownIcon, ArrowUpIcon, WalletsIcon } from '../../icons/Icons';
+import { useTransactions } from '../../store/transactionsStore';
 import { Colors } from '../../theme/colors';
 import { SummaryItem } from '../../types';
 import { formatShort } from '../../utils/formatters';
@@ -41,9 +41,38 @@ const getAmountStyle = (type: SummaryItem['type']) => {
 };
 
 const SummaryStats: React.FC = React.memo(() => {
+  const { state } = useTransactions();
+
+  const summaryItems = useMemo<SummaryItem[]>(() => {
+    const now = new Date();
+    const currentMonth = `${now.getFullYear()}-${String(
+      now.getMonth() + 1,
+    ).padStart(2, '0')}`;
+
+    const monthlyTransactions = state.transactions.filter(t =>
+      t.date.startsWith(currentMonth),
+    );
+
+    const totalIncome = monthlyTransactions
+      .filter(t => t.type === 'income')
+      .reduce((sum, t) => sum + t.amount, 0);
+
+    const totalExpense = monthlyTransactions
+      .filter(t => t.type === 'expense')
+      .reduce((sum, t) => sum + Math.abs(t.amount), 0);
+
+    const savings = totalIncome - totalExpense;
+
+    return [
+      { label: 'Income', type: 'income', amount: totalIncome },
+      { label: 'Expenses', type: 'expense', amount: totalExpense },
+      { label: 'Savings', type: 'savings', amount: savings },
+    ];
+  }, [state.transactions]);
+
   return (
     <View style={styles.container}>
-      {SUMMARY_ITEMS.map(item => (
+      {summaryItems.map(item => (
         <View key={item.label} style={styles.card}>
           <View style={[styles.iconWrapper, getIconStyle(item.type)]}>
             {getIcon(item.type)}

@@ -1,5 +1,5 @@
-import {Investment} from '../../types';
-import {db} from '../database';
+import { Investment } from '../../types';
+import { db } from '../database';
 
 function mapRow(row: Record<string, any>): Investment {
   return {
@@ -47,4 +47,11 @@ export function updateInvestment(inv: Investment): void {
 
 export function deleteInvestment(id: string): void {
   db.executeSync('DELETE FROM accounts_investment WHERE id = ?', [id]);
+}
+
+export function updateInvestmentAmount(id: string, delta: number): void {
+  db.executeSync(
+    'UPDATE accounts_investment SET amount = amount + ? WHERE id = ?',
+    [delta, id],
+  );
 }

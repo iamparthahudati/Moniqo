@@ -7,7 +7,11 @@ import RecentTransactions from '../components/dashboard/RecentTransactions';
 import SummaryStats from '../components/dashboard/SummaryStats';
 import { styles } from './DashboardScreen.styles';
 
-const DashboardScreen: React.FC = () => {
+interface DashboardScreenProps {
+  onSeeAll?: () => void;
+}
+
+const DashboardScreen: React.FC<DashboardScreenProps> = ({ onSeeAll }) => {
   return (
     <View style={styles.container}>
       <DashboardHeader />
@@ -18,7 +22,7 @@ const DashboardScreen: React.FC = () => {
         <BalanceCard />
         <SummaryStats />
         <ConnectedAccounts />
-        <RecentTransactions />
+        <RecentTransactions onSeeAll={onSeeAll} />
       </ScrollView>
     </View>
   );

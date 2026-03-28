@@ -66,7 +66,8 @@ export const TRANSACTIONS: Transaction[] = [
     amount: -450,
     type: 'expense',
     category: 'dining',
-    date: 'today',
+    date: '2026-03-27',
+    created_at: 1743033900000,
   },
   {
     id: '2',
@@ -76,7 +77,8 @@ export const TRANSACTIONS: Transaction[] = [
     amount: 85000,
     type: 'income',
     category: 'salary',
-    date: 'today',
+    date: '2026-03-27',
+    created_at: 1743008400000,
   },
   {
     id: '3',
@@ -86,7 +88,8 @@ export const TRANSACTIONS: Transaction[] = [
     amount: -2100,
     type: 'expense',
     category: 'shopping',
-    date: 'yesterday',
+    date: '2026-03-26',
+    created_at: 1742932800000,
   },
   {
     id: '4',
@@ -96,7 +99,8 @@ export const TRANSACTIONS: Transaction[] = [
     amount: -190,
     type: 'expense',
     category: 'transport',
-    date: 'yesterday',
+    date: '2026-03-26',
+    created_at: 1742906200000,
   },
 ];
 
@@ -116,6 +120,7 @@ export const BANK_ACCOUNTS: BankAccount[] = [
     color: '#003087',
     status: 'ACTIVE',
     icon: 'bank',
+    created_at: 1743000000000,
   },
   {
     id: 'b2',
@@ -125,6 +130,7 @@ export const BANK_ACCOUNTS: BankAccount[] = [
     color: '#1E40AF',
     status: 'ACTIVE',
     icon: 'piggy',
+    created_at: 1743000000000,
   },
 ];
 
@@ -136,6 +142,7 @@ export const CARD_ACCOUNTS: CardAccount[] = [
     dueAmount: 12400,
     dueLabel: 'DUE IN 5 DAYS',
     color: '#EF4444',
+    created_at: 1743000000000,
   },
 ];
 
@@ -146,6 +153,7 @@ export const INVESTMENTS: Investment[] = [
     amount: 22900,
     icon: 'trend',
     color: '#22C55E',
+    created_at: 1743000000000,
   },
   {
     id: 'i2',
@@ -153,11 +161,18 @@ export const INVESTMENTS: Investment[] = [
     amount: 4000,
     icon: 'bitcoin',
     color: '#2B3FE8',
+    created_at: 1743000000000,
   },
 ];
 
 export const CASH_ENTRIES: CashEntry[] = [
-  { id: 'cash1', label: 'Cash in Hand', sublabel: 'ESTIMATED', amount: 500 },
+  {
+    id: 'cash1',
+    label: 'Cash in Hand',
+    sublabel: 'ESTIMATED',
+    amount: 500,
+    created_at: 1743000000000,
+  },
 ];
 
 // ── Analytics screen data ─────────────────────────────────────────────────────

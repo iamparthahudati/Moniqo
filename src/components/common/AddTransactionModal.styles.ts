@@ -4,6 +4,9 @@ import { Radius, Shadow, Spacing } from '../../theme/spacing';
 
 export const styles = StyleSheet.create({
   // ── Overlay & container ──────────────────────────────────────────────────
+  modalRoot: {
+    flex: 1,
+  },
   overlay: {
     flex: 1,
     backgroundColor: Colors.background,
@@ -138,47 +141,34 @@ export const styles = StyleSheet.create({
     color: Colors.primary,
   },
 
-  // ── Category grid ─────────────────────────────────────────────────────────
-  categoryGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: Spacing.md,
-  },
-  categoryItem: {
-    width: '30%',
-    aspectRatio: 1,
-    backgroundColor: Colors.surface,
-    borderRadius: Radius.lg,
-    alignItems: 'center',
-    justifyContent: 'center',
+  // ── Category chips ────────────────────────────────────────────────────────
+  categoryScroll: {
+    paddingTop: Spacing.md,
+    paddingBottom: Spacing.xs,
     gap: Spacing.sm,
+    flexDirection: 'row',
+  },
+  categoryChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+    paddingHorizontal: Spacing.base,
+    paddingVertical: Spacing.sm + 2,
+    borderRadius: Radius.full,
+    backgroundColor: Colors.surface,
+    borderWidth: 1.5,
+    borderColor: Colors.border,
     ...Shadow.sm,
   },
-  categoryItemActive: {
-    backgroundColor: Colors.primary,
+  categoryChipEmoji: {
+    fontSize: 18,
   },
-  categoryIconCircle: {
-    width: 44,
-    height: 44,
-    borderRadius: Radius.full,
-    backgroundColor: 'rgba(43,63,232,0.1)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  categoryEmoji: {
-    fontSize: 22,
-  },
-  categoryIconCircleActive: {
-    backgroundColor: 'rgba(255,255,255,0.25)',
-  },
-  categoryLabel: {
-    fontSize: 10,
-    fontWeight: '700',
-    letterSpacing: 0.6,
+  categoryChipLabel: {
+    fontSize: 13,
+    fontWeight: '600',
     color: Colors.textSecondary,
-    textTransform: 'uppercase',
   },
-  categoryLabelActive: {
+  categoryChipLabelActive: {
     color: Colors.white,
   },
 
@@ -235,6 +225,31 @@ export const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '600',
     color: Colors.textPrimary,
+  },
+  timeValue: {
+    fontSize: 13,
+    fontWeight: '500',
+    color: Colors.textSecondary,
+  },
+
+  // ── Account selector ──────────────────────────────────────────────────────
+  accountIconBox: {
+    width: 44,
+    height: 44,
+    borderRadius: Radius.full,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  accountBalancePill: {
+    backgroundColor: Colors.background,
+    borderRadius: Radius.full,
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: 3,
+  },
+  accountBalanceText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: Colors.textSecondary,
   },
 
   // ── Note input ────────────────────────────────────────────────────────────

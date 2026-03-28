@@ -1,5 +1,5 @@
-import {CashEntry} from '../../types';
-import {db} from '../database';
+import { CashEntry } from '../../types';
+import { db } from '../database';
 
 function mapRow(row: Record<string, any>): CashEntry {
   return {
@@ -37,6 +37,13 @@ export function updateCash(entry: CashEntry): void {
     `UPDATE accounts_cash SET label = ?, sublabel = ?, amount = ? WHERE id = ?`,
     [entry.label, entry.sublabel, entry.amount, entry.id],
   );
+}
+
+export function updateCashBalance(id: string, delta: number): void {
+  db.executeSync('UPDATE accounts_cash SET amount = amount + ? WHERE id = ?', [
+    delta,
+    id,
+  ]);
 }
 
 export function deleteCash(id: string): void {

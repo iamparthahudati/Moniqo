@@ -67,3 +67,15 @@ export const CREATE_IDX_TRANSACTIONS_ACCOUNT =
 
 export const CREATE_IDX_TRANSACTIONS_CATEGORY =
   'CREATE INDEX IF NOT EXISTS idx_transactions_category ON transactions (category)';
+
+export const CREATE_CATEGORIES = `
+CREATE TABLE IF NOT EXISTS categories (
+  id         TEXT PRIMARY KEY,
+  name       TEXT NOT NULL,
+  emoji      TEXT NOT NULL,
+  type       TEXT NOT NULL,
+  color      TEXT NOT NULL,
+  is_default INTEGER NOT NULL DEFAULT 0,
+  sort_order INTEGER NOT NULL DEFAULT 0,
+  created_at INTEGER NOT NULL
+)`;

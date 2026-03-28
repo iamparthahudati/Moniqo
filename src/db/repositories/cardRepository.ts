@@ -1,5 +1,5 @@
-import {CardAccount} from '../../types';
-import {db} from '../database';
+import { CardAccount } from '../../types';
+import { db } from '../database';
 
 function mapRow(row: Record<string, any>): CardAccount {
   return {
@@ -57,4 +57,11 @@ export function updateCard(card: CardAccount): void {
 
 export function deleteCard(id: string): void {
   db.executeSync('DELETE FROM accounts_card WHERE id = ?', [id]);
+}
+
+export function updateCardDue(id: string, delta: number): void {
+  db.executeSync(
+    'UPDATE accounts_card SET due_amount = due_amount + ? WHERE id = ?',
+    [delta, id],
+  );
 }

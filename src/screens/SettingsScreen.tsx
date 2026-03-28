@@ -2,7 +2,6 @@ import React from 'react';
 import { Alert, ScrollView, View } from 'react-native';
 import CategoryManager from '../components/settings/CategoryManager';
 import PremiumBanner from '../components/settings/PremiumBanner';
-import ProfileCard from '../components/settings/ProfileCard';
 import {
   SettingGroup,
   SettingRowData,
@@ -277,9 +276,6 @@ const SettingsScreen: React.FC = () => {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
       >
-        {/* Profile */}
-        <ProfileCard />
-
         {/* Premium */}
         <PremiumBanner />
 
@@ -310,10 +306,6 @@ const SettingsScreen: React.FC = () => {
         {/* About */}
         <View style={styles.groupSpacing} />
         <SettingGroup title="About" rows={aboutRows} />
-
-        {/* Danger zone */}
-        <View style={styles.groupSpacing} />
-        <SettingGroup title="Account" rows={dangerRows} />
 
         <View style={styles.groupSpacing} />
       </ScrollView>

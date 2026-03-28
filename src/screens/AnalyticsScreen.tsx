@@ -1,52 +1,160 @@
-import React, {useMemo, useState} from 'react';
-import {ScrollView, Text, TouchableOpacity, View} from 'react-native';
+import React, { useMemo, useState } from 'react';
+import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import IconCircle from '../components/ui/IconCircle';
 import ScreenHeader from '../components/ui/ScreenHeader';
 import TabSwitcher from '../components/ui/TabSwitcher';
 import * as analyticsRepo from '../db/repositories/analyticsRepository';
-import {useTransactions} from '../store/transactionsStore';
-import {AnalyticsPeriod, MonthlyData, SpendingCategory, Transaction} from '../types';
-import {formatShort} from '../utils/formatters';
-import {styles} from './AnalyticsScreen.styles';
+import { useTransactions } from '../store/transactionsStore';
+import {
+  AnalyticsPeriod,
+  MonthlyData,
+  SpendingCategory,
+  Transaction,
+} from '../types';
+import { formatShort } from '../utils/formatters';
+import { styles } from './AnalyticsScreen.styles';
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
 const PERIODS: AnalyticsPeriod[] = ['Week', 'Month', 'Year'];
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
+const MONTH_NAMES = [
+  'January',
+  'February',
+  'March',
+  'April',
+  'May',
+  'June',
+  'July',
+  'August',
+  'September',
+  'October',
+  'November',
+  'December',
+];
 
-function getDateRange(period: AnalyticsPeriod): {from: string; to: string} {
+// ── Date helpers ──────────────────────────────────────────────────────────────
+
+// Returns the anchor date shifted by offset units for the given period
+function getAnchorDate(period: AnalyticsPeriod, offset: number): Date {
   const now = new Date();
+  switch (period) {
+    case 'Week': {
+      const d = new Date(now);
+      d.setDate(d.getDate() + offset * 7);
+      return d;
+    }
+    case 'Month': {
+      const d = new Date(now.getFullYear(), now.getMonth() + offset, 1);
+      return d;
+    }
+    case 'Year': {
+      const d = new Date(now.getFullYear() + offset, 0, 1);
+      return d;
+    }
+  }
+}
+
+function getDateRange(
+  period: AnalyticsPeriod,
+  anchor: Date,
+): { from: string; to: string } {
+  const today = new Date();
   let from: Date;
+  let to: Date;
 
   switch (period) {
-    case 'Week':
-      from = new Date(now);
+    case 'Week': {
+      // anchor is the "end" day of the week window
+      to = new Date(anchor);
+      from = new Date(anchor);
       from.setDate(from.getDate() - 6);
       break;
-    case 'Month':
-      from = new Date(now.getFullYear(), now.getMonth(), 1);
+    }
+    case 'Month': {
+      from = new Date(anchor.getFullYear(), anchor.getMonth(), 1);
+      // last day of the anchor month, but not beyond today
+      const lastDay = new Date(anchor.getFullYear(), anchor.getMonth() + 1, 0);
+      to = lastDay > today ? today : lastDay;
       break;
-    case 'Year':
-      from = new Date(now.getFullYear(), 0, 1);
+    }
+    case 'Year': {
+      from = new Date(anchor.getFullYear(), 0, 1);
+      const lastDay = new Date(anchor.getFullYear(), 11, 31);
+      to = lastDay > today ? today : lastDay;
       break;
+    }
   }
 
   return {
     from: from.toISOString().split('T')[0],
-    to: now.toISOString().split('T')[0],
+    to: to.toISOString().split('T')[0],
   };
 }
 
-function getPeriodLabel(): string {
-  const now = new Date();
-  return now.toLocaleDateString('en-US', {month: 'short', year: 'numeric'});
+function getPeriodLabel(period: AnalyticsPeriod, anchor: Date): string {
+  switch (period) {
+    case 'Week': {
+      const from = new Date(anchor);
+      from.setDate(from.getDate() - 6);
+      const opts: Intl.DateTimeFormatOptions = {
+        day: 'numeric',
+        month: 'short',
+      };
+      return `${from.toLocaleDateString(
+        'en-IN',
+        opts,
+      )} - ${anchor.toLocaleDateString('en-IN', opts)}`;
+    }
+    case 'Month':
+      return `${MONTH_NAMES[anchor.getMonth()]} ${anchor.getFullYear()}`;
+    case 'Year':
+      return anchor.getFullYear().toString();
+  }
 }
 
 // ── Sub-components ────────────────────────────────────────────────────────────
 
-const SummaryRow: React.FC<{income: number; expense: number}> = React.memo(
-  ({income, expense}) => (
+interface PeriodNavProps {
+  label: string;
+  onPrev: () => void;
+  onNext: () => void;
+  canGoNext: boolean;
+}
+
+const PeriodNav: React.FC<PeriodNavProps> = React.memo(
+  ({ label, onPrev, onNext, canGoNext }) => (
+    <View style={styles.periodNav}>
+      <TouchableOpacity
+        style={styles.periodNavBtn}
+        onPress={onPrev}
+        activeOpacity={0.7}
+        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+      >
+        <Text style={styles.periodNavChevron}>{'‹'}</Text>
+      </TouchableOpacity>
+      <Text style={styles.periodNavLabel}>{label}</Text>
+      <TouchableOpacity
+        style={[styles.periodNavBtn, !canGoNext && styles.periodNavBtnDisabled]}
+        onPress={canGoNext ? onNext : undefined}
+        activeOpacity={canGoNext ? 0.7 : 1}
+        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+      >
+        <Text
+          style={[
+            styles.periodNavChevron,
+            !canGoNext && styles.periodNavChevronDisabled,
+          ]}
+        >
+          {'›'}
+        </Text>
+      </TouchableOpacity>
+    </View>
+  ),
+);
+
+const SummaryRow: React.FC<{ income: number; expense: number }> = React.memo(
+  ({ income, expense }) => (
     <View style={styles.summaryRow}>
       <View style={[styles.summaryCard, styles.summaryCardIncome]}>
         <Text style={styles.summaryLabel}>Income</Text>
@@ -70,25 +178,28 @@ const SummaryRow: React.FC<{income: number; expense: number}> = React.memo(
   ),
 );
 
-const BarChart: React.FC<{data: MonthlyData[]}> = React.memo(({data}) => {
+const BarChart: React.FC<{ data: MonthlyData[] }> = React.memo(({ data }) => {
   const maxVal = useMemo(
     () => Math.max(...data.map(d => Math.max(d.income, d.expense)), 1),
     [data],
   );
+
   return (
     <View style={styles.chartCard}>
       <Text style={styles.chartTitle}>Income vs Expense</Text>
       <View style={styles.chartArea}>
-        {data.map(d => {
-          const incomeH = Math.round((d.income / maxVal) * 110);
-          const expenseH = Math.round((d.expense / maxVal) * 110);
+        {data.map((d, i) => {
+          const incomeH = Math.round((d.income / maxVal) * 100);
+          const expenseH = Math.round((d.expense / maxVal) * 100);
           return (
-            <View key={d.month} style={styles.chartBarGroup}>
+            <View key={`${d.month}-${i}`} style={styles.chartBarGroup}>
               <View style={styles.chartBarPair}>
-                <View style={[styles.chartBarIncome, {height: incomeH}]} />
-                <View style={[styles.chartBarExpense, {height: expenseH}]} />
+                <View style={[styles.chartBarIncome, { height: incomeH }]} />
+                <View style={[styles.chartBarExpense, { height: expenseH }]} />
               </View>
-              <Text style={styles.chartMonthLabel}>{d.month}</Text>
+              <Text style={styles.chartMonthLabel} numberOfLines={1}>
+                {d.month}
+              </Text>
             </View>
           );
         })}
@@ -107,28 +218,33 @@ const BarChart: React.FC<{data: MonthlyData[]}> = React.memo(({data}) => {
   );
 });
 
-const SavingsRateCard: React.FC<{rate: number}> = React.memo(({rate}) => (
-  <View style={styles.savingsCard}>
-    <Text style={styles.savingsLabel}>Savings Rate</Text>
-    <View style={styles.savingsRow}>
-      <Text style={styles.savingsRate}>{rate}</Text>
-      <Text style={styles.savingsPct}>%</Text>
+const SavingsRateCard: React.FC<{ rate: number; subtext: string }> = React.memo(
+  ({ rate, subtext }) => (
+    <View style={styles.savingsCard}>
+      <Text style={styles.savingsLabel}>Savings Rate</Text>
+      <View style={styles.savingsRow}>
+        <Text style={styles.savingsRate}>{Math.max(0, rate)}</Text>
+        <Text style={styles.savingsPct}>%</Text>
+      </View>
+      <Text style={styles.savingsSubtext}>{subtext}</Text>
+      <View style={styles.savingsBar}>
+        <View
+          style={[
+            styles.savingsBarFill,
+            { width: `${Math.min(Math.max(rate, 0), 100)}%` },
+          ]}
+        />
+      </View>
     </View>
-    <Text style={styles.savingsSubtext}>of your income saved this month</Text>
-    <View style={styles.savingsBar}>
-      <View
-        style={[styles.savingsBarFill, {width: `${Math.min(rate, 100)}%`}]}
-      />
-    </View>
-  </View>
-));
+  ),
+);
 
-const CategoryBreakdown: React.FC<{categories: SpendingCategory[]}> =
-  React.memo(({categories}) => (
+const CategoryBreakdown: React.FC<{ categories: SpendingCategory[] }> =
+  React.memo(({ categories }) => (
     <View style={styles.categoryCard}>
       <Text style={styles.categoryTitle}>Spending by Category</Text>
       {categories.length === 0 && (
-        <Text style={styles.legendText}>No spending data yet</Text>
+        <Text style={styles.emptyText}>No spending data yet</Text>
       )}
       {categories.map(cat => (
         <View key={cat.id} style={styles.categoryRow}>
@@ -139,15 +255,13 @@ const CategoryBreakdown: React.FC<{categories: SpendingCategory[]}> =
               <View
                 style={[
                   styles.categoryBarFill,
-                  {width: `${cat.percentage}%`, backgroundColor: cat.color},
+                  { width: `${cat.percentage}%`, backgroundColor: cat.color },
                 ]}
               />
             </View>
           </View>
           <View style={styles.categoryRight}>
-            <Text style={styles.categoryAmount}>
-              {formatShort(cat.amount)}
-            </Text>
+            <Text style={styles.categoryAmount}>{formatShort(cat.amount)}</Text>
             <Text style={styles.categoryPct}>{cat.percentage}%</Text>
           </View>
         </View>
@@ -155,8 +269,8 @@ const CategoryBreakdown: React.FC<{categories: SpendingCategory[]}> =
     </View>
   ));
 
-const TopTransactions: React.FC<{expenses: Transaction[]}> = React.memo(
-  ({expenses}) => {
+const TopTransactions: React.FC<{ expenses: Transaction[] }> = React.memo(
+  ({ expenses }) => {
     const categoryColors: Record<string, string> = {
       dining: '#EF4444',
       food: '#EF4444',
@@ -167,6 +281,7 @@ const TopTransactions: React.FC<{expenses: Transaction[]}> = React.memo(
       fun: '#EC4899',
       transfer: '#6366F1',
       other: '#94A3B8',
+      others: '#94A3B8',
     };
     const categoryEmojis: Record<string, string> = {
       dining: '\uD83C\uDF74',
@@ -178,12 +293,13 @@ const TopTransactions: React.FC<{expenses: Transaction[]}> = React.memo(
       fun: '\uD83C\uDFAB',
       transfer: '\u21C5',
       other: '\u2022',
+      others: '\u2022',
     };
     return (
       <View style={styles.topCard}>
         <Text style={styles.topTitle}>Top Expenses</Text>
         {expenses.length === 0 && (
-          <Text style={styles.legendText}>No expenses yet</Text>
+          <Text style={styles.emptyText}>No expenses yet</Text>
         )}
         {expenses.map(t => {
           const color = categoryColors[t.category] ?? '#94A3B8';
@@ -218,19 +334,40 @@ const TopTransactions: React.FC<{expenses: Transaction[]}> = React.memo(
 
 const AnalyticsScreen: React.FC = () => {
   const [period, setPeriod] = useState<AnalyticsPeriod>('Month');
+  const [offset, setOffset] = useState(0); // 0 = current, -1 = previous, etc.
 
-  // Force re-read when transactions change
-  const {state: txState} = useTransactions();
+  const { state: txState } = useTransactions();
   const txCount = txState.transactions.length;
 
-  const {from, to} = useMemo(() => getDateRange(period), [period]);
-  const currentYear = new Date().getFullYear();
+  // Reset offset when period changes
+  const handlePeriodChange = (p: AnalyticsPeriod) => {
+    setPeriod(p);
+    setOffset(0);
+  };
 
-  const monthlyData = useMemo(
-    () => analyticsRepo.getMonthlyTotals(currentYear),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [currentYear, txCount],
+  const anchor = useMemo(() => getAnchorDate(period, offset), [period, offset]);
+
+  const { from, to } = useMemo(
+    () => getDateRange(period, anchor),
+    [period, anchor],
   );
+
+  const canGoNext = offset < 0;
+
+  const chartData = useMemo(() => {
+    switch (period) {
+      case 'Week':
+        return analyticsRepo.getDailyTotals(from, to);
+      case 'Month':
+        return analyticsRepo.getWeeklyTotals(
+          anchor.getFullYear(),
+          anchor.getMonth() + 1,
+        );
+      case 'Year':
+        return analyticsRepo.getMonthlyTotals(anchor.getFullYear());
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [period, from, to, txCount]);
 
   const income = useMemo(
     () => analyticsRepo.getIncomeTotalForRange(from, to),
@@ -257,35 +394,50 @@ const AnalyticsScreen: React.FC = () => {
   );
 
   const topExpenses = useMemo(
-    () => analyticsRepo.getTopExpenses(3),
+    () => analyticsRepo.getTopExpenses(3, from, to),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [txCount],
+    [from, to, txCount],
   );
+
+  const savingsSubtext = useMemo(() => {
+    switch (period) {
+      case 'Week':
+        return 'of your income saved this week';
+      case 'Month':
+        return 'of your income saved this month';
+      case 'Year':
+        return 'of your income saved this year';
+    }
+  }, [period]);
 
   return (
     <View style={styles.container}>
-      <ScreenHeader
-        title="Analytics"
-        rightSlot={
-          <TouchableOpacity activeOpacity={0.7}>
-            <Text style={styles.headerPeriod}>{getPeriodLabel()}</Text>
-          </TouchableOpacity>
-        }
-      />
+      <ScreenHeader title="Analytics" />
 
       <ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.scrollContent}>
+        contentContainerStyle={styles.scrollContent}
+      >
+        {/* Tab switcher */}
         <View style={styles.periodWrapper}>
           <TabSwitcher
             tabs={PERIODS}
             activeTab={period}
-            onSelect={p => setPeriod(p as AnalyticsPeriod)}
+            onSelect={p => handlePeriodChange(p as AnalyticsPeriod)}
           />
         </View>
+
+        {/* Period navigator */}
+        <PeriodNav
+          label={getPeriodLabel(period, anchor)}
+          onPrev={() => setOffset(o => o - 1)}
+          onNext={() => setOffset(o => o + 1)}
+          canGoNext={canGoNext}
+        />
+
         <SummaryRow income={income} expense={expense} />
-        <BarChart data={monthlyData} />
-        <SavingsRateCard rate={savingsRate} />
+        <BarChart data={chartData} />
+        <SavingsRateCard rate={savingsRate} subtext={savingsSubtext} />
         <CategoryBreakdown categories={categories} />
         <TopTransactions expenses={topExpenses} />
       </ScrollView>

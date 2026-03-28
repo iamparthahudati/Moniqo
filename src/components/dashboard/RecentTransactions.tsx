@@ -1,15 +1,15 @@
-import React, {useMemo} from 'react';
-import {Text, TouchableOpacity, View} from 'react-native';
+import React, { useMemo } from 'react';
+import { Text, TouchableOpacity, View } from 'react-native';
 import {
   DiningIcon,
   SalaryIcon,
   ShoppingIcon,
   TransportIcon,
 } from '../../icons/Icons';
-import {useTransactions} from '../../store/transactionsStore';
-import {Transaction} from '../../types';
-import {formatAmount} from '../../utils/formatters';
-import {styles} from './RecentTransactions.styles';
+import { useTransactions } from '../../store/transactionsStore';
+import { Transaction } from '../../types';
+import { formatAmount } from '../../utils/formatters';
+import { styles } from './RecentTransactions.styles';
 
 const getCategoryIcon = (category: string) => {
   switch (category) {
@@ -79,21 +79,21 @@ const formatDateLabel = (date: string): string => {
   if (isNaN(d.getTime())) {
     return date.toUpperCase();
   }
-  return d.toLocaleDateString('en-IN', {
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
-  }).toUpperCase();
+  return d
+    .toLocaleDateString('en-IN', {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric',
+    })
+    .toUpperCase();
 };
 
-const TransactionItem: React.FC<{transaction: Transaction}> = React.memo(
-  ({transaction}) => (
+const TransactionItem: React.FC<{ transaction: Transaction }> = React.memo(
+  ({ transaction }) => (
     <View style={styles.transactionCard}>
       <View
-        style={[
-          styles.iconWrapper,
-          getCategoryIconStyle(transaction.category),
-        ]}>
+        style={[styles.iconWrapper, getCategoryIconStyle(transaction.category)]}
+      >
         {getCategoryIcon(transaction.category)}
       </View>
       <View style={styles.textGroup}>
@@ -109,71 +109,81 @@ const TransactionItem: React.FC<{transaction: Transaction}> = React.memo(
           transaction.type === 'income'
             ? styles.amountIncome
             : styles.amountExpense
-        }>
+        }
+      >
         {formatAmount(transaction.amount)}
       </Text>
     </View>
   ),
 );
 
-const RecentTransactions: React.FC = React.memo(() => {
-  const {state} = useTransactions();
+interface RecentTransactionsProps {
+  onSeeAll?: () => void;
+}
 
-  // Take the 10 most recent transactions (already sorted by created_at DESC)
-  const recent = useMemo(
-    () => state.transactions.slice(0, 10),
-    [state.transactions],
-  );
+const RecentTransactions: React.FC<RecentTransactionsProps> = React.memo(
+  ({ onSeeAll }) => {
+    const { state } = useTransactions();
 
-  const groups = useMemo(() => groupByDate(recent), [recent]);
+    // Take the 10 most recent transactions (already sorted by created_at DESC)
+    const recent = useMemo(
+      () => state.transactions.slice(0, 10),
+      [state.transactions],
+    );
 
-  // Sort date keys: today first, yesterday second, then descending
-  const dateOrder = useMemo(() => {
-    const today = getTodayISO();
-    const yesterday = getYesterdayISO();
-    const keys = Object.keys(groups);
-    return keys.sort((a, b) => {
-      if (a === today || a === 'today') {
-        return -1;
-      }
-      if (b === today || b === 'today') {
-        return 1;
-      }
-      if (a === yesterday || a === 'yesterday') {
-        return -1;
-      }
-      if (b === yesterday || b === 'yesterday') {
-        return 1;
-      }
-      return b.localeCompare(a);
-    });
-  }, [groups]);
+    const groups = useMemo(() => groupByDate(recent), [recent]);
 
-  return (
-    <View style={styles.container}>
-      <View style={styles.headerRow}>
-        <Text style={styles.sectionTitle}>Recent Transactions</Text>
-        <TouchableOpacity activeOpacity={0.7}>
-          <Text style={styles.seeAll}>SEE ALL</Text>
-        </TouchableOpacity>
+    // Sort date keys: today first, yesterday second, then descending
+    const dateOrder = useMemo(() => {
+      const today = getTodayISO();
+      const yesterday = getYesterdayISO();
+      const keys = Object.keys(groups);
+      return keys.sort((a, b) => {
+        if (a === today || a === 'today') {
+          return -1;
+        }
+        if (b === today || b === 'today') {
+          return 1;
+        }
+        if (a === yesterday || a === 'yesterday') {
+          return -1;
+        }
+        if (b === yesterday || b === 'yesterday') {
+          return 1;
+        }
+        return b.localeCompare(a);
+      });
+    }, [groups]);
+
+    return (
+      <View style={styles.container}>
+        <View style={styles.headerRow}>
+          <Text style={styles.sectionTitle}>Recent Transactions</Text>
+          <TouchableOpacity activeOpacity={0.7} onPress={onSeeAll}>
+            <Text style={styles.seeAll}>SEE ALL</Text>
+          </TouchableOpacity>
+        </View>
+
+        {dateOrder.length === 0 && (
+          <Text style={styles.subtitle}>No transactions yet</Text>
+        )}
+
+        {dateOrder.map(date =>
+          groups[date] ? (
+            <View key={date}>
+              <Text style={styles.dateLabel}>{formatDateLabel(date)}</Text>
+              {groups[date].map(transaction => (
+                <TransactionItem
+                  key={transaction.id}
+                  transaction={transaction}
+                />
+              ))}
+            </View>
+          ) : null,
+        )}
       </View>
-
-      {dateOrder.length === 0 && (
-        <Text style={styles.subtitle}>No transactions yet</Text>
-      )}
-
-      {dateOrder.map(date =>
-        groups[date] ? (
-          <View key={date}>
-            <Text style={styles.dateLabel}>{formatDateLabel(date)}</Text>
-            {groups[date].map(transaction => (
-              <TransactionItem key={transaction.id} transaction={transaction} />
-            ))}
-          </View>
-        ) : null,
-      )}
-    </View>
-  );
-});
+    );
+  },
+);
 
 export default RecentTransactions;

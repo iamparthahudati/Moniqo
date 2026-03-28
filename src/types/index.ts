@@ -5,14 +5,14 @@ export interface Transaction {
   title: string;
   subtitle: string;
   amount: number;
-  type: 'income' | 'expense';
+  type: 'income' | 'expense' | 'transfer';
   category: string;
   account_id?: string;
   account_type?: 'bank' | 'card' | 'cash' | 'investment';
   date: string;
   time: string;
   note?: string;
-  created_at?: number;
+  created_at: number;
 }
 
 export type TransactionCategory =
@@ -65,7 +65,7 @@ export interface BankAccount {
   status: 'ACTIVE' | 'INACTIVE';
   icon: 'bank' | 'piggy';
   note?: string;
-  created_at?: number;
+  created_at: number;
 }
 
 export interface CardAccount {
@@ -76,7 +76,7 @@ export interface CardAccount {
   dueLabel: string;
   color: string;
   note?: string;
-  created_at?: number;
+  created_at: number;
 }
 
 export interface Investment {
@@ -86,7 +86,7 @@ export interface Investment {
   icon: 'trend' | 'bitcoin' | 'gold' | 'other';
   color: string;
   note?: string;
-  created_at?: number;
+  created_at: number;
 }
 
 export interface CashEntry {
@@ -94,7 +94,7 @@ export interface CashEntry {
   label: string;
   sublabel: string;
   amount: number;
-  created_at?: number;
+  created_at: number;
 }
 
 // Analytics screen types
