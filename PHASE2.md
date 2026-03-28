@@ -1,11 +1,25 @@
 # Moniqo — Phase 2 Roadmap
 
-## In Progress
+---
+
+## Phase Overview
+
+| Phase             | Timeline | Focus                                                       |
+| ----------------- | -------- | ----------------------------------------------------------- |
+| Phase 1           | Done     | Core app — accounts, transactions, analytics (local SQLite) |
+| Phase 2 (current) | March    | Polish, transaction history, edit/delete, transfer fixes    |
+| Phase 3           | Next     | Firebase + Auth + Sync + Splitwise + Monetisation           |
+
+---
+
+## Phase 2 — In Progress
 
 - Transaction History Screen (full list, grouped by date, search + filter)
 - Edit & Delete Transactions (tap to edit, long-press to delete)
 
-## Planned Features
+---
+
+## Phase 2 — Planned Features
 
 ### 3. Transfer Exclusion from Analytics
 
@@ -23,9 +37,9 @@ Allow users to set a monthly spending limit per category and track progress.
 - SQLite table: budgets
 - UI: Budget screen or section in Analytics showing progress bars per category
 - Alert when spending reaches 80% and 100% of budget
-- Free tier: 1 active budget. Premium: unlimited budgets
+- Free tier: 1 active budget. Premium Lite/Full: unlimited budgets
 
-### 5. Recurring Transactions (Premium)
+### 5. Recurring Transactions
 
 Allow transactions to repeat automatically on a schedule.
 
@@ -33,7 +47,7 @@ Allow transactions to repeat automatically on a schedule.
 - SQLite table: recurring_transactions
 - Auto-create transaction on app open if nextDue <= today
 - UI: Manage recurring transactions list in Settings or dedicated screen
-- Premium only
+- Available: Premium Lite and Premium Full
 
 ### 6. FAB on All Screens
 
@@ -50,6 +64,7 @@ First-launch walkthrough to guide new users.
 - Store onboarding completion flag in AsyncStorage
 - Show only once on first launch
 - Skip button on every step
+- On first launch: automatically activate 3-day Premium Full trial (no payment info required)
 
 ### 8. Search & Filter on Transaction History
 
@@ -58,12 +73,12 @@ First-launch walkthrough to guide new users.
 - Filter pill UI below search bar
 - Results update in real time
 
-### 9. Export to CSV (Premium)
+### 9. Export to CSV
 
 - Export all transactions or filtered range to CSV
 - Share via native share sheet (react-native Share API)
 - Columns: Date, Time, Title, Category, Type, Amount, Account, Note
-- Premium only
+- Available: Premium Full only
 
 ### 10. Dark Mode
 
@@ -71,35 +86,28 @@ First-launch walkthrough to guide new users.
 - All Colors tokens need dark variants
 - Persist preference in AsyncStorage
 
-### 11. Multi-Currency Support (Premium)
+### 11. Multi-Currency Support
 
 - Add currency field to accounts
 - Store exchange rates (manual entry or API)
 - Convert all amounts to base currency (INR) for totals
-- Premium only
+- Available: Premium Full only
 
-### 12. Cloud Backup — iCloud / Google Drive (Premium)
+### 12. App Lock — Biometrics / PIN
 
-- Export SQLite DB snapshot to iCloud (iOS) or Google Drive (Android)
-- Restore from backup on new device
-- Auto-backup toggle in Settings
-- Premium only
-
-### 13. App Lock — Biometrics / PIN (Premium)
-
-- Lock app on background using react-native-biometrics or expo-local-authentication
+- Lock app on background using react-native-biometrics
 - Fallback to 4-digit PIN
 - Setting toggle already present in Settings screen
-- Premium only
+- Available: Premium Lite and Premium Full
 
-### 14. Home Screen Widget (Premium)
+### 13. Home Screen Widget
 
 - Show total balance and today's spend on home screen
 - iOS: WidgetKit via native module
 - Android: Glance widget
-- Premium only
+- Available: Premium Full only
 
-### 15. In-App Update
+### 14. In-App Update
 
 - Library: `sp-react-native-in-app-updates` v1.5.0 + `react-native-device-info` (peer dep)
 - Android: Native Play Core In-App Updates API — two modes:
@@ -110,7 +118,7 @@ First-launch walkthrough to guide new users.
 - Implementation: `src/hooks/useInAppUpdate.ts` hook called on app launch in `App.tsx`
 - Settings row 'App Version' shows 'Update Available' badge when a newer version is detected
 
-### 16. Push Notifications (Local)
+### 15. Local Push Notifications
 
 - Library: `@notifee/react-native`
 - Notification types (toggles already exist in Settings):
@@ -119,21 +127,98 @@ First-launch walkthrough to guide new users.
   - Monthly Report: 1st of each month — summary of previous month
   - Weekly Digest: every Monday — last 7 days summary
 - All scheduled locally, no server required
+- Available: all tiers
 
-### 17. Firebase Integration
+---
 
-Full Firebase setup as the backend foundation for auth, remote notifications, crash reporting, and analytics.
+## Phase 3 — Firebase + Monetisation + Splitwise
+
+### Architecture Decision
+
+#### Data Strategy by Membership Tier
+
+```
+Free Member
+  └── All data: local SQLite only
+  └── No cloud sync
+  └── No Firestore reads/writes (zero Firebase cost for free users)
+
+Premium Lite
+  └── Personal data: SQLite + synced to Firestore
+  └── Cloud backup available
+  └── No Splitwise
+
+Premium Full
+  └── Personal data: SQLite + synced to Firestore in real time
+  └── Every transaction synced on save
+  └── Splitwise: groups and expenses in Firestore
+  └── SMS auto-parsing enabled
+  └── All features unlocked
+```
+
+#### Why Hybrid SQLite + Firestore
+
+- App works fully offline (SQLite is always the source of truth on device)
+- Firestore is the cloud mirror — synced on save for premium users
+- Free users never touch Firestore — keeps cloud costs near zero
+- If user downgrades: local data stays, cloud sync pauses
+
+#### Firestore Structure
+
+```
+users/{uid}
+  ├── displayName: string
+  ├── phone: string
+  ├── email?: string
+  ├── createdAt: timestamp
+  ├── membership: 'free' | 'premium_lite' | 'premium_full'
+  ├── membershipExpiry?: timestamp
+  ├── trialUsed: boolean
+  ├── referralCode: string              ← unique code per user
+  ├── referredBy?: string               ← uid of who referred them
+  ├── referralBonusExpiry?: timestamp   ← 1 month from referral signup
+  ├── fcmToken: string
+  └── settings: { currency, theme, weekStart, adsEnabled }
+
+users/{uid}/transactions/{id}           ← mirror of SQLite (premium only)
+users/{uid}/accounts/{id}              ← mirror of SQLite (premium only)
+users/{uid}/budgets/{id}               ← mirror of SQLite (premium only)
+
+groups/{groupId}                        ← Splitwise groups (premium full only)
+  ├── name, createdBy, createdAt
+  ├── members: [{ uid?, name, phone }]
+  └── memberIds: [uid, ...]
+
+groups/{groupId}/expenses/{id}
+  ├── title, totalAmount, paidBy
+  ├── splits: [{ uid?, name, phone, amount, settled }]
+  ├── date, category, note
+  └── createdAt
+
+groups/{groupId}/settlements/{id}
+  ├── fromUid/fromPhone, toUid/toPhone
+  ├── amount, date, note
+  └── linkedTransactionId
+```
+
+---
+
+### 16. Firebase Integration
+
+Full Firebase setup as the backend foundation.
 
 #### Firebase Services Required
 
-| Service               | Package                                | Purpose                                    |
-| --------------------- | -------------------------------------- | ------------------------------------------ |
-| Firebase Core         | `@react-native-firebase/app`           | Base SDK, required by all other modules    |
-| Authentication        | `@react-native-firebase/auth`          | Phone/OTP, Google, Apple sign-in           |
-| Cloud Messaging (FCM) | `@react-native-firebase/messaging`     | Remote push notifications                  |
-| Crashlytics           | `@react-native-firebase/crashlytics`   | Crash reporting and error tracking         |
-| Analytics             | `@react-native-firebase/analytics`     | User behaviour, screen tracking, events    |
-| Remote Config         | `@react-native-firebase/remote-config` | Feature flags, premium config, A/B testing |
+| Service         | Package                                | Purpose                               |
+| --------------- | -------------------------------------- | ------------------------------------- |
+| Firebase Core   | `@react-native-firebase/app`           | Base SDK, required by all modules     |
+| Authentication  | `@react-native-firebase/auth`          | Phone OTP, Google, Apple sign-in      |
+| Firestore       | `@react-native-firebase/firestore`     | Cloud data sync, splits, user profile |
+| Cloud Messaging | `@react-native-firebase/messaging`     | Remote push notifications             |
+| Crashlytics     | `@react-native-firebase/crashlytics`   | Crash reporting                       |
+| Analytics       | `@react-native-firebase/analytics`     | User behaviour, screen tracking       |
+| Remote Config   | `@react-native-firebase/remote-config` | Feature flags, pricing, A/B testing   |
+| Storage         | `@react-native-firebase/storage`       | SQLite backup snapshots               |
 
 #### Setup Steps
 
@@ -143,213 +228,402 @@ Full Firebase setup as the backend foundation for auth, remote notifications, cr
 - Android: add `google-services` plugin to `android/build.gradle` and `android/app/build.gradle`
 - iOS: run `pod install` after adding Firebase packages
 
-#### FCM — Remote Push Notifications
+#### Do We Need Cloud Functions?
 
-- Request notification permission on first launch (after onboarding)
-- Save FCM token to user profile in Firestore for server-side targeting
-- Handle foreground, background, and quit-state messages via `@react-native-firebase/messaging`
-- Notification channels on Android (transaction alerts, budget warnings, promotions)
-- Deep link from notification to relevant screen (e.g. tap budget warning → opens Budget screen)
+- **No** — for most features, direct Firestore read/write from the app is sufficient
+- **Yes** — only for sending FCM push notifications to OTHER users (e.g. split activity)
+- Decision: skip Cloud Functions in Phase 3, add in Phase 4 only if push-on-split is needed
+- Trade-off: users see split updates when they open the app, not via push — acceptable for Phase 3
 
-#### Crashlytics
+#### Firestore Security Rules (Critical)
 
-- Automatic crash reporting enabled by default
-- Log custom errors: `crashlytics().recordError(error)`
-- Set user attributes on login: `crashlytics().setUserId(uid)`
-- Non-fatal error boundaries around critical screens
+```js
+// Users can only access their own data
+match /users/{uid} {
+  allow read, write: if request.auth.uid == uid;
+}
+match /users/{uid}/transactions/{id} {
+  allow read, write: if request.auth.uid == uid;
+}
 
-#### Analytics
+// Only group members can access group data
+match /groups/{groupId}/expenses/{id} {
+  allow read, write: if request.auth.uid in
+    get(/databases/$(database)/documents/groups/$(groupId)).data.memberIds;
+}
+```
 
-- Track key events: `app_open`, `transaction_added`, `budget_set`, `premium_viewed`, `premium_purchased`
-- Screen tracking: log screen name on every navigation change
-- User properties: account_count, is_premium, preferred_currency
+---
 
-#### Remote Config
-
-- Feature flags: `enable_splitwise`, `enable_sms_parsing`, `force_update_version`
-- Premium pricing config: monthly_price, annual_price, lifetime_price
-- Default values bundled in app, fetched and cached on launch with 1-hour TTL
-
-### 18. Login Screen & Authentication
-
-Full authentication flow using Firebase Auth.
+### 17. Login Screen & Authentication
 
 #### Sign-in Methods
 
-- **Phone + OTP** (primary — no password needed, best UX for Indian users)
+- **Phone + OTP** (primary — no password, best UX for Indian users)
 - **Google Sign-In** via `@react-native-google-signin/google-signin`
 - **Apple Sign-In** via `@invertase/react-native-apple-authentication` (required for iOS App Store)
-- **Guest / Skip** — allow using the app without an account, prompt to sign in when cloud features are accessed
+- **Guest / Skip** — full app works without login, prompt only when cloud features accessed
 
 #### Screens
 
-- `LoginScreen` — phone number entry with country code picker (default +91)
-- `OtpScreen` — 6-digit OTP input with 60-second resend timer
-- `WelcomeScreen` — shown before login, app branding + sign-in options
+- `WelcomeScreen` — app branding, sign-in options, "Continue as Guest"
+- `LoginScreen` — phone number entry with country code picker (default +91 India)
+- `OtpScreen` — 6-digit OTP input, 60-second resend timer, auto-read on Android
 
-#### Flow
+#### Auth Flow
 
 ```
 App launch
-  → check AsyncStorage for auth token
-  → if no token: WelcomeScreen → LoginScreen → OtpScreen → Onboarding → Dashboard
-  → if token valid: Dashboard directly
-  → if token expired: silent refresh via Firebase, fallback to LoginScreen
+  → check Firebase Auth currentUser
+  → if no user: WelcomeScreen
+  → if user exists: Dashboard (skip login)
+
+WelcomeScreen
+  → Phone → LoginScreen → OtpScreen → check referral → Dashboard
+  → Google/Apple → one tap → check referral → Dashboard
+  → Guest → Dashboard (limited features, prompt on premium action)
+
+On first login (new user):
+  → create Firestore user document
+  → generate unique referral code
+  → activate 3-day Premium Full trial (trialUsed: true)
+  → show onboarding flow
 ```
 
-#### Data Model (Firestore)
+#### Referral Code Flow
 
 ```
-users/{uid}
-  displayName: string
-  phone: string
-  email?: string
-  createdAt: timestamp
-  isPremium: boolean
-  premiumExpiry?: timestamp
-  fcmToken: string
-  settings: { currency, theme, weekStart }
+User A shares referral code "MONIQO-A1B2"
+        ↓
+User B installs app, enters code on signup
+        ↓
+Firestore: users/B.referredBy = A.uid
+Firestore: users/A.referralBonusExpiry = now + 30 days
+Firestore: users/A.membership = 'premium_full' (for 30 days)
+        ↓
+User A gets notified: "Your friend joined! You got 1 month Premium Free"
 ```
 
-#### Local vs Cloud Data
+---
 
-- All financial data (transactions, accounts) stays in SQLite on-device
-- User profile, premium status, and FCM token synced to Firestore
-- Cloud backup (phase 2 item 12) will optionally sync SQLite snapshot to Firebase Storage
+### 18. Membership & Monetisation
 
-### 19. SMS Integration — Auto Transaction Parsing
+#### Three Tiers
 
-Automatically detect bank SMS messages and suggest transactions without manual entry.
+**Free Member**
+
+- All core features: transactions, accounts, analytics, budgets (1 only), categories (5 custom max)
+- Data stored locally in SQLite only — no cloud sync
+- Ads shown (banner on Dashboard, interstitial max once per day)
+- No Splitwise access
+- No SMS parsing
+- Referral reward: 1 month Premium Full if referred friend signs up
+
+**Premium Lite**
+
+- Everything in Free, plus:
+- Unlimited budgets and custom categories
+- Cloud sync to Firestore (transactions, accounts, budgets)
+- Cloud backup and restore
+- App lock (biometrics/PIN)
+- Recurring transactions
+- Ads still shown (banner only, no interstitial) — reduced ad load
+- No Splitwise
+- No SMS parsing
+- No widget
+- No CSV export
+
+**Premium Full**
+
+- Everything in Premium Lite, plus:
+- Zero ads
+- Splitwise expense splitting (unlimited groups and members)
+- SMS auto-parsing (Android only)
+- CSV export
+- Multi-currency support
+- Home screen widget
+- All future premium features
+
+#### Pricing (Suggested)
+
+| Plan         | Monthly      | Annual                          | Lifetime        |
+| ------------ | ------------ | ------------------------------- | --------------- |
+| Premium Lite | ₹49 / month  | ₹399 / year (~₹33/mo, save 33%) | —               |
+| Premium Full | ₹149 / month | ₹999 / year (~₹83/mo, save 44%) | ₹2,499 one-time |
+
+- Annual plan is the recommended default (highlighted in UI)
+- Lifetime only for Premium Full — one-time purchase, no recurring
+- Pricing stored in Firebase Remote Config so it can be changed without app update
+
+#### 3-Day Free Trial
+
+- Automatically activated on first install — no payment info required
+- User gets full Premium Full access for 3 days
+- On day 3: notification "Your trial ends tomorrow — upgrade to keep your data synced"
+- On expiry: membership reverts to Free, local data stays, cloud sync pauses
+- Trial can only be used once per account (trialUsed flag in Firestore)
+
+#### Premium Implementation (Option B — Manual via Firestore)
+
+- No RevenueCat in Phase 3 — keep it simple
+- In-app purchase via React Native IAP (`react-native-iap`)
+- On successful purchase: update Firestore `users/{uid}.membership` and `membershipExpiry`
+- App reads membership status from Firestore on launch and caches in AsyncStorage
+- `useMembership()` hook returns current tier, expiry, and feature flags
+- Manual verification: Apple/Google receipt stored in Firestore for audit
+- Upgrade path: Free → Premium Lite → Premium Full (prorated if upgrading mid-cycle)
+
+#### Ad Integration
+
+- Library: Google AdMob via `react-native-google-mobile-ads`
+- Ad placements:
+  - Banner: bottom of Dashboard screen (Free and Premium Lite)
+  - Interstitial: shown once per day max, on app open (Free only)
+  - Never shown during transaction entry (bad UX)
+- `useAds()` hook checks membership and returns whether ads should render
+- Ad revenue offsets server costs for free users
+
+---
+
+### 19. Data Sync — SQLite to Firestore
+
+#### Sync Strategy (Premium users only)
+
+```
+On transaction save (AddTransactionModal)
+  → write to SQLite (always, instant)
+  → if premium: write to Firestore (async, non-blocking)
+
+On account update
+  → write to SQLite
+  → if premium: write to Firestore
+
+On app launch (premium user)
+  → fetch Firestore data
+  → compare with SQLite by created_at / updated_at
+  → merge: Firestore wins for conflicts (cloud is source of truth)
+```
+
+#### Sync Service
+
+- `src/services/SyncService.ts` — handles all Firestore read/write
+- Queue-based: if offline, queue writes and flush when connection restored
+- Conflict resolution: last-write-wins by timestamp
+- `src/hooks/useSync.ts` — exposes sync status (syncing, synced, error, offline)
+- Sync status indicator in Dashboard header (small dot: green=synced, orange=syncing, red=error)
+
+---
+
+### 20. SMS Integration — Auto Transaction Parsing (Premium Full)
 
 #### How It Works
 
-- Android: Read incoming SMS via `react-native-get-sms-android` or a native BroadcastReceiver
-- iOS: SMS access is not available — show a manual paste option instead
-- Parse SMS body using regex patterns for common Indian bank formats (HDFC, ICICI, SBI, Axis, Kotak)
-- Extract: amount, merchant/payee, account last 4 digits, transaction type (debit/credit)
-- Show a suggestion card on the Dashboard: "We detected a transaction — add it?"
+- Android: BroadcastReceiver listens for incoming SMS from known bank sender IDs
+- iOS: SMS access not available — show manual paste option instead
+- Parse SMS body using regex for common Indian bank formats
+- Extract: amount, merchant, account last 4 digits, transaction type (debit/credit)
+- Show suggestion card on Dashboard: "We detected a transaction — add it?"
 - User reviews pre-filled AddTransactionModal and confirms or dismisses
 
-#### Supported SMS Patterns
+#### Supported Banks
 
-- Debit: "debited", "spent", "withdrawn", "paid"
-- Credit: "credited", "received", "deposited"
-- Amount: Rs./INR/₹ followed by amount with optional commas
-- Account: "a/c XX1234" or "account ending XXXX"
+- HDFC Bank (sender: HDFCBK)
+- ICICI Bank (sender: ICICIB)
+- SBI (sender: SBIINB)
+- Axis Bank (sender: AXISBK)
+- Kotak Mahindra (sender: KOTAKB)
+- Paytm, PhonePe, GPay UPI alerts
 
 #### Permissions
 
-- Android: `READ_SMS` and `RECEIVE_SMS` permissions — request at runtime with explanation
-- Show clear privacy notice: "SMS is read only on your device and never sent to any server"
+- Android: `READ_SMS` and `RECEIVE_SMS` — request at runtime with clear explanation
+- Privacy notice: "SMS is read only on your device and never sent to any server"
+- Settings toggle: "Auto-detect transactions from SMS" (default: off, user must opt in)
 
 #### Implementation
 
 - `src/services/SmsParser.ts` — regex engine for parsing bank SMS
-- `src/hooks/useSmsListener.ts` — listens for new SMS on Android
+- `src/hooks/useSmsListener.ts` — Android SMS BroadcastReceiver bridge
 - Suggestion card component on Dashboard above Recent Transactions
-- Settings toggle: "Auto-detect transactions from SMS" (default: off, user must opt in)
-- Premium consideration: basic SMS parsing free, advanced multi-bank parsing premium
 
-### 20. Splitwise-Style Expense Splitting
+---
 
-Allow users to split expenses with friends and track who owes what.
+### 21. Splitwise — Expense Splitting (Premium Full)
 
 #### Core Concept
 
-- Create a group or a one-off split with named participants
-- Add an expense, assign who paid and split amounts (equal, percentage, or custom)
-- Track balances: who owes you, who you owe
-- Settle up: mark a balance as paid (creates a transfer transaction)
+- Split expenses with friends and track who owes what
+- Works with or without the other person having Moniqo
+- If they have Moniqo + are logged in: real-time Firestore sync
+- If they do not have Moniqo: notify via SMS or WhatsApp deep link
 
-#### Data Model
+#### Split Types
+
+| Type          | Example                              |
+| ------------- | ------------------------------------ |
+| Equal         | ₹2400 / 4 people = ₹600 each         |
+| Exact amounts | You: ₹1000, Rahul: ₹800, Priya: ₹600 |
+| Percentage    | You: 50%, Rahul: 30%, Priya: 20%     |
+| By shares     | You: 2 shares, Rahul: 1 share        |
+
+#### Debt Simplification
+
+In a group with many expenses, the app calculates minimum transactions needed to settle all debts — same algorithm as Splitwise.
 
 ```
-Group: { id, name, members: Member[], created_at }
-Member: { id, name, phone?, userId? }
-SplitExpense: { id, groupId, title, totalAmount, paidBy: memberId, splits: Split[], date, note, category }
-Split: { memberId, amount, settled: boolean }
-Settlement: { id, fromMemberId, toMemberId, amount, date }
+Without simplification:       With simplification:
+Rahul owes you ₹600           Rahul owes you ₹200 (net)
+You owe Priya ₹400            Priya owes Ankit ₹200
+Priya owes Ankit ₹200
 ```
+
+#### Notifying Non-Moniqo Users
+
+When a split member does not have Moniqo:
+
+- **WhatsApp**: deep link `whatsapp://send?text=...` with pre-filled message showing their share
+- **SMS**: `sms:+91XXXXXXXXXX?body=...` deep link with split summary
+- **Copy link**: shareable summary text copied to clipboard
+- No backend or API needed — all deep links, works instantly
+
+#### Analytics Integration
+
+- Only YOUR share of a split expense counts in Analytics (not the full amount)
+- Settled amounts appear as Transfer In transactions in the ledger
+- Unsettled amounts shown as "pending recovery" — separate from expense totals
 
 #### Screens
 
-- `SplitsScreen` — list of active groups and one-off splits, total you are owed / you owe
-- `GroupDetailScreen` — members, expenses, and net balances within a group
-- `AddSplitExpenseScreen` — add expense, select who paid, split equally or custom
-- `SettleUpScreen` — mark a split as settled, creates a transaction record
+- `SplitsScreen` — you are owed / you owe summary, active groups list
+- `GroupDetailScreen` — members, all expenses, net balances, settle up button
+- `AddSplitExpenseScreen` — amount, who paid, split type, member selector
+- `ExpenseDetailScreen` — per-person breakdown of one expense
+- `SettleUpScreen` — mark settled, creates Transfer transaction in ledger
 
-#### Integration with Transactions
+#### No Cloud Functions Needed
 
-- Settled splits automatically create a Transfer transaction in the main ledger
-- Split expenses optionally appear in Analytics as expenses (your share only)
-
-#### Sharing & Invites
-
-- Share group invite via deep link or WhatsApp
-- If invitee has Moniqo: syncs via Firestore (requires login)
-- If invitee does not have Moniqo: track locally, share summary via SMS/WhatsApp text
-
-#### Premium Consideration
-
-- Free: up to 3 members per group, 1 active group
-- Premium: unlimited groups and members, Firestore sync across devices
+- All Firestore reads/writes happen directly from the app
+- Real-time sync via Firestore listeners (no polling)
+- Push notifications for split activity deferred to Phase 4 (requires Cloud Functions)
+- Phase 3 trade-off: users see split updates when they open the app
 
 ---
 
-## Premium Tier — What's Included
+### 22. Push Notifications (Remote via FCM)
 
-| Feature                     | Free               | Premium        |
-| --------------------------- | ------------------ | -------------- |
-| Accounts                    | Up to 3            | Unlimited      |
-| Budgets                     | 1 category         | All categories |
-| Recurring transactions      | No                 | Yes            |
-| Export to CSV               | No                 | Yes            |
-| Analytics history           | 3 months           | All time       |
-| Custom categories           | Up to 5            | Unlimited      |
-| Multi-currency              | No                 | Yes            |
-| Cloud backup                | No                 | Yes            |
-| App lock (Biometrics/PIN)   | No                 | Yes            |
-| Home screen widget          | No                 | Yes            |
-| SMS auto-parsing (advanced) | Basic only         | All banks      |
-| Expense splitting           | 1 group, 3 members | Unlimited      |
-| Remote sync (Splitwise)     | No                 | Yes            |
-
-### Premium Implementation
-
-- Use `react-native-purchases` (RevenueCat) for subscription management
-- Products: Monthly plan, Annual plan (best value), Lifetime one-time purchase
-- Premium status synced to Firestore `users/{uid}.isPremium` field
-- PremiumBanner component already exists in Settings screen
-- Gate premium features with a `usePremium()` hook that checks subscription status
-- Remote Config controls pricing and feature flag visibility
-- Graceful degradation: show upgrade prompt when free limit is hit, never hard-block
+- FCM token saved to Firestore on login
+- Remote notifications triggered by Cloud Functions (Phase 4)
+- Phase 3: local notifications only via `@notifee/react-native`
+- Notification types:
+  - Transaction saved confirmation
+  - Budget warning (80% and 100%)
+  - Monthly report (1st of month)
+  - Weekly digest (every Monday)
+  - Trial expiry reminder (day before trial ends)
+  - Referral reward received
 
 ---
 
-## Priority Order
+### 23. Firebase Analytics + Crashlytics
+
+#### Analytics Events to Track
+
+- `app_open`, `transaction_added`, `transaction_deleted`
+- `budget_set`, `budget_exceeded`
+- `split_created`, `split_settled`
+- `premium_viewed`, `premium_purchased`, `trial_started`, `trial_expired`
+- `referral_shared`, `referral_redeemed`
+- `sms_suggestion_accepted`, `sms_suggestion_dismissed`
+
+#### Crashlytics
+
+- Automatic crash reporting
+- Set user context on login: `crashlytics().setUserId(uid)`
+- Log non-fatal errors in sync service and SMS parser
+- Error boundaries around critical screens
+
+#### Remote Config Keys
+
+| Key                            | Default | Purpose                             |
+| ------------------------------ | ------- | ----------------------------------- |
+| `premium_lite_monthly_price`   | 49      | Pricing (changeable without update) |
+| `premium_lite_annual_price`    | 399     | Pricing                             |
+| `premium_full_monthly_price`   | 149     | Pricing                             |
+| `premium_full_annual_price`    | 999     | Pricing                             |
+| `premium_full_lifetime_price`  | 2499    | Pricing                             |
+| `trial_duration_days`          | 3       | Trial length                        |
+| `enable_sms_parsing`           | false   | Feature flag                        |
+| `enable_splitwise`             | false   | Feature flag                        |
+| `interstitial_frequency_hours` | 24      | Ad frequency cap                    |
+| `referral_bonus_days`          | 30      | Referral reward duration            |
+
+---
+
+## Membership Feature Matrix
+
+| Feature                   | Free                  | Premium Lite | Premium Full  |
+| ------------------------- | --------------------- | ------------ | ------------- |
+| Transactions              | Unlimited             | Unlimited    | Unlimited     |
+| Accounts                  | Up to 3               | Unlimited    | Unlimited     |
+| Budgets                   | 1                     | Unlimited    | Unlimited     |
+| Custom categories         | Up to 5               | Unlimited    | Unlimited     |
+| Recurring transactions    | No                    | Yes          | Yes           |
+| Cloud sync (Firestore)    | No                    | Yes          | Yes           |
+| Cloud backup              | No                    | Yes          | Yes           |
+| App lock (biometrics/PIN) | No                    | Yes          | Yes           |
+| Ads                       | Banner + interstitial | Banner only  | No ads        |
+| Splitwise splitting       | No                    | No           | Yes           |
+| SMS auto-parsing          | No                    | No           | Yes (Android) |
+| CSV export                | No                    | No           | Yes           |
+| Multi-currency            | No                    | No           | Yes           |
+| Home screen widget        | No                    | No           | Yes           |
+| Analytics history         | 3 months              | All time     | All time      |
+| 3-day free trial          | Yes (auto)            | —            | —             |
+| Referral reward           | 1 month Premium Full  | —            | —             |
+
+---
+
+## Priority Order — Phase 3
 
 ```
-1.  Transaction History + Edit/Delete        (done in phase 2 start)
+1.  Firebase Core + Auth setup              (foundation)
+2.  Login screen (Phone OTP + Google)       (user identity)
+3.  Firestore user profile + membership     (membership system)
+4.  3-day trial activation on first launch  (conversion)
+5.  Referral code system                    (viral growth)
+6.  useMembership() hook + feature gating   (gates all premium features)
+7.  AdMob integration                       (free tier revenue)
+8.  SQLite → Firestore sync service         (premium value)
+9.  Local push notifications (@notifee)     (engagement)
+10. SMS integration (Android)               (killer feature)
+11. Splitwise — local split tracking        (social feature)
+12. Splitwise — Firestore sync              (real-time splits)
+13. In-app purchase (react-native-iap)      (monetisation)
+14. Crashlytics + Analytics events          (observability)
+15. Remote Config                           (pricing + flags)
+16. In-app update                           (maintenance)
+17. Onboarding flow                         (new user retention)
+18. Dark mode                               (polish)
+19. CSV export                              (premium value)
+20. Multi-currency                          (premium value)
+21. Home screen widget                      (premium value)
+22. Cloud Functions + remote push           (Phase 4)
+```
+
+---
+
+## Phase 2 Priority Order
+
+```
+1.  Transaction History + Edit/Delete        (done)
 2.  FAB on all screens                       (quick win)
 3.  Transfer exclusion from Analytics        (data accuracy)
-4.  Firebase Core setup                      (foundation for everything below)
-5.  Login screen + Firebase Auth             (user identity)
-6.  FCM remote push notifications            (engagement)
-7.  Budget feature                           (retention driver)
-8.  SMS integration                          (killer feature for Indian market)
-9.  Local push notifications                 (engagement)
-10. Recurring transactions                   (power users)
-11. Expense splitting (Splitwise)            (social/viral feature)
-12. Onboarding flow                          (new user retention)
-13. Search & filter                          (usability)
-14. In-app update                            (maintenance)
-15. Crashlytics + Analytics                  (observability)
-16. Remote Config                            (feature flags)
-17. Dark mode                                (polish)
-18. Premium infrastructure (RevenueCat)      (monetisation)
-19. Export CSV                               (premium value)
-20. App lock                                 (premium value)
-21. Multi-currency                           (premium value)
-22. Cloud backup                             (premium value)
-23. Widget                                   (premium value)
+4.  Budget feature                           (retention driver)
+5.  Local push notifications                 (engagement)
+6.  Recurring transactions                   (power users)
+7.  Onboarding flow                          (new user retention)
+8.  Search & filter on history               (usability)
+9.  In-app update                            (maintenance)
+10. Dark mode                                (polish)
+11. App lock                                 (security)
 ```
