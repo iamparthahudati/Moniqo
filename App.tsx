@@ -1,5 +1,12 @@
-import React, { useCallback, useState } from 'react';
-import { StatusBar, StyleSheet, TouchableOpacity, View } from 'react-native';
+import crashlytics from '@react-native-firebase/crashlytics';
+import React, { useCallback, useEffect, useState } from 'react';
+import {
+  StatusBar,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import {
   SafeAreaProvider,
   useSafeAreaInsets,
@@ -7,6 +14,7 @@ import {
 import AddTransactionModal, {
   TransactionType,
 } from './src/components/common/AddTransactionModal';
+import ErrorBoundary from './src/components/common/ErrorBoundary';
 import FabActionSheet, {
   FabAction,
 } from './src/components/common/FabActionSheet';
@@ -15,9 +23,11 @@ import BottomNavBar from './src/components/navigation/BottomNavBar';
 import { PlusIcon } from './src/icons/Icons';
 import AccountsScreen from './src/screens/AccountScreen';
 import AnalyticsScreen from './src/screens/AnalyticsScreen';
+import { styles } from './src/screens/AnalyticsScreen.styles';
 import DashboardScreen from './src/screens/DashboardScreen';
 import SettingsScreen from './src/screens/SettingsScreen';
 import TransactionHistoryScreen from './src/screens/TransactionHistoryScreen';
+import { logScreenView } from './src/services/firebase';
 import { AccountsProvider } from './src/store/accountsStore';
 import { CategoriesProvider } from './src/store/categoriesStore';
 import { TransactionsProvider } from './src/store/transactionsStore';
@@ -55,6 +65,11 @@ function AppContent() {
   // Transaction history screen state
   const [transactionHistoryVisible, setTransactionHistoryVisible] =
     useState(false);
+
+  // Track screen views in Firebase Analytics on every tab change
+  useEffect(() => {
+    logScreenView(activeTab);
+  }, [activeTab]);
 
   const handleTabPress = useCallback((tab: TabName) => {
     setActiveTab(tab);
@@ -109,6 +124,26 @@ function AppContent() {
         </TouchableOpacity>
       )}
 
+      {/* TEMP: Crashlytics test buttons — remove before release */}
+      {__DEV__ && (
+        <View style={styles.devRow}>
+          <TouchableOpacity
+            style={[styles.devButton, { backgroundColor: '#EF4444' }]}
+            onPress={() => crashlytics().crash()}
+          >
+            <Text style={styles.devButtonText}>Force Crash</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.devButton, { backgroundColor: '#F97316' }]}
+            onPress={() =>
+              crashlytics().recordError(new Error('Test non-fatal error'))
+            }
+          >
+            <Text style={styles.devButtonText}>Non-Fatal</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
       {/* Action sheet */}
       <FabActionSheet
         visible={sheetVisible}
@@ -140,15 +175,17 @@ function AppContent() {
 
 function App() {
   return (
-    <SafeAreaProvider>
-      <CategoriesProvider>
-        <AccountsProvider>
-          <TransactionsProvider>
-            <AppContent />
-          </TransactionsProvider>
-        </AccountsProvider>
-      </CategoriesProvider>
-    </SafeAreaProvider>
+    <ErrorBoundary>
+      <SafeAreaProvider>
+        <CategoriesProvider>
+          <AccountsProvider>
+            <TransactionsProvider>
+              <AppContent />
+            </TransactionsProvider>
+          </AccountsProvider>
+        </CategoriesProvider>
+      </SafeAreaProvider>
+    </ErrorBoundary>
   );
 }
 
@@ -174,6 +211,23 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.4,
     shadowRadius: 12,
     elevation: 10,
+  },
+  devRow: {
+    position: 'absolute',
+    top: 60,
+    left: 16,
+    flexDirection: 'row',
+    gap: 8,
+  },
+  devButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+  },
+  devButtonText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: '600',
   },
 });
 

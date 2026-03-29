@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "377396948837",
+    "project_id": "moniqo-cc889",
+    "storage_bucket": "moniqo-cc889.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:377396948837:android:b172dcfe75154eb699fb8c",
+        "android_client_info": {
+          "package_name": "com.ph.moniqo"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB2E9Y9lHl2kyMe7Xq7tEnqJIL8w3W2mS0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

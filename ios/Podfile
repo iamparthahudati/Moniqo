@@ -14,6 +14,9 @@ if linkage != nil
   use_frameworks! :linkage => linkage.to_sym
 end
 
+# Required for RNFirebase static framework build
+$RNFirebaseAsStaticFramework = true
+
 target 'Moniqo' do
   config = use_native_modules!
 
@@ -23,7 +26,21 @@ target 'Moniqo' do
     :app_path => "#{Pod::Config.instance.installation_root}/.."
   )
 
+  # Modular headers required only for Firebase Swift pods that depend
+  # on ObjC pods without module maps (GoogleUtilities, GoogleDataTransport, nanopb)
+  pod 'GoogleUtilities', :modular_headers => true
+  pod 'GoogleDataTransport', :modular_headers => true
+  pod 'nanopb', :modular_headers => true
+
   post_install do |installer|
+    # Disable module verification for all pods to fix non-modular-include errors
+    installer.pods_project.targets.each do |target|
+      target.build_configurations.each do |config|
+        config.build_settings['DEFINES_MODULE'] = 'NO'
+        config.build_settings['CLANG_ALLOW_NON_MODULAR_INCLUDES_IN_FRAMEWORK_MODULES'] = 'YES'
+      end
+    end
+
     react_native_post_install(
       installer,
       config[:reactNativePath],

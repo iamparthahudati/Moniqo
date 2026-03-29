@@ -1,4 +1,4 @@
-package com.moniqo
+package com.ph.moniqo
 
 import com.facebook.react.ReactActivity
 import com.facebook.react.ReactActivityDelegate
