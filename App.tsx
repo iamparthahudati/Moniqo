@@ -13,20 +13,33 @@ import FabActionSheet, {
 } from './src/components/common/FabActionSheet';
 import TransferModal from './src/components/common/TransferModal';
 import BottomNavBar from './src/components/navigation/BottomNavBar';
+import useNotifications from './src/hooks/useNotifications';
 import { PlusIcon } from './src/icons/Icons';
 import AccountsScreen from './src/screens/AccountScreen';
 import AnalyticsScreen from './src/screens/AnalyticsScreen';
 import DashboardScreen from './src/screens/DashboardScreen';
+import LoginScreen from './src/screens/LoginScreen';
+import OtpScreen from './src/screens/OtpScreen';
 import SettingsScreen from './src/screens/SettingsScreen';
 import TransactionHistoryScreen from './src/screens/TransactionHistoryScreen';
+import WelcomeScreen from './src/screens/WelcomeScreen';
 import { logScreenView } from './src/services/firebase';
 import { AccountsProvider } from './src/store/accountsStore';
+import { AuthProvider, useAuth } from './src/store/authStore';
 import { CategoriesProvider } from './src/store/categoriesStore';
 import { TransactionsProvider } from './src/store/transactionsStore';
 import { Colors } from './src/theme/colors';
 import { TabName } from './src/types';
 
-const renderScreen = (tab: TabName, onSeeAll: () => void) => {
+// ---------------------------------------------------------------------------
+// Auth flow screen names
+// ---------------------------------------------------------------------------
+type AuthScreen = 'welcome' | 'login' | 'otp';
+
+// ---------------------------------------------------------------------------
+// Main app content — shown after authentication
+// ---------------------------------------------------------------------------
+const renderTab = (tab: TabName, onSeeAll: () => void) => {
   switch (tab) {
     case 'Dashboard':
       return <DashboardScreen onSeeAll={onSeeAll} />;
@@ -43,22 +56,14 @@ function AppContent() {
   const [activeTab, setActiveTab] = useState<TabName>('Dashboard');
   const insets = useSafeAreaInsets();
 
-  // Action sheet state
   const [sheetVisible, setSheetVisible] = useState(false);
-
-  // Add transaction modal state
   const [txModalVisible, setTxModalVisible] = useState(false);
   const [txInitialType, setTxInitialType] =
     useState<TransactionType>('expense');
-
-  // Transfer modal state
   const [transferVisible, setTransferVisible] = useState(false);
-
-  // Transaction history screen state
   const [transactionHistoryVisible, setTransactionHistoryVisible] =
     useState(false);
 
-  // Track screen views in Firebase Analytics on every tab change
   useEffect(() => {
     logScreenView(activeTab);
   }, [activeTab]);
@@ -67,20 +72,17 @@ function AppContent() {
     setActiveTab(tab);
   }, []);
 
-  // FAB tapped — open action sheet
   const handleFabPress = useCallback(() => {
     setSheetVisible(true);
   }, []);
 
-  // User picked an action from the sheet
   const handleActionSelect = useCallback((action: FabAction) => {
     setSheetVisible(false);
-    // Small delay so sheet closes before next modal opens
     setTimeout(() => {
       if (action === 'transfer') {
         setTransferVisible(true);
       } else {
-        setTxInitialType(action); // 'expense' | 'income'
+        setTxInitialType(action);
         setTxModalVisible(true);
       }
     }, 300);
@@ -97,15 +99,12 @@ function AppContent() {
         translucent={false}
       />
 
-      {/* Screen content */}
       <View style={styles.screenContainer}>
-        {renderScreen(activeTab, () => setTransactionHistoryVisible(true))}
+        {renderTab(activeTab, () => setTransactionHistoryVisible(true))}
       </View>
 
-      {/* Bottom navigation */}
       <BottomNavBar activeTab={activeTab} onTabPress={handleTabPress} />
 
-      {/* FAB — Dashboard only */}
       {isDashboard && (
         <TouchableOpacity
           style={[styles.fab, { bottom: fabBottom }]}
@@ -116,27 +115,23 @@ function AppContent() {
         </TouchableOpacity>
       )}
 
-      {/* Action sheet */}
       <FabActionSheet
         visible={sheetVisible}
         onClose={() => setSheetVisible(false)}
         onSelect={handleActionSelect}
       />
 
-      {/* Add Expense / Income modal */}
       <AddTransactionModal
         visible={txModalVisible}
         onClose={() => setTxModalVisible(false)}
         initialType={txInitialType}
       />
 
-      {/* Transfer modal */}
       <TransferModal
         visible={transferVisible}
         onClose={() => setTransferVisible(false)}
       />
 
-      {/* Transaction history screen */}
       <TransactionHistoryScreen
         visible={transactionHistoryVisible}
         onClose={() => setTransactionHistoryVisible(false)}
@@ -145,17 +140,87 @@ function AppContent() {
   );
 }
 
+// ---------------------------------------------------------------------------
+// Auth gate — decides whether to show auth screens or the main app
+// ---------------------------------------------------------------------------
+function AuthGate() {
+  const { user, isGuest, isLoading, setGuest } = useAuth();
+  const { setup } = useNotifications();
+
+  const [authScreen, setAuthScreen] = useState<AuthScreen>('welcome');
+  const [pendingConfirmation, setPendingConfirmation] = useState<any>(null);
+  const [pendingPhone, setPendingPhone] = useState('');
+
+  // Request notification permissions once the user is authenticated
+  useEffect(() => {
+    if (user || isGuest) {
+      setup();
+    }
+  }, [user, isGuest, setup]);
+
+  // Still resolving Firebase auth state
+  if (isLoading) {
+    return null;
+  }
+
+  // Authenticated or guest — show the main app
+  if (user || isGuest) {
+    return (
+      <CategoriesProvider>
+        <AccountsProvider>
+          <TransactionsProvider>
+            <AppContent />
+          </TransactionsProvider>
+        </AccountsProvider>
+      </CategoriesProvider>
+    );
+  }
+
+  // Auth screens
+  if (authScreen === 'login') {
+    return (
+      <LoginScreen
+        onBack={() => setAuthScreen('welcome')}
+        onOtpSent={(confirmation, phoneNumber) => {
+          setPendingConfirmation(confirmation);
+          setPendingPhone(phoneNumber);
+          setAuthScreen('otp');
+        }}
+      />
+    );
+  }
+
+  if (authScreen === 'otp') {
+    return (
+      <OtpScreen
+        phoneNumber={pendingPhone}
+        confirmation={pendingConfirmation}
+        onBack={() => setAuthScreen('login')}
+        onSuccess={() => {
+          // onAuthStateChanged in AuthProvider will update user automatically
+        }}
+      />
+    );
+  }
+
+  return (
+    <WelcomeScreen
+      onPhonePress={() => setAuthScreen('login')}
+      onGuestPress={() => setGuest(true)}
+    />
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Root app
+// ---------------------------------------------------------------------------
 function App() {
   return (
     <ErrorBoundary>
       <SafeAreaProvider>
-        <CategoriesProvider>
-          <AccountsProvider>
-            <TransactionsProvider>
-              <AppContent />
-            </TransactionsProvider>
-          </AccountsProvider>
-        </CategoriesProvider>
+        <AuthProvider>
+          <AuthGate />
+        </AuthProvider>
       </SafeAreaProvider>
     </ErrorBoundary>
   );
