@@ -1,12 +1,5 @@
-import crashlytics from '@react-native-firebase/crashlytics';
 import React, { useCallback, useEffect, useState } from 'react';
-import {
-  StatusBar,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import { StatusBar, StyleSheet, TouchableOpacity, View } from 'react-native';
 import {
   SafeAreaProvider,
   useSafeAreaInsets,
@@ -23,7 +16,6 @@ import BottomNavBar from './src/components/navigation/BottomNavBar';
 import { PlusIcon } from './src/icons/Icons';
 import AccountsScreen from './src/screens/AccountScreen';
 import AnalyticsScreen from './src/screens/AnalyticsScreen';
-import { styles } from './src/screens/AnalyticsScreen.styles';
 import DashboardScreen from './src/screens/DashboardScreen';
 import SettingsScreen from './src/screens/SettingsScreen';
 import TransactionHistoryScreen from './src/screens/TransactionHistoryScreen';
@@ -124,26 +116,6 @@ function AppContent() {
         </TouchableOpacity>
       )}
 
-      {/* TEMP: Crashlytics test buttons — remove before release */}
-      {__DEV__ && (
-        <View style={styles.devRow}>
-          <TouchableOpacity
-            style={[styles.devButton, { backgroundColor: '#EF4444' }]}
-            onPress={() => crashlytics().crash()}
-          >
-            <Text style={styles.devButtonText}>Force Crash</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.devButton, { backgroundColor: '#F97316' }]}
-            onPress={() =>
-              crashlytics().recordError(new Error('Test non-fatal error'))
-            }
-          >
-            <Text style={styles.devButtonText}>Non-Fatal</Text>
-          </TouchableOpacity>
-        </View>
-      )}
-
       {/* Action sheet */}
       <FabActionSheet
         visible={sheetVisible}
@@ -211,23 +183,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.4,
     shadowRadius: 12,
     elevation: 10,
-  },
-  devRow: {
-    position: 'absolute',
-    top: 60,
-    left: 16,
-    flexDirection: 'row',
-    gap: 8,
-  },
-  devButton: {
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 8,
-  },
-  devButtonText: {
-    color: '#FFFFFF',
-    fontSize: 12,
-    fontWeight: '600',
   },
 });
 
