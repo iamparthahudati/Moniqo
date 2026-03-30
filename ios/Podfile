@@ -31,6 +31,9 @@ target 'Moniqo' do
   pod 'GoogleUtilities', :modular_headers => true
   pod 'GoogleDataTransport', :modular_headers => true
   pod 'nanopb', :modular_headers => true
+  pod 'FirebaseAuthInterop', :modular_headers => true
+  pod 'FirebaseAppCheckInterop', :modular_headers => true
+  pod 'RecaptchaInterop', :modular_headers => true
 
   post_install do |installer|
     # Disable module verification for all pods to fix non-modular-include errors
