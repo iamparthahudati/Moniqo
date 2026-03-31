@@ -2159,6 +2159,7 @@ PODS:
 DEPENDENCIES:
   - FBLazyVector (from `../node_modules/react-native/Libraries/FBLazyVector`)
   - FirebaseAppCheckInterop
+  - FirebaseAuth
   - FirebaseAuthInterop
   - GoogleDataTransport
   - GoogleUtilities
@@ -2545,6 +2546,6 @@ SPEC CHECKSUMS:
   RNNotifee: 5e3b271e8ea7456a36eec994085543c9adca9168
   Yoga: c0b3f2c7e8d3e327e450223a2414ca3fa296b9a2
 
-PODFILE CHECKSUM: 9a92f16479ac1d6ffed09a96fd2a058f04624c43
+PODFILE CHECKSUM: ba6536576c04e1434541eee8dc32063d57fcc12c
 
 COCOAPODS: 1.16.2
