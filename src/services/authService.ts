@@ -2,7 +2,10 @@ import auth, { FirebaseAuthTypes } from '@react-native-firebase/auth';
 import { GoogleSignin } from '@react-native-google-signin/google-signin';
 
 export function configureGoogleSignIn(): void {
-  GoogleSignin.configure({ webClientId: 'YOUR_WEB_CLIENT_ID' });
+  GoogleSignin.configure({
+    webClientId: 'YOUR_WEB_CLIENT_ID', // from Firebase Console → Project Settings → Web client OAuth ID
+    iosClientId: 'YOUR_IOS_CLIENT_ID', // CLIENT_ID value from GoogleService-Info.plist
+  });
 }
 
 export async function signInWithGoogle(): Promise<FirebaseAuthTypes.User> {
