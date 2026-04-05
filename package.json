@@ -7,7 +7,11 @@
     "ios": "react-native run-ios",
     "lint": "eslint .",
     "start": "react-native start",
-    "test": "jest"
+    "test": "jest",
+    "xcode": "xed ios",
+    "pods": "npx pod-install",
+    "android:build": "cd android && ./gradlew clean && ./gradlew assembleRelease && ./gradlew bundleRelease",
+    "deepclean": "rm -rf node_modules vendor ios/build ios/Pods android/build android/.gradle android/.idea android/.kotlin android/.default android/app/.cxx android/app/build && rm -f yarn.lock package-lock.json Gemfile.lock ios/Podfile.lock ios/Gemfile.lock ios/.xcode.env.local android/*.hprof"
   },
   "dependencies": {
     "@notifee/react-native": "^9.1.8",
