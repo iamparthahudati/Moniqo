@@ -2,12 +2,15 @@ import React, { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
+  KeyboardAvoidingView,
+  Platform,
   Text,
   TextInput,
   TextInput as TextInputType,
   TouchableOpacity,
   View,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BackIcon } from '../icons/Icons';
 import { confirmOtp, sendOtp } from '../services/authService';
 import { Colors } from '../theme/colors';
@@ -36,6 +39,7 @@ export default function OtpScreen({
     useState<any>(confirmation);
 
   const inputRefs = useRef<TextInputType[]>([]);
+  const insets = useSafeAreaInsets();
 
   useEffect(() => {
     const timeout = setTimeout(() => {
@@ -117,8 +121,13 @@ export default function OtpScreen({
   const isVerifyDisabled = otp.join('').length < OTP_LENGTH || loading;
 
   return (
-    <View style={styles.container}>
-      <View style={styles.content}>
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+    >
+      <View
+        style={[styles.content, { paddingTop: Math.max(insets.top + 16, 48) }]}
+      >
         <TouchableOpacity
           style={styles.backButton}
           onPress={onBack}
@@ -201,6 +210,6 @@ export default function OtpScreen({
           </TouchableOpacity>
         </View>
       </View>
-    </View>
+    </KeyboardAvoidingView>
   );
 }
