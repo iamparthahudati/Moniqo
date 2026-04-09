@@ -25,4 +25,6 @@ export const Colors = {
   overlay: 'rgba(0,0,0,0.05)',
   avatarBg: '#E8ECFF',
   backdrop: 'rgba(0,0,0,0.45)',
+  badgeGreen: 'rgba(34,197,94,0.85)',
+  badgeRed: 'rgba(239,68,68,0.85)',
 };

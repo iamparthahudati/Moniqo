@@ -89,7 +89,6 @@ function AppContent() {
   }, []);
 
   const fabBottom = 64 + insets.bottom + 16;
-  const isDashboard = activeTab === 'Dashboard';
 
   return (
     <View style={[styles.root, { paddingTop: insets.top }]}>
@@ -105,15 +104,13 @@ function AppContent() {
 
       <BottomNavBar activeTab={activeTab} onTabPress={handleTabPress} />
 
-      {isDashboard && (
-        <TouchableOpacity
-          style={[styles.fab, { bottom: fabBottom }]}
-          onPress={handleFabPress}
-          activeOpacity={0.85}
-        >
-          <PlusIcon size={26} color="#FFFFFF" />
-        </TouchableOpacity>
-      )}
+      <TouchableOpacity
+        style={[styles.fab, { bottom: fabBottom }]}
+        onPress={handleFabPress}
+        activeOpacity={0.85}
+      >
+        <PlusIcon size={26} color="#FFFFFF" />
+      </TouchableOpacity>
 
       <FabActionSheet
         visible={sheetVisible}

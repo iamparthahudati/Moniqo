@@ -3,6 +3,7 @@ import { Text, View } from 'react-native';
 import { TrendUpIcon } from '../../icons/Icons';
 import { computeTotalBalance, useAccounts } from '../../store/accountsStore';
 import { useTransactions } from '../../store/transactionsStore';
+import { Colors } from '../../theme/colors';
 import { formatCurrency } from '../../utils/formatters';
 import { styles } from './BalanceCard.styles';
 
@@ -89,16 +90,21 @@ const BalanceCard: React.FC = React.memo(() => {
 
   const isPositive = monthlyNetChange >= 0;
   const badgeSign = isPositive ? '+' : '-';
+  const badgeBg = isPositive ? Colors.badgeGreen : Colors.badgeRed;
 
   return (
     <View style={styles.card}>
       <View style={styles.topRow}>
         <Text style={styles.label}>TOTAL BALANCE</Text>
-        <View style={styles.badge}>
-          <TrendUpIcon size={12} color="#FFFFFF" />
+        <View style={[styles.badge, { backgroundColor: badgeBg }]}>
+          {isPositive ? (
+            <TrendUpIcon size={12} color={Colors.white} />
+          ) : (
+            <Text style={styles.trendDownArrow}>{'\u2198'}</Text>
+          )}
           <Text style={styles.badgeText}>
             {badgeSign}
-            {formatCurrency(monthlyNetChange)}
+            {formatCurrency(Math.abs(monthlyNetChange))}
           </Text>
         </View>
       </View>

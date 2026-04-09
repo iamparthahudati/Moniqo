@@ -2,12 +2,14 @@ import React from 'react';
 import { Alert, ScrollView, View } from 'react-native';
 import CategoryManager from '../components/settings/CategoryManager';
 import PremiumBanner from '../components/settings/PremiumBanner';
+import ProfileCard from '../components/settings/ProfileCard';
 import {
   SettingGroup,
   SettingRowData,
 } from '../components/settings/SettingRow';
 import ScreenHeader from '../components/ui/ScreenHeader';
 import { useToggle } from '../hooks/useToggle';
+import { signOut } from '../services/authService';
 import { styles } from './SettingsScreen.styles';
 
 // ── Settings screen ───────────────────────────────────────────────────────────
@@ -244,7 +246,20 @@ const SettingsScreen: React.FC = () => {
       onPress: () =>
         Alert.alert('Sign Out', 'Are you sure you want to sign out?', [
           { text: 'Cancel', style: 'cancel' },
-          { text: 'Sign Out', style: 'destructive', onPress: () => {} },
+          {
+            text: 'Sign Out',
+            style: 'destructive',
+            onPress: async () => {
+              try {
+                await signOut();
+              } catch {
+                Alert.alert(
+                  'Sign Out Failed',
+                  'Something went wrong. Please try again.',
+                );
+              }
+            },
+          },
         ]),
     },
     {
@@ -276,7 +291,11 @@ const SettingsScreen: React.FC = () => {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
       >
+        {/* Profile */}
+        <ProfileCard />
+
         {/* Premium */}
+        <View style={styles.groupSpacing} />
         <PremiumBanner />
 
         {/* Categories */}
@@ -306,6 +325,10 @@ const SettingsScreen: React.FC = () => {
         {/* About */}
         <View style={styles.groupSpacing} />
         <SettingGroup title="About" rows={aboutRows} />
+
+        {/* Account */}
+        <View style={styles.groupSpacing} />
+        <SettingGroup title="Account" rows={dangerRows} />
 
         <View style={styles.groupSpacing} />
       </ScrollView>

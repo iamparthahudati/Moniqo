@@ -1010,7 +1010,7 @@ const TransferModal: React.FC<TransferModalProps> = ({ visible, onClose }) => {
         title: 'Transfer Out',
         subtitle: `To ${toName}`,
         amount: -numAmount,
-        type: 'expense',
+        type: 'transfer',
         category: 'transfer',
         account_id:
           fromAccount.kind === 'cash' ? undefined : fromAccount.account.id,
@@ -1030,7 +1030,7 @@ const TransferModal: React.FC<TransferModalProps> = ({ visible, onClose }) => {
         title: 'Transfer In',
         subtitle: `From ${fromName}`,
         amount: numAmount,
-        type: 'income',
+        type: 'transfer',
         category: 'transfer',
         account_id:
           toAccount.kind === 'cash' ? undefined : toAccount.account.id,
