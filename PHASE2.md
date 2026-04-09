@@ -131,6 +131,160 @@ First-launch walkthrough to guide new users.
 
 ---
 
+## Firebase Sync Migration — To Do
+
+> Context: User asked to migrate all transaction and account data from local SQLite to Firebase Firestore so everything syncs in real time. This is a pre-Phase 3 task — do it before the full Phase 3 monetisation work.
+
+---
+
+### Decision: Replace SQLite with Firestore entirely
+
+- Drop `@op-engineering/op-sqlite` and the entire `src/db/` folder
+- Firestore becomes the single source of truth (it has built-in offline persistence on mobile)
+- All data scoped under `users/{uid}/` — clean multi-user support from day one
+- No hybrid SQLite + Firestore — simpler architecture, less code to maintain
+
+---
+
+### Firestore Collection Structure
+
+```
+users/{uid}/
+  ├── accounts_bank/{docId}        ← BankAccount
+  ├── accounts_card/{docId}        ← CardAccount
+  ├── accounts_cash/{docId}        ← CashEntry
+  ├── accounts_investment/{docId}  ← Investment
+  ├── transactions/{docId}         ← Transaction
+  └── categories/{docId}           ← AppCategory
+```
+
+---
+
+### Files to Create
+
+| File                               | Purpose                                                             |
+| ---------------------------------- | ------------------------------------------------------------------- |
+| `src/services/firestoreService.ts` | All Firestore CRUD — replaces all 7 repositories                    |
+| `src/utils/analytics.ts`           | Client-side analytics computations — replaces `analyticsRepository` |
+
+### Files to Rewrite
+
+| File                             | What Changes                                                            |
+| -------------------------------- | ----------------------------------------------------------------------- |
+| `src/store/accountsStore.ts`     | Swap SQLite calls for Firestore, use `onSnapshot` for real-time updates |
+| `src/store/transactionsStore.ts` | Swap SQLite calls for Firestore, use `onSnapshot` for real-time updates |
+| `src/store/categoriesStore.tsx`  | Swap SQLite calls for Firestore, seed default categories on first login |
+| `src/services/firebase.ts`       | Add Firestore initialisation                                            |
+
+### Files / Folders to Delete
+
+| Path                   | Reason                                                         |
+| ---------------------- | -------------------------------------------------------------- |
+| `src/db/`              | Entire SQLite layer — schema, database, seed, all repositories |
+| `src/data/mockData.ts` | Mock seed data no longer needed                                |
+
+---
+
+### Implementation Checklist
+
+#### 1. Firestore Service (`src/services/firestoreService.ts`)
+
+- [ ] Helper: `userCol(uid, collection)` — returns typed collection reference
+- [ ] Bank accounts: `getBanks`, `addBank`, `updateBank`, `deleteBank`, `incrementBankBalance`
+- [ ] Card accounts: `getCards`, `addCard`, `updateCard`, `deleteCard`, `incrementCardDue`
+- [ ] Cash accounts: `getCash`, `addCash`, `updateCash`, `deleteCash`, `incrementCashBalance`
+- [ ] Investments: `getInvestments`, `addInvestment`, `updateInvestment`, `deleteInvestment`, `incrementInvestmentAmount`
+- [ ] Transactions: `getTransactions`, `addTransaction`, `updateTransaction`, `deleteTransaction`
+- [ ] Categories: `getCategories`, `addCategory`, `deleteCategory`, `seedDefaultCategories`
+- [ ] Use `FieldValue.increment()` for all balance delta operations
+- [ ] Use Firestore auto-generated IDs (`doc().id`) — drop `generateId()`
+
+#### 2. Accounts Store (`src/store/accountsStore.ts`)
+
+- [ ] Replace `loadInitialState()` (synchronous SQLite) with `onSnapshot` listeners on all 4 account collections
+- [ ] All dispatch actions become async Firestore writes
+- [ ] Unsubscribe all listeners on unmount
+- [ ] Keep same context API shape so no consumer components need to change
+
+#### 3. Transactions Store (`src/store/transactionsStore.ts`)
+
+- [ ] Replace synchronous `getAllTransactions()` with `onSnapshot` on `transactions` collection
+- [ ] `ADD`, `UPDATE`, `DELETE` actions write to Firestore (store updates automatically via listener)
+- [ ] Order by `date DESC` in the Firestore query
+
+#### 4. Categories Store (`src/store/categoriesStore.tsx`)
+
+- [ ] On first login: check if categories collection is empty → seed 13 default categories
+- [ ] Use `onSnapshot` for live category list
+- [ ] `addCategory` and `deleteCategory` write to Firestore
+
+#### 5. Analytics Utility (`src/utils/analytics.ts`)
+
+- [ ] All functions take the in-memory `Transaction[]` array (already loaded via store)
+- [ ] `getDailyTotals(transactions, from, to)` — group by date, sum income/expense
+- [ ] `getWeeklyTotals(transactions, year, month)` — bucket into W1–W4
+- [ ] `getMonthlyTotals(transactions, year)` — group by month
+- [ ] `getSpendingByCategory(transactions, from, to)` — group by category, compute % share
+- [ ] `getIncomeTotalForRange(transactions, from, to)`
+- [ ] `getExpenseTotalForRange(transactions, from, to)`
+- [ ] `getSavingsRate(transactions, from, to)`
+- [ ] `getTopExpenses(transactions, limit, from?, to?)`
+- [ ] All filter out `type === 'transfer'` from income/expense totals
+
+#### 6. Analytics Screen
+
+- [ ] Replace `analyticsRepository` calls with the new `src/utils/analytics.ts` functions
+- [ ] Pass transactions from `useTransactions()` store hook
+
+#### 7. Firestore Security Rules (set in Firebase Console)
+
+```js
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /users/{uid}/{document=**} {
+      allow read, write: if request.auth != null && request.auth.uid == uid;
+    }
+  }
+}
+```
+
+#### 8. Firestore Indexes (set in Firebase Console or `firestore.indexes.json`)
+
+- [ ] `transactions` — composite index: `date DESC`
+- [ ] `transactions` — composite index: `(account_id ASC, date DESC)`
+- [ ] `transactions` — composite index: `(category ASC, date DESC)`
+
+#### 9. Cleanup
+
+- [ ] Delete `src/db/` folder entirely
+- [ ] Delete `src/data/mockData.ts`
+- [ ] Remove `@op-engineering/op-sqlite` from `package.json`
+- [ ] Remove `op-sqlite` pod from `ios/Podfile` and run `pod install`
+- [ ] Remove SQLite native module from `android/app/build.gradle` if added
+
+#### 10. Testing
+
+- [ ] Fresh install: categories seeded correctly on first login
+- [ ] Add transaction → appears instantly (onSnapshot)
+- [ ] Delete account → transactions linked to it still visible (soft reference, no cascade)
+- [ ] Kill app and reopen → data loads from Firestore offline cache
+- [ ] Two devices logged in as same user → change on one reflects on other in real time
+
+---
+
+### Key Technical Notes
+
+- **Delta balance updates**: use `FieldValue.increment(delta)` — atomic, no race conditions
+- **Analytics**: computed client-side from the in-memory transactions array — no Cloud Functions needed
+- **Offline**: Firestore's offline persistence is enabled by default on React Native — app works without internet
+- **`date` field**: keep as ISO string `YYYY-MM-DD` — Firestore range queries on strings work fine
+- **`created_at`**: store as Firestore `Timestamp` (not Unix ms integer)
+- **No `accountsRepository.ts`**: account ops are split across 4 type-specific functions in `firestoreService.ts`
+- **`AppCategory` type**: move from `categoryRepository.ts` into `src/types/index.ts` before starting
+
+---
+
 ## Phase 3 — Firebase + Monetisation + Splitwise
 
 ### Architecture Decision
