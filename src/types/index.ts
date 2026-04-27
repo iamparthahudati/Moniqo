@@ -119,3 +119,36 @@ export interface SpendingCategory {
 }
 
 export type AnalyticsPeriod = 'Week' | 'Month' | 'Year';
+
+// ---------------------------------------------------------------------------
+// Membership & user profile types
+// ---------------------------------------------------------------------------
+
+export type MembershipTier = 'free' | 'premium_lite' | 'premium_full';
+
+export type PremiumFeature =
+  | 'budget_unlimited'
+  | 'categories_unlimited'
+  | 'recurring_transactions'
+  | 'cloud_sync'
+  | 'app_lock'
+  | 'csv_export'
+  | 'splitwise'
+  | 'sms_parsing'
+  | 'multi_currency'
+  | 'widget'
+  | 'analytics_full_history';
+
+export interface UserProfile {
+  uid: string;
+  displayName: string;
+  phone: string;
+  email?: string;
+  membership: MembershipTier;
+  trialUsed: boolean;
+  trialExpiry?: number;
+  membershipExpiry?: number;
+  referralCode: string;
+  referredBy?: string;
+  createdAt: number;
+}

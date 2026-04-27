@@ -21,6 +21,7 @@ import BudgetScreen from './src/screens/BudgetScreen';
 import DashboardScreen from './src/screens/DashboardScreen';
 import LoginScreen from './src/screens/LoginScreen';
 import OtpScreen from './src/screens/OtpScreen';
+import PaywallScreen from './src/screens/PaywallScreen';
 import SettingsScreen from './src/screens/SettingsScreen';
 import TransactionHistoryScreen from './src/screens/TransactionHistoryScreen';
 import WelcomeScreen from './src/screens/WelcomeScreen';
@@ -29,6 +30,7 @@ import { AccountsProvider } from './src/store/accountsStore';
 import { AuthProvider, useAuth } from './src/store/authStore';
 import { BudgetProvider } from './src/store/budgetStore';
 import { CategoriesProvider } from './src/store/categoriesStore';
+import { MembershipProvider } from './src/store/membershipStore';
 import { TransactionsProvider } from './src/store/transactionsStore';
 import { Colors } from './src/theme/colors';
 import { TabName } from './src/types';
@@ -41,7 +43,11 @@ type AuthScreen = 'welcome' | 'login' | 'otp';
 // ---------------------------------------------------------------------------
 // Main app content — shown after authentication
 // ---------------------------------------------------------------------------
-const renderTab = (tab: TabName, onSeeAll: () => void) => {
+const renderTab = (
+  tab: TabName,
+  onSeeAll: () => void,
+  onUpgradePress: () => void,
+) => {
   switch (tab) {
     case 'Dashboard':
       return <DashboardScreen onSeeAll={onSeeAll} />;
@@ -52,7 +58,7 @@ const renderTab = (tab: TabName, onSeeAll: () => void) => {
     case 'Accounts':
       return <AccountsScreen />;
     case 'Settings':
-      return <SettingsScreen />;
+      return <SettingsScreen onUpgradePress={onUpgradePress} />;
   }
 };
 
@@ -67,6 +73,7 @@ function AppContent() {
   const [transferVisible, setTransferVisible] = useState(false);
   const [transactionHistoryVisible, setTransactionHistoryVisible] =
     useState(false);
+  const [paywallVisible, setPaywallVisible] = useState(false);
 
   useEffect(() => {
     logScreenView(activeTab);
@@ -103,7 +110,11 @@ function AppContent() {
       />
 
       <View style={styles.screenContainer}>
-        {renderTab(activeTab, () => setTransactionHistoryVisible(true))}
+        {renderTab(
+          activeTab,
+          () => setTransactionHistoryVisible(true),
+          () => setPaywallVisible(true),
+        )}
       </View>
 
       <BottomNavBar activeTab={activeTab} onTabPress={handleTabPress} />
@@ -136,6 +147,11 @@ function AppContent() {
       <TransactionHistoryScreen
         visible={transactionHistoryVisible}
         onClose={() => setTransactionHistoryVisible(false)}
+      />
+
+      <PaywallScreen
+        visible={paywallVisible}
+        onClose={() => setPaywallVisible(false)}
       />
     </View>
   );
@@ -222,7 +238,9 @@ function App() {
     <ErrorBoundary>
       <SafeAreaProvider>
         <AuthProvider>
-          <AuthGate />
+          <MembershipProvider>
+            <AuthGate />
+          </MembershipProvider>
         </AuthProvider>
       </SafeAreaProvider>
     </ErrorBoundary>

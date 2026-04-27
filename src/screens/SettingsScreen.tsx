@@ -15,7 +15,11 @@ import { styles } from './SettingsScreen.styles';
 
 // ── Settings screen ───────────────────────────────────────────────────────────
 
-const SettingsScreen: React.FC = () => {
+interface SettingsScreenProps {
+  onUpgradePress: () => void;
+}
+
+const SettingsScreen: React.FC<SettingsScreenProps> = ({ onUpgradePress }) => {
   // Notification toggles
   const [txAlerts, toggleTxAlerts] = useToggle(true);
   const [monthlyReport, toggleMonthlyReport] = useToggle(true);
@@ -321,7 +325,7 @@ const SettingsScreen: React.FC = () => {
 
         {/* Premium */}
         <View style={styles.groupSpacing} />
-        <PremiumBanner />
+        <PremiumBanner onUpgradePress={onUpgradePress} />
 
         {/* Categories */}
         <View style={styles.groupSpacing} />

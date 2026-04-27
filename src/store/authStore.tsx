@@ -8,6 +8,7 @@ import React, {
   useState,
 } from 'react';
 import { configureGoogleSignIn } from '../services/authService';
+import { ensureUserProfile } from '../services/firestoreService';
 
 type AuthUser = FirebaseAuthTypes.User | null;
 type GuestMode = boolean;
@@ -46,6 +47,14 @@ export function AuthProvider({
 
   useEffect(() => {
     const unsubscribe = auth().onAuthStateChanged((firebaseUser: AuthUser) => {
+      if (firebaseUser) {
+        ensureUserProfile(
+          firebaseUser.uid,
+          firebaseUser.displayName ?? '',
+          firebaseUser.phoneNumber ?? '',
+          firebaseUser.email ?? undefined,
+        ).catch(console.error);
+      }
       setUser(firebaseUser);
       setIsLoading(false);
     });
