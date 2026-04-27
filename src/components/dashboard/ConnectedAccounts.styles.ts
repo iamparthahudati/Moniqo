@@ -56,4 +56,28 @@ export const styles = StyleSheet.create({
     fontWeight: '700',
     color: Colors.textPrimary,
   },
+  accountSubType: {
+    fontSize: 10,
+    fontWeight: '600',
+    letterSpacing: 0.6,
+    color: Colors.textMuted,
+    textTransform: 'uppercase',
+    marginBottom: 6,
+  },
+  dueLabel: {
+    fontSize: 10,
+    fontWeight: '600',
+    letterSpacing: 0.6,
+    color: Colors.textMuted,
+    textTransform: 'uppercase',
+    marginTop: 2,
+  },
+  cashBadge: {
+    width: 44,
+    height: 44,
+    borderRadius: Radius.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: Colors.incomeGreen,
+  },
 });

@@ -37,6 +37,12 @@ export const styles = StyleSheet.create({
     fontWeight: '700',
     color: Colors.white,
   },
+  trendDownArrow: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: Colors.white,
+    lineHeight: 14,
+  },
   balanceAmount: {
     fontSize: 36,
     fontWeight: '700',

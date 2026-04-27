@@ -79,3 +79,12 @@ CREATE TABLE IF NOT EXISTS categories (
   sort_order INTEGER NOT NULL DEFAULT 0,
   created_at INTEGER NOT NULL
 )`;
+
+export const CREATE_BUDGETS = `
+CREATE TABLE IF NOT EXISTS budgets (
+  id          TEXT PRIMARY KEY,
+  category_id TEXT NOT NULL,
+  amount      REAL NOT NULL,
+  period      TEXT NOT NULL DEFAULT 'monthly',
+  created_at  INTEGER NOT NULL
+)`;

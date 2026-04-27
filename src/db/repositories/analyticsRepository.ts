@@ -1,5 +1,6 @@
 import { MonthlyData, SpendingCategory, Transaction } from '../../types';
 import { db } from '../database';
+import { AppCategory } from './categoryRepository';
 
 const MONTH_SHORT = [
   '',
@@ -33,12 +34,11 @@ const CATEGORY_META: Record<string, { emoji: string; color: string }> = {
   others: { emoji: '\u2022\u2022\u2022', color: '#94A3B8' },
 };
 
-// Returns daily totals for the last 7 days (labels: Mon, Tue, etc.)
 export function getDailyTotals(from: string, to: string): MonthlyData[] {
   const result = db.executeSync(
     `SELECT date,
-            SUM(CASE WHEN type='income' THEN amount ELSE 0 END) as income,
-            SUM(CASE WHEN type='expense' THEN ABS(amount) ELSE 0 END) as expense
+            SUM(CASE WHEN type='income' AND category != 'transfer' THEN amount ELSE 0 END) as income,
+            SUM(CASE WHEN type='expense' AND category != 'transfer' THEN ABS(amount) ELSE 0 END) as expense
      FROM transactions
      WHERE date BETWEEN ? AND ?
      GROUP BY date
@@ -71,13 +71,12 @@ export function getDailyTotals(from: string, to: string): MonthlyData[] {
   return days;
 }
 
-// Returns weekly totals for the current month (labels: W1, W2, etc.)
 export function getWeeklyTotals(year: number, month: number): MonthlyData[] {
   const monthStr = month.toString().padStart(2, '0');
   const result = db.executeSync(
     `SELECT date,
-            SUM(CASE WHEN type='income' THEN amount ELSE 0 END) as income,
-            SUM(CASE WHEN type='expense' THEN ABS(amount) ELSE 0 END) as expense
+            SUM(CASE WHEN type='income' AND category != 'transfer' THEN amount ELSE 0 END) as income,
+            SUM(CASE WHEN type='expense' AND category != 'transfer' THEN ABS(amount) ELSE 0 END) as expense
      FROM transactions
      WHERE strftime('%Y', date) = ? AND strftime('%m', date) = ?
      GROUP BY date
@@ -110,8 +109,8 @@ export function getWeeklyTotals(year: number, month: number): MonthlyData[] {
 export function getMonthlyTotals(year: number): MonthlyData[] {
   const result = db.executeSync(
     `SELECT strftime('%m', date) as month,
-            SUM(CASE WHEN type='income' THEN amount ELSE 0 END) as income,
-            SUM(CASE WHEN type='expense' THEN ABS(amount) ELSE 0 END) as expense
+            SUM(CASE WHEN type='income' AND category != 'transfer' THEN amount ELSE 0 END) as income,
+            SUM(CASE WHEN type='expense' AND category != 'transfer' THEN ABS(amount) ELSE 0 END) as expense
      FROM transactions
      WHERE strftime('%Y', date) = ?
      GROUP BY month
@@ -129,11 +128,12 @@ export function getMonthlyTotals(year: number): MonthlyData[] {
 export function getSpendingByCategory(
   from: string,
   to: string,
+  categories?: AppCategory[],
 ): SpendingCategory[] {
   const result = db.executeSync(
     `SELECT category, SUM(ABS(amount)) as total
      FROM transactions
-     WHERE type = 'expense' AND date BETWEEN ? AND ?
+     WHERE type = 'expense' AND category != 'transfer' AND date BETWEEN ? AND ?
      GROUP BY category
      ORDER BY total DESC`,
     [from, to],
@@ -145,11 +145,22 @@ export function getSpendingByCategory(
     0,
   );
 
+  // Build a lookup map from the live categories store when provided
+  const categoryMap = new Map<string, { emoji: string; color: string }>();
+  if (categories) {
+    for (const c of categories) {
+      categoryMap.set(c.name.toLowerCase(), { emoji: c.emoji, color: c.color });
+    }
+  }
+
   return rows.map(row => {
     const cat = row.category as string;
     const total = (row.total as number) ?? 0;
-    const meta = CATEGORY_META[cat] ?? CATEGORY_META.other;
     const pct = grandTotal > 0 ? Math.round((total / grandTotal) * 100) : 0;
+    const meta =
+      categoryMap.get(cat.toLowerCase()) ??
+      CATEGORY_META[cat.toLowerCase()] ??
+      CATEGORY_META.other;
     return {
       id: cat,
       label: cat.charAt(0).toUpperCase() + cat.slice(1),
@@ -165,7 +176,7 @@ export function getIncomeTotalForRange(from: string, to: string): number {
   const result = db.executeSync(
     `SELECT COALESCE(SUM(amount), 0) as total
      FROM transactions
-     WHERE type = 'income' AND date BETWEEN ? AND ?`,
+     WHERE type = 'income' AND category != 'transfer' AND date BETWEEN ? AND ?`,
     [from, to],
   );
   return ((result.rows as any[])?.[0]?.total as number) ?? 0;
@@ -175,7 +186,7 @@ export function getExpenseTotalForRange(from: string, to: string): number {
   const result = db.executeSync(
     `SELECT COALESCE(SUM(ABS(amount)), 0) as total
      FROM transactions
-     WHERE type = 'expense' AND date BETWEEN ? AND ?`,
+     WHERE type = 'expense' AND category != 'transfer' AND date BETWEEN ? AND ?`,
     [from, to],
   );
   return ((result.rows as any[])?.[0]?.total as number) ?? 0;
@@ -199,14 +210,14 @@ export function getTopExpenses(
     from && to
       ? db.executeSync(
           `SELECT * FROM transactions
-         WHERE type = 'expense' AND date BETWEEN ? AND ?
+         WHERE type = 'expense' AND category != 'transfer' AND date BETWEEN ? AND ?
          ORDER BY ABS(amount) DESC
          LIMIT ?`,
           [from, to, limit],
         )
       : db.executeSync(
           `SELECT * FROM transactions
-         WHERE type = 'expense'
+         WHERE type = 'expense' AND category != 'transfer'
          ORDER BY ABS(amount) DESC
          LIMIT ?`,
           [limit],
