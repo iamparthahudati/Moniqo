@@ -4,6 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   AccountsNavIcon,
   AnalyticsNavIcon,
+  BudgetNavIcon,
   DashboardIcon,
   SettingsIcon,
 } from '../../icons/Icons';
@@ -18,8 +19,9 @@ interface NavTab {
 }
 
 const NAV_TABS: NavTab[] = [
-  { name: 'Dashboard', label: 'DASHBOARD', Icon: DashboardIcon },
+  { name: 'Dashboard', label: 'HOME', Icon: DashboardIcon },
   { name: 'Analytics', label: 'ANALYTICS', Icon: AnalyticsNavIcon },
+  { name: 'Budget', label: 'BUDGET', Icon: BudgetNavIcon },
   { name: 'Accounts', label: 'ACCOUNTS', Icon: AccountsNavIcon },
   { name: 'Settings', label: 'SETTINGS', Icon: SettingsIcon },
 ];

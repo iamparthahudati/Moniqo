@@ -1,4 +1,9 @@
-export type TabName = 'Dashboard' | 'Analytics' | 'Accounts' | 'Settings';
+export type TabName =
+  | 'Dashboard'
+  | 'Analytics'
+  | 'Accounts'
+  | 'Budget'
+  | 'Settings';
 
 export interface Transaction {
   id: string;

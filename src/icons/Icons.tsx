@@ -371,6 +371,19 @@ export const CreditCardIcon: React.FC<IconProps> = ({
   </View>
 );
 
+export const BudgetNavIcon: React.FC<IconProps> = ({
+  size = 24,
+  color = '#94A3B8',
+}) => (
+  <View style={[styles.container, { width: size, height: size }]}>
+    <View style={[styles.budgetOuter, { borderColor: color }]}>
+      <View style={[styles.budgetBar1, { backgroundColor: color }]} />
+      <View style={[styles.budgetBar2, { backgroundColor: color }]} />
+      <View style={[styles.budgetBar3, { backgroundColor: color }]} />
+    </View>
+  </View>
+);
+
 export const AnalyticsNavIcon: React.FC<IconProps> = ({
   size = 24,
   color = '#94A3B8',
@@ -588,4 +601,19 @@ const styles = StyleSheet.create({
     borderStyle: 'dashed',
     transform: [{ rotate: '-15deg' }],
   },
+  budgetOuter: {
+    width: '88%',
+    height: '88%',
+    borderWidth: 1.5,
+    borderRadius: 3,
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    justifyContent: 'space-between',
+    paddingHorizontal: 2,
+    paddingBottom: 2,
+    overflow: 'hidden',
+  },
+  budgetBar1: { width: '25%', height: '45%', borderRadius: 1 },
+  budgetBar2: { width: '25%', height: '70%', borderRadius: 1 },
+  budgetBar3: { width: '25%', height: '55%', borderRadius: 1 },
 });

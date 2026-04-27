@@ -17,6 +17,7 @@ import useNotifications from './src/hooks/useNotifications';
 import { PlusIcon } from './src/icons/Icons';
 import AccountsScreen from './src/screens/AccountScreen';
 import AnalyticsScreen from './src/screens/AnalyticsScreen';
+import BudgetScreen from './src/screens/BudgetScreen';
 import DashboardScreen from './src/screens/DashboardScreen';
 import LoginScreen from './src/screens/LoginScreen';
 import OtpScreen from './src/screens/OtpScreen';
@@ -26,6 +27,7 @@ import WelcomeScreen from './src/screens/WelcomeScreen';
 import { logScreenView } from './src/services/firebase';
 import { AccountsProvider } from './src/store/accountsStore';
 import { AuthProvider, useAuth } from './src/store/authStore';
+import { BudgetProvider } from './src/store/budgetStore';
 import { CategoriesProvider } from './src/store/categoriesStore';
 import { TransactionsProvider } from './src/store/transactionsStore';
 import { Colors } from './src/theme/colors';
@@ -45,6 +47,8 @@ const renderTab = (tab: TabName, onSeeAll: () => void) => {
       return <DashboardScreen onSeeAll={onSeeAll} />;
     case 'Analytics':
       return <AnalyticsScreen />;
+    case 'Budget':
+      return <BudgetScreen />;
     case 'Accounts':
       return <AccountsScreen />;
     case 'Settings':
@@ -166,7 +170,9 @@ function AuthGate() {
       <CategoriesProvider>
         <AccountsProvider>
           <TransactionsProvider>
-            <AppContent />
+            <BudgetProvider>
+              <AppContent />
+            </BudgetProvider>
           </TransactionsProvider>
         </AccountsProvider>
       </CategoriesProvider>

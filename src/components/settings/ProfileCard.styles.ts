@@ -39,4 +39,56 @@ export const styles = StyleSheet.create({
     borderColor: Colors.primary,
   },
   editBtnText: { fontSize: 13, fontWeight: '600', color: Colors.primary },
+
+  // Edit modal
+  overlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'flex-end',
+  },
+  sheet: {
+    backgroundColor: Colors.surface,
+    borderTopLeftRadius: Radius.xxl,
+    borderTopRightRadius: Radius.xxl,
+    padding: Spacing.xl,
+    paddingBottom: Spacing.xxxl,
+  },
+  sheetTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: Colors.textPrimary,
+    marginBottom: Spacing.lg,
+  },
+  input: {
+    borderWidth: 1.5,
+    borderColor: Colors.border,
+    borderRadius: Radius.md,
+    padding: Spacing.md,
+    fontSize: 16,
+    color: Colors.textPrimary,
+    marginBottom: Spacing.lg,
+  },
+  saveBtn: {
+    backgroundColor: Colors.primary,
+    borderRadius: Radius.full,
+    padding: Spacing.md,
+    alignItems: 'center',
+  },
+  saveBtnDisabled: {
+    opacity: 0.6,
+  },
+  saveBtnText: {
+    color: Colors.white,
+    fontWeight: '700',
+    fontSize: 15,
+  },
+  cancelBtn: {
+    alignItems: 'center',
+    marginTop: Spacing.md,
+    padding: Spacing.sm,
+  },
+  cancelBtnText: {
+    color: Colors.textSecondary,
+    fontSize: 14,
+  },
 });

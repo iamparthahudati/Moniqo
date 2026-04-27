@@ -8,6 +8,7 @@ import {
   SettingRowData,
 } from '../components/settings/SettingRow';
 import ScreenHeader from '../components/ui/ScreenHeader';
+import useNotifications from '../hooks/useNotifications';
 import { useToggle } from '../hooks/useToggle';
 import { signOut } from '../services/authService';
 import { styles } from './SettingsScreen.styles';
@@ -20,6 +21,30 @@ const SettingsScreen: React.FC = () => {
   const [monthlyReport, toggleMonthlyReport] = useToggle(true);
   const [budgetWarnings, toggleBudgetWarnings] = useToggle(false);
   const [weeklyDigest, toggleWeeklyDigest] = useToggle(false);
+
+  const { enableMonthlyReport, enableWeeklyDigest } = useNotifications();
+
+  const handleTxAlerts = () => {
+    toggleTxAlerts();
+  };
+
+  const handleMonthlyReport = () => {
+    if (!monthlyReport) {
+      enableMonthlyReport().catch(() => {});
+    }
+    toggleMonthlyReport();
+  };
+
+  const handleBudgetWarnings = () => {
+    toggleBudgetWarnings();
+  };
+
+  const handleWeeklyDigest = () => {
+    if (!weeklyDigest) {
+      enableWeeklyDigest().catch(() => {});
+    }
+    toggleWeeklyDigest();
+  };
 
   // ── Row definitions ─────────────────────────────────────────────────────────
 
@@ -72,7 +97,7 @@ const SettingsScreen: React.FC = () => {
       label: 'Transaction Alerts',
       type: 'toggle',
       toggleValue: txAlerts,
-      onToggle: toggleTxAlerts,
+      onToggle: handleTxAlerts,
     },
     {
       id: 'monthly',
@@ -81,7 +106,7 @@ const SettingsScreen: React.FC = () => {
       label: 'Monthly Report',
       type: 'toggle',
       toggleValue: monthlyReport,
-      onToggle: toggleMonthlyReport,
+      onToggle: handleMonthlyReport,
     },
     {
       id: 'budget',
@@ -90,7 +115,7 @@ const SettingsScreen: React.FC = () => {
       label: 'Budget Warnings',
       type: 'toggle',
       toggleValue: budgetWarnings,
-      onToggle: toggleBudgetWarnings,
+      onToggle: handleBudgetWarnings,
     },
     {
       id: 'weekly',
@@ -99,7 +124,7 @@ const SettingsScreen: React.FC = () => {
       label: 'Weekly Digest',
       type: 'toggle',
       toggleValue: weeklyDigest,
-      onToggle: toggleWeeklyDigest,
+      onToggle: handleWeeklyDigest,
     },
   ];
 
