@@ -108,11 +108,11 @@ If you plan to submit to the App Store, Apple requires Sign in with Apple when a
 | 3   | iOS URL scheme set in `Info.plist`                   | Done     |
 | 4   | Android `build.gradle` Google Services plugin        | Done     |
 | 5   | iOS Podfile Firebase static framework                | Done     |
-| 6   | Add debug SHA-1 + SHA-256 fingerprints in Firebase   | Pending  |
-| 7   | Add release SHA-1 + SHA-256 fingerprints in Firebase | Pending  |
-| 8   | Download updated `google-services.json`              | Pending  |
-| 9   | Enable Phone + Google auth providers in Firebase     | Pending  |
-| 10  | Create Firestore database + set security rules       | Pending  |
+| 6   | Add debug SHA-1 + SHA-256 fingerprints in Firebase   | Done     |
+| 7   | Add release SHA-1 + SHA-256 fingerprints in Firebase | Done     |
+| 8   | Download updated `google-services.json`              | Done     |
+| 9   | Enable Phone + Google auth providers in Firebase     | Done     |
+| 10  | Create Firestore database + set security rules       | Done     |
 | 11  | Create composite index on `transactions`             | Pending  |
 | 12  | Apple Sign-In (before App Store only)                | Optional |
 
