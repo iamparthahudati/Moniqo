@@ -16,8 +16,8 @@ import {
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { generateId } from '../../db/database';
-import type { AppCategory } from '../../db/repositories/categoryRepository';
+
+import type { AppCategory } from '../../types';
 import {
   BankIcon,
   CalendarIcon,
@@ -869,7 +869,7 @@ const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
     txDispatch({
       type: 'ADD_TRANSACTION',
       payload: {
-        id: generateId(),
+        id: Date.now().toString(36) + Math.random().toString(36).slice(2),
         title,
         subtitle: note || title,
         amount: finalAmount,

@@ -5945,6 +5945,16 @@ react-is@^19.2.3:
   resolved "https://registry.npmjs.org/react-is/-/react-is-19.2.4.tgz"
   integrity sha512-W+EWGn2v0ApPKgKKCy/7s7WHXkboGcsrXE+2joLyVxkbyVQfO3MUEaUQDHoSmb8TFFrSKYa9mw64WZHNHSDzYA==
 
+react-native-iap@14.7.8:
+  version "14.7.8"
+  resolved "https://artifed.transunion.com:443/artifactory/api/npm/npmjs/react-native-iap/-/react-native-iap-14.7.8.tgz#9ddc77b22603a72f20ac7bfa036c9fa0cb453941"
+  integrity sha512-acp0bGzQ7CFTlzCx7/RPKEzzvq4xLiU+ettVBVfT2wlLX6z2xCDpEMzDevXIuLQY6ae2rm+2+imrDX5mFGHAYw==
+
+react-native-nitro-modules@0.31.1:
+  version "0.31.1"
+  resolved "https://artifed.transunion.com:443/artifactory/api/npm/npmjs/react-native-nitro-modules/-/react-native-nitro-modules-0.31.1.tgz#a5ea5ac5ae7e08c224563e6ab9d422c1a05b5110"
+  integrity sha512-ecr3bTWvLj5/Ce3BO54XRHy4uNHfFR2iVFLf9g/zDRkaD4iOg6kF9hatkIXwUPZi6apIf9P91BS+bco0lSIcVA==
+
 react-native-safe-area-context@^5.5.2:
   version "5.7.0"
   resolved "https://registry.npmjs.org/react-native-safe-area-context/-/react-native-safe-area-context-5.7.0.tgz"

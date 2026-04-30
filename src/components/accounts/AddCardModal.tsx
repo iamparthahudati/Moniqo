@@ -90,6 +90,7 @@ const AddCardModal: React.FC<AddCardModalProps> = ({
       cardType: cardType.trim(),
       dueAmount: isNaN(parsedAmount) ? 0 : parsedAmount,
       dueLabel: dueLabel.trim(),
+          created_at: Date.now(),
       color,
     };
 

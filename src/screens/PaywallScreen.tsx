@@ -1,5 +1,6 @@
 import React from 'react';
 import {
+  ActivityIndicator,
   Alert,
   Modal,
   ScrollView,
@@ -9,6 +10,7 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useIAP } from '../hooks/useIAP';
 import { useAuth } from '../store/authStore';
 import { useMembership } from '../store/membershipStore';
 import type { MembershipTier } from '../types/index';
@@ -19,11 +21,7 @@ import { styles } from './PaywallScreen.styles';
 interface TierData {
   id: MembershipTier;
   name: string;
-  priceMonthly: string;
-  priceAnnual: string | null;
-  priceLifetime: string | null;
   features: string[];
-  ctaLabel: string | null;
   recommended: boolean;
 }
 
@@ -32,15 +30,25 @@ interface PaywallScreenProps {
   onClose: () => void;
 }
 
+// ── SKU maps ───────────────────────────────────────────────────────────────
+
+const LITE_SKUS = {
+  monthly: 'moniqo_lite_monthly',
+  annual: 'moniqo_lite_annual',
+} as const;
+
+const FULL_SKUS = {
+  monthly: 'moniqo_full_monthly',
+  annual: 'moniqo_full_annual',
+  lifetime: 'moniqo_full_lifetime',
+} as const;
+
 // ── Static tier data ───────────────────────────────────────────────────────
 
 const TIERS: TierData[] = [
   {
     id: 'free',
     name: 'Free',
-    priceMonthly: 'Free forever',
-    priceAnnual: null,
-    priceLifetime: null,
     features: [
       'Unlimited transactions',
       'All account types',
@@ -48,15 +56,11 @@ const TIERS: TierData[] = [
       'Up to 5 custom categories',
       '3 months analytics history',
     ],
-    ctaLabel: null,
     recommended: false,
   },
   {
     id: 'premium_lite',
     name: 'Premium Lite',
-    priceMonthly: 'Rs.49 / month',
-    priceAnnual: 'Rs.399 / year',
-    priceLifetime: null,
     features: [
       'Everything in Free',
       'Unlimited budgets & categories',
@@ -64,15 +68,11 @@ const TIERS: TierData[] = [
       'App lock (biometrics / PIN)',
       'Recurring transactions',
     ],
-    ctaLabel: 'Upgrade to Lite',
     recommended: false,
   },
   {
     id: 'premium_full',
     name: 'Premium Full',
-    priceMonthly: 'Rs.149 / month',
-    priceAnnual: 'Rs.999 / year',
-    priceLifetime: 'Rs.2499 lifetime',
     features: [
       'Everything in Lite',
       'Zero ads',
@@ -82,7 +82,6 @@ const TIERS: TierData[] = [
       'Multi-currency',
       'Home screen widget',
     ],
-    ctaLabel: 'Upgrade to Full',
     recommended: true,
   },
 ];
@@ -120,22 +119,129 @@ const FeatureRow: React.FC<FeatureRowProps> = ({ text, isActive, isFree }) => {
 interface TierCardProps {
   tier: TierData;
   currentTier: MembershipTier;
-  onUpgrade: (label: string) => void;
+  onPurchase: (sku: string) => void;
+  purchasing: string | null;
+  getPrice: (sku: string) => string;
 }
 
 const TierCard: React.FC<TierCardProps> = ({
   tier,
   currentTier,
-  onUpgrade,
+  onPurchase,
+  purchasing,
+  getPrice,
 }) => {
   const isActive = currentTier === tier.id;
   const isFree = tier.id === 'free';
+  const isDisabled = purchasing !== null;
 
   const cardStyle = [
     styles.card,
     isActive && styles.cardActive,
     tier.recommended && !isActive && styles.cardRecommended,
   ];
+
+  const renderPurchaseButtons = () => {
+    if (isFree) {
+      return (
+        <View style={styles.currentPlanRow}>
+          <View style={styles.currentPlanCheck}>
+            <Text style={styles.currentPlanCheckText}>{'v'}</Text>
+          </View>
+          <Text style={styles.currentPlanText}>Your current plan</Text>
+        </View>
+      );
+    }
+
+    if (tier.id === 'premium_lite') {
+      return (
+        <View style={{ gap: 8, marginTop: 4 }}>
+          {(
+            [
+              { sku: LITE_SKUS.monthly, label: 'Monthly' },
+              { sku: LITE_SKUS.annual, label: 'Annual' },
+            ] as const
+          ).map(({ sku, label }) => {
+            const isPurchasing = purchasing === sku;
+            return (
+              <TouchableOpacity
+                key={sku}
+                style={[
+                  styles.ctaButton,
+                  styles.ctaButtonLite,
+                  isDisabled && { opacity: 0.6 },
+                ]}
+                onPress={() => onPurchase(sku)}
+                disabled={isDisabled}
+                activeOpacity={0.8}
+              >
+                {isPurchasing ? (
+                  <ActivityIndicator size="small" color="#2B3FE8" />
+                ) : (
+                  <Text
+                    style={[styles.ctaButtonText, styles.ctaButtonTextLite]}
+                  >
+                    {`${label}  ${getPrice(sku)}`}
+                  </Text>
+                )}
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+      );
+    }
+
+    if (tier.id === 'premium_full') {
+      return (
+        <View style={{ gap: 8, marginTop: 4 }}>
+          {(
+            [
+              { sku: FULL_SKUS.monthly, label: 'Monthly', isLifetime: false },
+              { sku: FULL_SKUS.annual, label: 'Annual', isLifetime: false },
+              { sku: FULL_SKUS.lifetime, label: 'Lifetime', isLifetime: true },
+            ] as const
+          ).map(({ sku, label, isLifetime }) => {
+            const isPurchasing = purchasing === sku;
+            return (
+              <TouchableOpacity
+                key={sku}
+                style={[
+                  styles.ctaButton,
+                  isLifetime && {
+                    backgroundColor: 'transparent',
+                    borderWidth: 2,
+                    borderColor: '#22C55E',
+                  },
+                  isDisabled && { opacity: 0.6 },
+                ]}
+                onPress={() => onPurchase(sku)}
+                disabled={isDisabled}
+                activeOpacity={0.8}
+              >
+                {isPurchasing ? (
+                  <ActivityIndicator
+                    size="small"
+                    color={isLifetime ? '#22C55E' : '#FFFFFF'}
+                  />
+                ) : (
+                  <Text
+                    style={[
+                      styles.ctaButtonText,
+                      isLifetime && { color: '#22C55E' },
+                    ]}
+                  >
+                    {`${label}  ${getPrice(sku)}`}
+                  </Text>
+                )}
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+      );
+    }
+
+    return null;
+  };
 
   return (
     <View style={cardStyle}>
@@ -156,23 +262,6 @@ const TierCard: React.FC<TierCardProps> = ({
               </View>
             )}
           </View>
-
-          <View style={styles.priceBlock}>
-            <Text style={isFree ? styles.priceFree : styles.priceMain}>
-              {isFree ? tier.priceMonthly : tier.priceMonthly.split(' ')[0]}
-            </Text>
-            {!isFree && (
-              <Text style={styles.priceAnnual}>
-                {tier.priceMonthly.split(' ').slice(1).join(' ')}
-              </Text>
-            )}
-            {tier.priceAnnual && (
-              <Text style={styles.priceAnnual}>{tier.priceAnnual}</Text>
-            )}
-            {tier.priceLifetime && (
-              <Text style={styles.priceLifetime}>{tier.priceLifetime}</Text>
-            )}
-          </View>
         </View>
 
         <View style={styles.divider} />
@@ -189,33 +278,8 @@ const TierCard: React.FC<TierCardProps> = ({
           ))}
         </View>
 
-        {/* CTA */}
-        {tier.ctaLabel ? (
-          <TouchableOpacity
-            style={[
-              styles.ctaButton,
-              tier.id === 'premium_lite' && styles.ctaButtonLite,
-            ]}
-            onPress={() => onUpgrade(tier.ctaLabel as string)}
-            activeOpacity={0.8}
-          >
-            <Text
-              style={[
-                styles.ctaButtonText,
-                tier.id === 'premium_lite' && styles.ctaButtonTextLite,
-              ]}
-            >
-              {tier.ctaLabel}
-            </Text>
-          </TouchableOpacity>
-        ) : (
-          <View style={styles.currentPlanRow}>
-            <View style={styles.currentPlanCheck}>
-              <Text style={styles.currentPlanCheckText}>{'v'}</Text>
-            </View>
-            <Text style={styles.currentPlanText}>Your current plan</Text>
-          </View>
-        )}
+        {/* Purchase buttons */}
+        {renderPurchaseButtons()}
       </View>
     </View>
   );
@@ -225,14 +289,20 @@ const TierCard: React.FC<TierCardProps> = ({
 
 const PaywallScreen: React.FC<PaywallScreenProps> = ({ visible, onClose }) => {
   const { tier, isTrialActive, trialDaysLeft } = useMembership();
-  const { isGuest } = useAuth();
+  const { user, isGuest } = useAuth();
+  const {
+    state: iapState,
+    purchase,
+    restore,
+    getPrice,
+  } = useIAP(user?.uid ?? null, onClose);
 
-  const handleUpgrade = (_label: string) => {
-    Alert.alert(
-      'Coming Soon',
-      'In-app purchases will be available in the next update.',
-      [{ text: 'OK', style: 'default' }],
-    );
+  const handleUpgrade = async (sku: string) => {
+    if (!user) {
+      Alert.alert('Sign in required', 'Please sign in to purchase.');
+      return;
+    }
+    await purchase(sku);
   };
 
   const handleSignIn = () => {
@@ -304,14 +374,59 @@ const PaywallScreen: React.FC<PaywallScreenProps> = ({ visible, onClose }) => {
             ) : (
               <>
                 <Text style={styles.sectionLabel}>Choose your plan</Text>
+
                 {TIERS.map(tierData => (
                   <TierCard
                     key={tierData.id}
                     tier={tierData}
                     currentTier={tier}
-                    onUpgrade={handleUpgrade}
+                    onPurchase={handleUpgrade}
+                    purchasing={iapState.purchasing}
+                    getPrice={getPrice}
                   />
                 ))}
+
+                {/* IAP error */}
+                {iapState.error ? (
+                  <Text
+                    style={{
+                      color: '#EF4444',
+                      fontSize: 13,
+                      textAlign: 'center',
+                      marginTop: 8,
+                      marginHorizontal: 16,
+                    }}
+                  >
+                    {iapState.error}
+                  </Text>
+                ) : null}
+
+                {/* Restore purchases */}
+                <TouchableOpacity
+                  onPress={restore}
+                  disabled={iapState.restoring}
+                  activeOpacity={0.7}
+                  style={{
+                    alignItems: 'center',
+                    paddingVertical: 12,
+                    marginTop: 4,
+                  }}
+                >
+                  {iapState.restoring ? (
+                    <ActivityIndicator size="small" color="#94A3B8" />
+                  ) : (
+                    <Text
+                      style={{
+                        color: '#94A3B8',
+                        fontSize: 13,
+                        textDecorationLine: 'underline',
+                      }}
+                    >
+                      Restore Purchases
+                    </Text>
+                  )}
+                </TouchableOpacity>
+
                 <Text style={styles.footerNote}>
                   {
                     'Prices are in Indian Rupees (INR). Subscriptions renew automatically and can be cancelled anytime.'
