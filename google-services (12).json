@@ -1,0 +1,46 @@
+{
+  "project_info": {
+    "project_number": "377396948837",
+    "project_id": "moniqo-cc889",
+    "storage_bucket": "moniqo-cc889.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:377396948837:android:b172dcfe75154eb699fb8c",
+        "android_client_info": {
+          "package_name": "com.ph.moniqo"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "377396948837-6oarsnto4b0hmfguns16t6k89ce71kr7.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB2E9Y9lHl2kyMe7Xq7tEnqJIL8w3W2mS0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "377396948837-6oarsnto4b0hmfguns16t6k89ce71kr7.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "377396948837-rbeffu8kfs4bvh3276iplp7m8q15g0d8.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.ph.moniqo"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
