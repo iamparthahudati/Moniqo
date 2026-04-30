@@ -4,46 +4,36 @@ These are the manual steps only you can do — they require access to Firebase C
 
 ---
 
-## 1. Google Sign-In — Web Client ID (CRITICAL — breaks Google login)
+## 1. Add SHA Fingerprints to Firebase (CRITICAL — Android Google Sign-In won't work without this)
 
-**File:** `src/services/authService.ts`
+The `webClientId` is already set in `src/services/authService.ts`. But Android Google Sign-In
+also requires your keystore fingerprints registered in Firebase so it can verify the app identity.
 
-```ts
-GoogleSignin.configure({
-  webClientId: 'YOUR_WEB_CLIENT_ID', // ← replace this
-  iosClientId:
-    '377396948837-rbeffu8kfs4bvh3276iplp7m8q15g0d8.apps.googleusercontent.com',
-});
+### Fingerprints (already generated — just add these in Firebase Console)
+
+**Debug keystore** (for development builds):
+
+```
+SHA-1:   5E:8F:16:06:2E:A3:CD:2C:4A:0D:54:78:76:BA:A6:F3:8C:AB:F6:25
+SHA-256: FA:C6:17:45:DC:09:03:78:6F:B9:ED:E6:2A:96:2B:39:9F:73:48:F0:BB:6F:89:9B:83:32:66:75:91:03:3B:9C
 ```
 
-**Why it's missing:** Your `google-services.json` has an empty `oauth_client: []` array.
-This happens because no SHA-1 fingerprint has been added to the Android app in Firebase Console yet.
-Google Sign-In on Android will not work until this is done.
+**Release keystore** (`moniqo-release.keystore`) — for production / Play Store:
+
+```
+SHA-1:   3F:F4:67:70:13:11:A3:FE:FD:B5:BA:B9:F7:2B:C9:45:D4:62:81:8C
+SHA-256: 2F:8F:15:B8:F2:F1:DA:12:24:AF:D1:83:D8:3F:79:9F:C4:17:3C:74:1D:23:3F:51:E1:DC:09:FC:30:12:C6:A1
+```
 
 **Steps:**
 
-1. Get your debug SHA-1:
-
-   ```bash
-   cd android && ./gradlew signingReport
-   ```
-
-   Look for the `debug` variant SHA-1 and SHA-256.
-
-2. Firebase Console → Project Settings → General → Your Android app → "Add fingerprint"
-   Add both SHA-1 and SHA-256.
-
-3. Download the updated `google-services.json` and replace `android/app/google-services.json`.
-   The new file will have an `oauth_client` entry with a `client_type: 3` (web client).
-
-4. Copy the `client_id` from that entry — it looks like:
-   `377396948837-XXXXXXXXXXXX.apps.googleusercontent.com`
-
-5. Replace `'YOUR_WEB_CLIENT_ID'` in `src/services/authService.ts` with that value.
+1. Firebase Console → Project Settings → General → Your Android app (`com.ph.moniqo`)
+2. Click **"Add fingerprint"** — add all 4 values above (both SHA-1 and SHA-256 for both keystores)
+3. Download the updated `google-services.json` and replace `android/app/google-services.json`
 
 > **iOS note:** The `iosClientId` is already correctly set from `GoogleService-Info.plist`.
 > The `REVERSED_CLIENT_ID` URL scheme in `Info.plist` also matches — iOS Google Sign-In is ready.
-377396948837-6oarsnto4b0hmfguns16t6k89ce71kr7.apps.googleusercontent.com
+
 ---
 
 ## 2. Firebase Phone Auth — Enable in Console
@@ -63,7 +53,7 @@ Google Sign-In on Android will not work until this is done.
 **Steps:**
 
 1. Firebase Console → Firestore Database → Create database
-2. Start in **production mode**
+2. Start in **production mode**, pick region `asia-south1` (Mumbai) for India
 3. Go to Rules tab and paste:
 
 ```js
@@ -77,28 +67,26 @@ service cloud.firestore {
 }
 ```
 
-4. Publish the rules
+4. Click **Publish**
 
 ---
 
-## 4. Firestore — Composite Indexes
+## 4. Firestore — Composite Index on Transactions
 
-The transactions query orders by `date DESC` then `created_at DESC`. Firestore requires a composite index for this.
+The transactions listener orders by `date DESC` then `created_at DESC` — Firestore needs a
+composite index for this. The easiest way is to let the app tell you:
 
-**Steps:**
-
-1. Firebase Console → Firestore → Indexes → Composite → Add index
-2. Collection: `transactions` (this is a sub-collection — Firestore will auto-detect it on first query)
-3. Fields:
-   - `date` — Descending
-   - `created_at` — Descending
-4. Query scope: Collection
-
-> Alternatively, run the app and Firestore will log a direct link in the console to create the missing index automatically.
+1. Run the app after Firestore is created
+2. On first load, Firestore will log an error in Metro/Xcode with a direct link:
+   ```
+   The query requires an index. You can create it here: https://console.firebase.google.com/...
+   ```
+3. Tap/open that link → Firebase Console opens with the index pre-filled → click **Create**
+4. Wait ~2 minutes for it to build
 
 ---
 
-## 5. Apple Sign-In (Optional — required for App Store)
+## 5. Apple Sign-In (Optional — required before App Store submission)
 
 If you plan to submit to the App Store, Apple requires Sign in with Apple when any third-party login is offered.
 
@@ -109,33 +97,33 @@ If you plan to submit to the App Store, Apple requires Sign in with Apple when a
 3. In Xcode → your target → Signing & Capabilities → add "Sign In with Apple"
 4. Install: `@invertase/react-native-apple-authentication`
 
-This can be done later before App Store submission.
-
 ---
 
 ## Summary Checklist
 
-| #   | Task                                      | Where                             | Status   |
-| --- | ----------------------------------------- | --------------------------------- | -------- |
-| 1   | Add SHA-1 + SHA-256 fingerprints          | Firebase Console → Android app    | Pending  |
-| 2   | Download updated `google-services.json`   | Firebase Console → Android app    | Pending  |
-| 3   | Replace `webClientId` in `authService.ts` | From updated google-services.json | Pending  |
-| 4   | Enable Phone + Google auth providers      | Firebase Console → Authentication | Pending  |
-| 5   | Create Firestore database + set rules     | Firebase Console → Firestore      | Pending  |
-| 6   | Add composite index on `transactions`     | Firebase Console → Firestore      | Pending  |
-| 7   | Apple Sign-In (before App Store only)     | Apple Developer + Xcode           | Optional |
+| #   | Task                                                 | Status   |
+| --- | ---------------------------------------------------- | -------- |
+| 1   | `webClientId` set in `authService.ts`                | Done     |
+| 2   | iOS `iosClientId` set in `authService.ts`            | Done     |
+| 3   | iOS URL scheme set in `Info.plist`                   | Done     |
+| 4   | Android `build.gradle` Google Services plugin        | Done     |
+| 5   | iOS Podfile Firebase static framework                | Done     |
+| 6   | Add debug SHA-1 + SHA-256 fingerprints in Firebase   | Pending  |
+| 7   | Add release SHA-1 + SHA-256 fingerprints in Firebase | Pending  |
+| 8   | Download updated `google-services.json`              | Pending  |
+| 9   | Enable Phone + Google auth providers in Firebase     | Pending  |
+| 10  | Create Firestore database + set security rules       | Pending  |
+| 11  | Create composite index on `transactions`             | Pending  |
+| 12  | Apple Sign-In (before App Store only)                | Optional |
 
 ---
 
 ## What Is Already Done (Code Side)
 
-| Item                                    | Status |
+| File                                    | Status |
 | --------------------------------------- | ------ |
 | `google-services.json` added            | Done   |
 | `GoogleService-Info.plist` added        | Done   |
-| iOS `Info.plist` URL scheme set         | Done   |
-| Android `build.gradle` plugins added    | Done   |
-| iOS `Podfile` Firebase static framework | Done   |
 | `firebase.ts` (analytics + crashlytics) | Done   |
 | `authService.ts` (OTP + Google)         | Done   |
 | `authStore.tsx` (auth state + listener) | Done   |
@@ -147,4 +135,3 @@ This can be done later before App Store submission.
 | `analytics.ts` (client-side)            | Done   |
 | `AnalyticsScreen.tsx` → analytics.ts    | Done   |
 | `App.tsx` wired with all providers      | Done   |
-| Firestore security rules (code sample)  | Done   |

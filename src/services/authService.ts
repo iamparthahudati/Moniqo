@@ -3,7 +3,8 @@ import { GoogleSignin } from '@react-native-google-signin/google-signin';
 
 export function configureGoogleSignIn(): void {
   GoogleSignin.configure({
-    webClientId: 'YOUR_WEB_CLIENT_ID', // from Firebase Console → Project Settings → Web client OAuth ID
+    webClientId:
+      '377396948837-6oarsnto4b0hmfguns16t6k89ce71kr7.apps.googleusercontent.com',
     iosClientId:
       '377396948837-rbeffu8kfs4bvh3276iplp7m8q15g0d8.apps.googleusercontent.com',
   });
