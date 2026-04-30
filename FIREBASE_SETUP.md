@@ -43,7 +43,7 @@ Google Sign-In on Android will not work until this is done.
 
 > **iOS note:** The `iosClientId` is already correctly set from `GoogleService-Info.plist`.
 > The `REVERSED_CLIENT_ID` URL scheme in `Info.plist` also matches — iOS Google Sign-In is ready.
-
+377396948837-6oarsnto4b0hmfguns16t6k89ce71kr7.apps.googleusercontent.com
 ---
 
 ## 2. Firebase Phone Auth — Enable in Console
