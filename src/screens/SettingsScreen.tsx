@@ -11,6 +11,7 @@ import ScreenHeader from '../components/ui/ScreenHeader';
 import useNotifications from '../hooks/useNotifications';
 import { useToggle } from '../hooks/useToggle';
 import { signOut } from '../services/authService';
+import { useMembership } from '../store/membershipStore';
 import { styles } from './SettingsScreen.styles';
 
 // ── Settings screen ───────────────────────────────────────────────────────────
@@ -20,6 +21,8 @@ interface SettingsScreenProps {
 }
 
 const SettingsScreen: React.FC<SettingsScreenProps> = ({ onUpgradePress }) => {
+  const { canAccess } = useMembership();
+
   // Notification toggles
   const [txAlerts, toggleTxAlerts] = useToggle(true);
   const [monthlyReport, toggleMonthlyReport] = useToggle(true);
@@ -169,7 +172,20 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ onUpgradePress }) => {
       label: 'Face ID / Biometrics',
       type: 'value',
       value: 'Off',
-      onPress: () => Alert.alert('Biometrics', 'Biometric lock coming soon.'),
+      onPress: () => {
+        if (!canAccess('app_lock')) {
+          Alert.alert(
+            'Premium Required',
+            'App lock is available on Premium Lite and Full plans.',
+            [
+              { text: 'Cancel', style: 'cancel' },
+              { text: 'Upgrade', onPress: onUpgradePress },
+            ],
+          );
+          return;
+        }
+        Alert.alert('Biometrics', 'Biometric lock coming soon.');
+      },
     },
     {
       id: 'passcode',
@@ -177,7 +193,20 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ onUpgradePress }) => {
       iconBg: 'rgba(249,115,22,0.1)',
       label: 'App Passcode',
       type: 'chevron',
-      onPress: () => Alert.alert('Passcode', 'Passcode setup coming soon.'),
+      onPress: () => {
+        if (!canAccess('app_lock')) {
+          Alert.alert(
+            'Premium Required',
+            'App lock is available on Premium Lite and Full plans.',
+            [
+              { text: 'Cancel', style: 'cancel' },
+              { text: 'Upgrade', onPress: onUpgradePress },
+            ],
+          );
+          return;
+        }
+        Alert.alert('Biometrics', 'Biometric lock coming soon.');
+      },
     },
   ];
 
@@ -188,7 +217,20 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ onUpgradePress }) => {
       iconBg: 'rgba(34,197,94,0.1)',
       label: 'Export Data',
       type: 'chevron',
-      onPress: () => Alert.alert('Export', 'Data export coming soon.'),
+      onPress: () => {
+        if (!canAccess('csv_export')) {
+          Alert.alert(
+            'Premium Full Required',
+            'CSV export is available on Premium Full plan.',
+            [
+              { text: 'Cancel', style: 'cancel' },
+              { text: 'Upgrade', onPress: onUpgradePress },
+            ],
+          );
+          return;
+        }
+        Alert.alert('Export', 'Data export coming soon.');
+      },
     },
     {
       id: 'backup',

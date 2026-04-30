@@ -855,3 +855,65 @@ export async function seedDefaultCategories(uid: string): Promise<void> {
     throw error;
   }
 }
+
+// ---------------------------------------------------------------------------
+// Budgets
+// ---------------------------------------------------------------------------
+
+export interface Budget {
+  id: string;
+  categoryId: string;
+  amount: number;
+  period: 'monthly';
+  created_at: number;
+}
+
+const COL_BUDGETS = 'budgets';
+
+export function subscribeToBudgets(
+  uid: string,
+  onChange: (budgets: Budget[]) => void,
+): () => void {
+  return subCol(uid, COL_BUDGETS)
+    .orderBy('created_at', 'asc')
+    .onSnapshot(
+      snapshot => {
+        const budgets = snapshot.docs.map(doc => {
+          const data = doc.data();
+          return {
+            id: data.id ?? doc.id,
+            categoryId: data.categoryId ?? '',
+            amount: data.amount ?? 0,
+            period: 'monthly' as const,
+            created_at: data.created_at ?? 0,
+          };
+        });
+        onChange(budgets);
+      },
+      error => {
+        console.error(
+          '[firestoreService] subscribeToBudgets snapshot error:',
+          error,
+        );
+        onChange([]);
+      },
+    );
+}
+
+export async function upsertBudget(uid: string, budget: Budget): Promise<void> {
+  try {
+    await subCol(uid, COL_BUDGETS).doc(budget.id).set(budget, { merge: true });
+  } catch (error) {
+    console.error('[firestoreService] upsertBudget failed:', error);
+    throw error;
+  }
+}
+
+export async function deleteBudget(uid: string, id: string): Promise<void> {
+  try {
+    await subCol(uid, COL_BUDGETS).doc(id).delete();
+  } catch (error) {
+    console.error('[firestoreService] deleteBudget failed:', error);
+    throw error;
+  }
+}

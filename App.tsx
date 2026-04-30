@@ -54,7 +54,7 @@ const renderTab = (
     case 'Analytics':
       return <AnalyticsScreen />;
     case 'Budget':
-      return <BudgetScreen />;
+      return <BudgetScreen onUpgradePress={onUpgradePress} />;
     case 'Accounts':
       return <AccountsScreen />;
     case 'Settings':

@@ -13,13 +13,13 @@ import {
   View,
 } from 'react-native';
 import ScreenHeader from '../components/ui/ScreenHeader';
-import { Budget } from '../db/repositories/budgetRepository';
-import { AppCategory } from '../db/repositories/categoryRepository';
 import { PlusIcon } from '../icons/Icons';
-import { useBudgets } from '../store/budgetStore';
+import { Budget, useBudgets } from '../store/budgetStore';
 import { useCategories } from '../store/categoriesStore';
+import { useMembership } from '../store/membershipStore';
 import { useTransactions } from '../store/transactionsStore';
 import { Colors } from '../theme/colors';
+import { AppCategory } from '../types';
 import { formatCurrency } from '../utils/formatters';
 import { styles } from './BudgetScreen.styles';
 
@@ -490,10 +490,15 @@ AddBudgetModal.displayName = 'AddBudgetModal';
 
 // ── Screen ────────────────────────────────────────────────────────────────────
 
-const BudgetScreen: React.FC = () => {
+interface BudgetScreenProps {
+  onUpgradePress?: () => void;
+}
+
+const BudgetScreen: React.FC<BudgetScreenProps> = ({ onUpgradePress }) => {
   const { state: budgetState, dispatch } = useBudgets();
   const { expenseCategories } = useCategories();
   const { state: txState } = useTransactions();
+  const { canAccess } = useMembership();
 
   const [modalVisible, setModalVisible] = useState(false);
 
@@ -594,18 +599,47 @@ const BudgetScreen: React.FC = () => {
     [budgetState.budgets.length, totalBudgeted, totalSpent],
   );
 
+  const isAtFreeLimit =
+    !canAccess('budget_unlimited') && budgetState.budgets.length >= 1;
+
+  const handleAddPress = useCallback(() => {
+    if (isAtFreeLimit) {
+      const buttons: {
+        text: string;
+        style?: 'cancel' | 'default' | 'destructive';
+        onPress?: () => void;
+      }[] = [{ text: 'Cancel', style: 'cancel' }];
+      if (onUpgradePress) {
+        buttons.push({ text: 'Upgrade', onPress: onUpgradePress });
+      }
+      Alert.alert(
+        'Upgrade Required',
+        'Free plan includes 1 budget. Upgrade to Premium Lite or Full for unlimited budgets.',
+        buttons,
+      );
+      return;
+    }
+    setModalVisible(true);
+  }, [isAtFreeLimit, onUpgradePress]);
+
   const AddButton = useMemo(
     () => (
       <TouchableOpacity
-        style={styles.addButton}
-        onPress={() => setModalVisible(true)}
+        style={[styles.addButton, isAtFreeLimit && { opacity: 0.55 }]}
+        onPress={handleAddPress}
         activeOpacity={0.8}
         hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
       >
-        <PlusIcon size={20} color={Colors.white} />
+        {isAtFreeLimit ? (
+          <Text style={{ fontSize: 16, color: Colors.white }}>
+            {'\uD83D\uDD12'}
+          </Text>
+        ) : (
+          <PlusIcon size={20} color={Colors.white} />
+        )}
       </TouchableOpacity>
     ),
-    [],
+    [isAtFreeLimit, handleAddPress],
   );
 
   return (
