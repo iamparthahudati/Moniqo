@@ -1,16 +1,8 @@
 import { SQLBatchTuple } from '@op-engineering/op-sqlite';
+import { AppCategory } from '../../types';
 import { db } from '../database';
 
-export interface AppCategory {
-  id: string;
-  name: string;
-  emoji: string;
-  type: 'expense' | 'income';
-  color: string;
-  isDefault: boolean;
-  sortOrder: number;
-  created_at: number;
-}
+export type { AppCategory };
 
 const DEFAULT_CATEGORIES: Omit<AppCategory, 'created_at'>[] = [
   {

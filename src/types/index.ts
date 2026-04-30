@@ -152,3 +152,18 @@ export interface UserProfile {
   referredBy?: string;
   createdAt: number;
 }
+
+// ---------------------------------------------------------------------------
+// Category types
+// ---------------------------------------------------------------------------
+
+export interface AppCategory {
+  id: string;
+  name: string;
+  emoji: string;
+  type: 'expense' | 'income';
+  color: string;
+  isDefault: boolean;
+  sortOrder: number;
+  created_at: number;
+}

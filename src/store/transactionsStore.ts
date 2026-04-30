@@ -2,11 +2,18 @@ import React, {
   createContext,
   useCallback,
   useContext,
-  useReducer,
+  useEffect,
+  useRef,
+  useState,
 } from 'react';
-import { generateId, initDatabase } from '../db/database';
-import * as txRepo from '../db/repositories/transactionRepository';
+import {
+  addTransaction,
+  deleteTransaction,
+  subscribeToTransactions,
+  updateTransaction,
+} from '../services/firestoreService';
 import { Transaction } from '../types';
+import { useAuth } from './authStore';
 
 // ── State ─────────────────────────────────────────────────────────────────────
 
@@ -22,8 +29,9 @@ export type TransactionsAction =
   | { type: 'DELETE_TRANSACTION'; payload: { id: string } }
   | { type: 'SET_TRANSACTIONS'; payload: Transaction[] };
 
-// ── Reducer ───────────────────────────────────────────────────────────────────
+// ── Reducer (kept for type-contract parity; state is driven by onSnapshot) ────
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function transactionsReducer(
   state: TransactionsState,
   action: TransactionsAction,
@@ -68,50 +76,67 @@ const TransactionsContext = createContext<TransactionsContextValue | undefined>(
 export function TransactionsProvider(props: {
   children: React.ReactNode;
 }): React.JSX.Element {
-  const [state, rawDispatch] = useReducer(
-    transactionsReducer,
-    undefined,
-    () => {
-      initDatabase();
-      return {
-        transactions: txRepo.getAllTransactions(),
-      };
-    },
-  );
+  const { user } = useAuth();
+  const uid = user?.uid ?? null;
 
-  const dispatch = useCallback((action: TransactionsAction) => {
-    switch (action.type) {
-      case 'ADD_TRANSACTION': {
-        const payload = {
-          ...action.payload,
-          id: action.payload.id || generateId(),
-          created_at: action.payload.created_at ?? Date.now(),
-        };
-        try {
-          txRepo.insertTransaction(payload);
-        } catch (e) {
-          console.error('[TransactionsStore] insertTransaction failed:', e);
-        }
-        rawDispatch({ type: 'ADD_TRANSACTION', payload });
+  const [state, setState] = useState<TransactionsState>({ transactions: [] });
+
+  // Keep uid in a ref so the dispatch callback never goes stale
+  const uidRef = useRef(uid);
+  useEffect(() => {
+    uidRef.current = uid;
+  }, [uid]);
+
+  useEffect(() => {
+    if (!uid) {
+      setState({ transactions: [] });
+      return;
+    }
+
+    const unsubscribe = subscribeToTransactions(
+      uid,
+      (transactions: Transaction[]) => {
+        setState({ transactions });
+      },
+    );
+
+    return () => {
+      unsubscribe();
+    };
+  }, [uid]);
+
+  const dispatch = useCallback<React.Dispatch<TransactionsAction>>(
+    (action: TransactionsAction) => {
+      const currentUid = uidRef.current;
+      if (!currentUid) {
         return;
       }
-      case 'UPDATE_TRANSACTION':
-        try {
-          txRepo.updateTransaction(action.payload);
-        } catch (e) {
-          console.error('[TransactionsStore] updateTransaction failed:', e);
+
+      switch (action.type) {
+        case 'ADD_TRANSACTION': {
+          const { id: _id, ...rest } = action.payload;
+          addTransaction(currentUid, rest).catch(e =>
+            console.error('[TransactionsStore] addTransaction failed:', e),
+          );
+          break;
         }
-        break;
-      case 'DELETE_TRANSACTION':
-        try {
-          txRepo.deleteTransaction(action.payload.id);
-        } catch (e) {
-          console.error('[TransactionsStore] deleteTransaction failed:', e);
-        }
-        break;
-    }
-    rawDispatch(action);
-  }, []);
+        case 'UPDATE_TRANSACTION':
+          updateTransaction(currentUid, action.payload).catch(e =>
+            console.error('[TransactionsStore] updateTransaction failed:', e),
+          );
+          break;
+        case 'DELETE_TRANSACTION':
+          deleteTransaction(currentUid, action.payload.id).catch(e =>
+            console.error('[TransactionsStore] deleteTransaction failed:', e),
+          );
+          break;
+        case 'SET_TRANSACTIONS':
+          // no-op: state is driven by onSnapshot
+          break;
+      }
+    },
+    [],
+  );
 
   return React.createElement(
     TransactionsContext.Provider,
