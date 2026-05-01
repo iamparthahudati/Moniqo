@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { Platform } from 'react-native';
 import type {
   Product,
   ProductSubscription,
@@ -87,6 +88,44 @@ const INITIAL_STATE: IAPState = {
 };
 
 // ---------------------------------------------------------------------------
+// Helper — extract offerToken from a subscription for Android
+// Google Play Billing v5+ requires an offerToken to initiate a subscription purchase.
+// We pick the first available offer token from the subscription's offers list.
+// ---------------------------------------------------------------------------
+
+function getOfferTokenForSku(
+  subscriptions: ProductSubscription[],
+  sku: string,
+): string | undefined {
+  if (Platform.OS !== 'android') return undefined;
+
+  const sub = subscriptions.find(s => {
+    const id =
+      (s as { id?: string; productId?: string }).id ??
+      (s as { productId?: string }).productId;
+    return id === sku;
+  });
+
+  if (!sub) return undefined;
+
+  // react-native-iap v14 exposes subscriptionOffers on Android
+  const offers = (
+    sub as { subscriptionOffers?: Array<{ offerToken?: string }> }
+  ).subscriptionOffers;
+  if (offers && offers.length > 0 && offers[0].offerToken) {
+    return offers[0].offerToken;
+  }
+
+  // Fallback: oneTimePurchaseOfferDetailsAndroid
+  const oneTime = (
+    sub as { oneTimePurchaseOfferDetailsAndroid?: { offerToken?: string } }
+  ).oneTimePurchaseOfferDetailsAndroid;
+  if (oneTime?.offerToken) return oneTime.offerToken;
+
+  return undefined;
+}
+
+// ---------------------------------------------------------------------------
 // Hook
 // ---------------------------------------------------------------------------
 
@@ -104,15 +143,20 @@ export function useIAP(
   const purchaseListenerRef = useRef<{ remove(): void } | null>(null);
   const errorListenerRef = useRef<{ remove(): void } | null>(null);
 
-  // Stable ref so listener callbacks always see the latest uid / onSuccess
+  // Stable refs so listener callbacks always see the latest uid / onSuccess / state
   const uidRef = useRef(uid);
   const onSuccessRef = useRef(onSuccess);
+  const stateRef = useRef(state);
+
   useEffect(() => {
     uidRef.current = uid;
   }, [uid]);
   useEffect(() => {
     onSuccessRef.current = onSuccess;
   }, [onSuccess]);
+  useEffect(() => {
+    stateRef.current = state;
+  }, [state]);
 
   // -------------------------------------------------------------------------
   // Mount / unmount
@@ -124,12 +168,11 @@ export function useIAP(
     const setup = async () => {
       try {
         await initConnection();
-
         if (!mounted) return;
 
         setState(prev => ({ ...prev, connected: true }));
 
-        // Fetch subscriptions and one-time products in parallel
+        // Fetch subscriptions and one-time products
         await Promise.all([
           fetchProducts({ skus: SUBSCRIPTION_SKUS, type: 'subs' }),
           fetchProducts({ skus: ONETIME_SKUS, type: 'in-app' }),
@@ -162,10 +205,14 @@ export function useIAP(
         // Purchase error listener
         errorListenerRef.current = purchaseErrorListener(
           (error: PurchaseError) => {
+            // Code 2 = user cancelled — don't show as error
+            const cancelled =
+              (error as { code?: number | string }).code === 2 ||
+              (error as { code?: number | string }).code === 'E_USER_CANCELLED';
             setState(prev => ({
               ...prev,
               purchasing: null,
-              error: error.message ?? 'An unknown purchase error occurred',
+              error: cancelled ? null : error.message ?? 'Purchase failed',
             }));
           },
         );
@@ -200,11 +247,20 @@ export function useIAP(
       const isSub = SUBSCRIPTION_SKUS.includes(sku);
 
       if (isSub) {
+        // Android requires offerToken for Google Play Billing v5+
+        const offerToken = getOfferTokenForSku(
+          stateRef.current.subscriptions,
+          sku,
+        );
+
         await requestPurchase({
           type: 'subs',
           request: {
             apple: { sku },
-            google: { skus: [sku] },
+            google: {
+              skus: [sku],
+              ...(offerToken ? { offerToken } : {}),
+            },
           },
         });
       } else {
@@ -236,7 +292,6 @@ export function useIAP(
       await restorePurchases();
       const purchases = await getAvailablePurchases();
 
-      // Apply the most-privileged tier found across all restored purchases
       for (const p of purchases) {
         const mapping = SKU_MAP[p.productId];
         if (mapping && uidRef.current) {
@@ -253,19 +308,34 @@ export function useIAP(
     }
   };
 
+  // -------------------------------------------------------------------------
+  // getPrice
+  // -------------------------------------------------------------------------
+
   const getPrice = (sku: string): string => {
     // react-native-iap v14 uses `id` and `displayPrice` on ProductCommon
     const sub = state.subscriptions.find(
-      s => (s as { id?: string }).id === sku,
+      s =>
+        (s as { id?: string; productId?: string }).id === sku ||
+        (s as { productId?: string }).productId === sku,
     );
     if (sub) {
-      const price = (sub as { displayPrice?: string }).displayPrice;
+      const price =
+        (sub as { displayPrice?: string; localizedPrice?: string })
+          .displayPrice ?? (sub as { localizedPrice?: string }).localizedPrice;
       if (price) return price;
     }
 
-    const product = state.products.find(p => (p as { id?: string }).id === sku);
+    const product = state.products.find(
+      p =>
+        (p as { id?: string; productId?: string }).id === sku ||
+        (p as { productId?: string }).productId === sku,
+    );
     if (product) {
-      const price = (product as { displayPrice?: string }).displayPrice;
+      const price =
+        (product as { displayPrice?: string; localizedPrice?: string })
+          .displayPrice ??
+        (product as { localizedPrice?: string }).localizedPrice;
       if (price) return price;
     }
 

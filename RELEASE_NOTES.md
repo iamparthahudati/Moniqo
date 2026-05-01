@@ -111,20 +111,96 @@
 
 ---
 
-## In-App Purchase Product IDs
+## In-App Purchase — Full Setup Details
 
-These exact IDs must be created in both **Google Play Console** and **App Store Connect**:
+---
 
-| Product ID             | Name                           | Type                      | Price   | Description                                                                       |
-| ---------------------- | ------------------------------ | ------------------------- | ------- | --------------------------------------------------------------------------------- |
-| `moniqo_lite_monthly`  | Moniqo Premium Lite — Monthly  | Subscription              | ₹49/mo  | Unlimited budgets, cloud sync, app lock and more. Billed monthly.                 |
-| `moniqo_lite_annual`   | Moniqo Premium Lite — Annual   | Subscription              | ₹399/yr | Unlimited budgets, cloud sync, app lock and more. Save 33% vs monthly.            |
-| `moniqo_full_monthly`  | Moniqo Premium Full — Monthly  | Subscription              | ₹149/mo | All features — CSV export, zero ads, and everything in Lite. Billed monthly.      |
-| `moniqo_full_annual`   | Moniqo Premium Full — Annual   | Subscription              | ₹999/yr | All features — CSV export, zero ads, and everything in Lite. Save 44% vs monthly. |
-| `moniqo_full_lifetime` | Moniqo Premium Full — Lifetime | One-time (non-consumable) | ₹2,499  | All Premium Full features, forever. One-time payment, no subscription.            |
+### Subscriptions (Google Play → Monetisation → Subscriptions)
 
-**Google Play Console:** Monetisation → Subscriptions (for the 4 subs) + One-time products (for lifetime)
-**App Store Connect:** Your app → In-App Purchases → Auto-Renewable Subscription (for subs) + Non-Consumable (for lifetime)
+**1. `moniqo_lite_monthly`**
+- Name: `Moniqo Premium Lite — Monthly`
+- Base Plan ID: `lite-monthly`
+- Billing period: Monthly
+- Price: ₹49
+- Renewal: Auto-renewing
+- Benefits:
+  - Unlimited budgets and categories
+  - Cloud sync and backup across devices
+  - App lock with biometrics or PIN
+  - Recurring transactions
+- Offer ID: `free-trial` | Type: Free trial | Duration: 3 days | Eligibility: New subscribers only
+
+**2. `moniqo_lite_annual`**
+- Name: `Moniqo Premium Lite — Annual`
+- Base Plan ID: `lite-annual`
+- Billing period: Yearly
+- Price: ₹399
+- Renewal: Auto-renewing
+- Benefits:
+  - Unlimited budgets and categories
+  - Cloud sync and backup across devices
+  - App lock with biometrics or PIN
+  - Recurring transactions
+- Offer ID: `free-trial` | Type: Free trial | Duration: 3 days | Eligibility: New subscribers only
+
+**3. `moniqo_full_monthly`**
+- Name: `Moniqo Premium Full — Monthly`
+- Base Plan ID: `full-monthly`
+- Billing period: Monthly
+- Price: ₹149
+- Renewal: Auto-renewing
+- Benefits:
+  - Everything in Premium Lite
+  - Zero ads
+  - CSV export
+  - Splitwise expense splitting
+  - SMS auto-parsing (Android)
+  - Multi-currency support
+  - Home screen widget
+- Offer ID: `free-trial` | Type: Free trial | Duration: 3 days | Eligibility: New subscribers only
+
+**4. `moniqo_full_annual`**
+- Name: `Moniqo Premium Full — Annual`
+- Base Plan ID: `full-annual`
+- Billing period: Yearly
+- Price: ₹999
+- Renewal: Auto-renewing
+- Benefits:
+  - Everything in Premium Lite
+  - Zero ads
+  - CSV export
+  - Splitwise expense splitting
+  - SMS auto-parsing (Android)
+  - Multi-currency support
+  - Home screen widget
+- Offer ID: `free-trial` | Type: Free trial | Duration: 3 days | Eligibility: New subscribers only
+
+> After adding benefits, base plan, and offer — click **Activate** on each base plan to make it available to users.
+
+---
+
+### One-Time Product (Google Play → Monetisation → One-time products)
+
+**5. `moniqo_full_lifetime`**
+- Name: `Moniqo Premium Full — Lifetime`
+- Purchase Option ID: `lifetime-purchase`
+- Price: ₹2,499
+- Type: One-time (non-consumable)
+- Description: All Premium Full features, forever. One-time payment, no subscription.
+
+---
+
+### App Store Connect (Your app → In-App Purchases)
+
+Create a **Subscription Group** named `Moniqo Premium` and add all 4 subscriptions to it.
+
+| Product ID             | Type                        | Reference Name                  | Price  |
+| ---------------------- | --------------------------- | ------------------------------- | ------ |
+| `moniqo_lite_monthly`  | Auto-Renewable Subscription | Moniqo Premium Lite Monthly     | ₹49    |
+| `moniqo_lite_annual`   | Auto-Renewable Subscription | Moniqo Premium Lite Annual      | ₹399   |
+| `moniqo_full_monthly`  | Auto-Renewable Subscription | Moniqo Premium Full Monthly     | ₹149   |
+| `moniqo_full_annual`   | Auto-Renewable Subscription | Moniqo Premium Full Annual      | ₹999   |
+| `moniqo_full_lifetime` | Non-Consumable              | Moniqo Premium Full Lifetime    | ₹2,499 |
 
 ---
 
