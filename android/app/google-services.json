@@ -14,6 +14,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "377396948837-dko995eumvie8k0d78lqhlstdf4t7359.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.ph.moniqo",
+            "certificate_hash": "5e8f16062ea3cd2c4a0d547876baa6f38cabf625"
+          }
+        },
+        {
           "client_id": "377396948837-v1if7hcunekck2nn7k9q4n7jka088ca8.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
