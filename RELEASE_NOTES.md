@@ -179,9 +179,26 @@
 - [ ] Release AAB built (`./gradlew bundleRelease`)
 - [ ] Play Console — app created, internal track upload
 - [ ] Play Console — store listing (description, screenshots, icon)
-- [ ] Play Console — in-app products created (Premium Lite, Premium Full)
+- [ ] Play Console — in-app products created (see Product IDs below)
 - [ ] Play Console — privacy policy URL added
 - [ ] Play Console — content rating questionnaire completed
+
+### In-App Purchase Product IDs
+
+These exact IDs must be created in both **Google Play Console** and **App Store Connect**:
+
+| Product ID             | Type                      | Price   | Plan         |
+| ---------------------- | ------------------------- | ------- | ------------ |
+| `moniqo_lite_monthly`  | Subscription              | ₹49/mo  | Premium Lite |
+| `moniqo_lite_annual`   | Subscription              | ₹399/yr | Premium Lite |
+| `moniqo_full_monthly`  | Subscription              | ₹149/mo | Premium Full |
+| `moniqo_full_annual`   | Subscription              | ₹999/yr | Premium Full |
+| `moniqo_full_lifetime` | One-time (non-consumable) | ₹2,499  | Premium Full |
+
+**Google Play Console:** Monetisation → Subscriptions (for the 4 subs) + One-time products (for lifetime)
+**App Store Connect:** Your app → In-App Purchases → Create → Auto-Renewable Subscription (for subs) + Non-Consumable (for lifetime)
+
+---
 
 ### iOS (App Store)
 
