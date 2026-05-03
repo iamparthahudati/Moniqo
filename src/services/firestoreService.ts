@@ -721,24 +721,24 @@ export function subscribeToTransactions(
   uid: string,
   onChange: (transactions: Transaction[]) => void,
 ): () => void {
-  return subCol(uid, COL.TRANSACTIONS)
-    .orderBy('date', 'desc')
-    .orderBy('created_at', 'desc')
-    .onSnapshot(
-      snapshot => {
-        const transactions = snapshot.docs.map(doc =>
-          mapDocToTransaction(doc.data()),
-        );
-        onChange(transactions);
-      },
-      error => {
-        console.error(
-          '[firestoreService] subscribeToTransactions snapshot error:',
-          error,
-        );
-        onChange([]);
-      },
-    );
+  return subCol(uid, COL.TRANSACTIONS).onSnapshot(
+    snapshot => {
+      const transactions = snapshot.docs
+        .map(doc => mapDocToTransaction(doc.data()))
+        .sort((a, b) => {
+          if (b.date !== a.date) return b.date.localeCompare(a.date);
+          return b.created_at - a.created_at;
+        });
+      onChange(transactions);
+    },
+    error => {
+      console.error(
+        '[firestoreService] subscribeToTransactions snapshot error:',
+        error,
+      );
+      onChange([]);
+    },
+  );
 }
 
 export async function addTransaction(
