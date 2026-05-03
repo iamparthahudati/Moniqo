@@ -1,10 +1,49 @@
-# Add project specific ProGuard rules here.
-# By default, the flags in this file are appended to flags specified
-# in /usr/local/Cellar/android-sdk/24.3.3/tools/proguard/proguard-android.txt
-# You can edit the include path and order by changing the proguardFiles
-# directive in build.gradle.
-#
-# For more details, see
-#   http://developer.android.com/guide/developing/tools/proguard.html
+# ── React Native ──────────────────────────────────────────────────────────────
+-keep class com.facebook.react.** { *; }
+-keep class com.facebook.hermes.** { *; }
+-keep class com.facebook.jni.** { *; }
+-dontwarn com.facebook.react.**
+-dontwarn com.facebook.hermes.**
 
-# Add any project specific keep options here:
+# ── React Native New Architecture / Nitro Modules ─────────────────────────────
+-keep class com.margelo.nitro.** { *; }
+-dontwarn com.margelo.nitro.**
+
+# ── Firebase ──────────────────────────────────────────────────────────────────
+-keep class com.google.firebase.** { *; }
+-keep class com.google.android.gms.** { *; }
+-dontwarn com.google.firebase.**
+-dontwarn com.google.android.gms.**
+
+# ── Firebase Crashlytics ──────────────────────────────────────────────────────
+-keepattributes SourceFile,LineNumberTable
+-keep public class * extends java.lang.Exception
+-keep class com.google.firebase.crashlytics.** { *; }
+
+# ── Google Sign-In ────────────────────────────────────────────────────────────
+-keep class com.google.android.gms.auth.** { *; }
+-keep class com.google.android.gms.common.** { *; }
+
+# ── react-native-iap / Google Play Billing ────────────────────────────────────
+-keep class com.android.billingclient.** { *; }
+-keep class com.dooboolab.rniap.** { *; }
+-dontwarn com.android.billingclient.**
+
+# ── Notifee ───────────────────────────────────────────────────────────────────
+-keep class io.invertase.notifee.** { *; }
+-dontwarn io.invertase.notifee.**
+
+# ── Kotlin ────────────────────────────────────────────────────────────────────
+-keep class kotlin.** { *; }
+-keep class kotlinx.** { *; }
+-dontwarn kotlin.**
+-dontwarn kotlinx.**
+
+# ── OkHttp / Networking ───────────────────────────────────────────────────────
+-dontwarn okhttp3.**
+-dontwarn okio.**
+
+# ── General ───────────────────────────────────────────────────────────────────
+-keepattributes *Annotation*
+-keepattributes Signature
+-keepattributes Exceptions

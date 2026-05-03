@@ -17,16 +17,20 @@ import useNotifications from './src/hooks/useNotifications';
 import { PlusIcon } from './src/icons/Icons';
 import AccountsScreen from './src/screens/AccountScreen';
 import AnalyticsScreen from './src/screens/AnalyticsScreen';
+import BudgetScreen from './src/screens/BudgetScreen';
 import DashboardScreen from './src/screens/DashboardScreen';
 import LoginScreen from './src/screens/LoginScreen';
 import OtpScreen from './src/screens/OtpScreen';
+import PaywallScreen from './src/screens/PaywallScreen';
 import SettingsScreen from './src/screens/SettingsScreen';
 import TransactionHistoryScreen from './src/screens/TransactionHistoryScreen';
 import WelcomeScreen from './src/screens/WelcomeScreen';
 import { logScreenView } from './src/services/firebase';
 import { AccountsProvider } from './src/store/accountsStore';
 import { AuthProvider, useAuth } from './src/store/authStore';
+import { BudgetProvider } from './src/store/budgetStore';
 import { CategoriesProvider } from './src/store/categoriesStore';
+import { MembershipProvider } from './src/store/membershipStore';
 import { TransactionsProvider } from './src/store/transactionsStore';
 import { Colors } from './src/theme/colors';
 import { TabName } from './src/types';
@@ -39,16 +43,22 @@ type AuthScreen = 'welcome' | 'login' | 'otp';
 // ---------------------------------------------------------------------------
 // Main app content — shown after authentication
 // ---------------------------------------------------------------------------
-const renderTab = (tab: TabName, onSeeAll: () => void) => {
+const renderTab = (
+  tab: TabName,
+  onSeeAll: () => void,
+  onUpgradePress: () => void,
+) => {
   switch (tab) {
     case 'Dashboard':
       return <DashboardScreen onSeeAll={onSeeAll} />;
     case 'Analytics':
       return <AnalyticsScreen />;
+    case 'Budget':
+      return <BudgetScreen onUpgradePress={onUpgradePress} />;
     case 'Accounts':
       return <AccountsScreen />;
     case 'Settings':
-      return <SettingsScreen />;
+      return <SettingsScreen onUpgradePress={onUpgradePress} />;
   }
 };
 
@@ -63,6 +73,7 @@ function AppContent() {
   const [transferVisible, setTransferVisible] = useState(false);
   const [transactionHistoryVisible, setTransactionHistoryVisible] =
     useState(false);
+  const [paywallVisible, setPaywallVisible] = useState(false);
 
   useEffect(() => {
     logScreenView(activeTab);
@@ -89,7 +100,6 @@ function AppContent() {
   }, []);
 
   const fabBottom = 64 + insets.bottom + 16;
-  const isDashboard = activeTab === 'Dashboard';
 
   return (
     <View style={[styles.root, { paddingTop: insets.top }]}>
@@ -100,20 +110,22 @@ function AppContent() {
       />
 
       <View style={styles.screenContainer}>
-        {renderTab(activeTab, () => setTransactionHistoryVisible(true))}
+        {renderTab(
+          activeTab,
+          () => setTransactionHistoryVisible(true),
+          () => setPaywallVisible(true),
+        )}
       </View>
 
       <BottomNavBar activeTab={activeTab} onTabPress={handleTabPress} />
 
-      {isDashboard && (
-        <TouchableOpacity
-          style={[styles.fab, { bottom: fabBottom }]}
-          onPress={handleFabPress}
-          activeOpacity={0.85}
-        >
-          <PlusIcon size={26} color="#FFFFFF" />
-        </TouchableOpacity>
-      )}
+      <TouchableOpacity
+        style={[styles.fab, { bottom: fabBottom }]}
+        onPress={handleFabPress}
+        activeOpacity={0.85}
+      >
+        <PlusIcon size={26} color="#FFFFFF" />
+      </TouchableOpacity>
 
       <FabActionSheet
         visible={sheetVisible}
@@ -135,6 +147,11 @@ function AppContent() {
       <TransactionHistoryScreen
         visible={transactionHistoryVisible}
         onClose={() => setTransactionHistoryVisible(false)}
+      />
+
+      <PaywallScreen
+        visible={paywallVisible}
+        onClose={() => setPaywallVisible(false)}
       />
     </View>
   );
@@ -169,7 +186,9 @@ function AuthGate() {
       <CategoriesProvider>
         <AccountsProvider>
           <TransactionsProvider>
-            <AppContent />
+            <BudgetProvider>
+              <AppContent />
+            </BudgetProvider>
           </TransactionsProvider>
         </AccountsProvider>
       </CategoriesProvider>
@@ -219,7 +238,9 @@ function App() {
     <ErrorBoundary>
       <SafeAreaProvider>
         <AuthProvider>
-          <AuthGate />
+          <MembershipProvider>
+            <AuthGate />
+          </MembershipProvider>
         </AuthProvider>
       </SafeAreaProvider>
     </ErrorBoundary>

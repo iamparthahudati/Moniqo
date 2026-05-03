@@ -16,7 +16,7 @@ import {
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { generateId } from '../../db/database';
+
 import {
   BankIcon,
   CalendarIcon,
@@ -1006,11 +1006,11 @@ const TransferModal: React.FC<TransferModalProps> = ({ visible, onClose }) => {
     txDispatch({
       type: 'ADD_TRANSACTION',
       payload: {
-        id: generateId(),
+        id: Date.now().toString(36) + Math.random().toString(36).slice(2),
         title: 'Transfer Out',
         subtitle: `To ${toName}`,
         amount: -numAmount,
-        type: 'expense',
+        type: 'transfer',
         category: 'transfer',
         account_id:
           fromAccount.kind === 'cash' ? undefined : fromAccount.account.id,
@@ -1026,11 +1026,11 @@ const TransferModal: React.FC<TransferModalProps> = ({ visible, onClose }) => {
     txDispatch({
       type: 'ADD_TRANSACTION',
       payload: {
-        id: generateId(),
+        id: Date.now().toString(36) + Math.random().toString(36).slice(2),
         title: 'Transfer In',
         subtitle: `From ${fromName}`,
         amount: numAmount,
-        type: 'income',
+        type: 'transfer',
         category: 'transfer',
         account_id:
           toAccount.kind === 'cash' ? undefined : toAccount.account.id,

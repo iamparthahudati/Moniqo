@@ -1,4 +1,9 @@
-export type TabName = 'Dashboard' | 'Analytics' | 'Accounts' | 'Settings';
+export type TabName =
+  | 'Dashboard'
+  | 'Analytics'
+  | 'Accounts'
+  | 'Budget'
+  | 'Settings';
 
 export interface Transaction {
   id: string;
@@ -114,3 +119,51 @@ export interface SpendingCategory {
 }
 
 export type AnalyticsPeriod = 'Week' | 'Month' | 'Year';
+
+// ---------------------------------------------------------------------------
+// Membership & user profile types
+// ---------------------------------------------------------------------------
+
+export type MembershipTier = 'free' | 'premium_lite' | 'premium_full';
+
+export type PremiumFeature =
+  | 'budget_unlimited'
+  | 'categories_unlimited'
+  | 'recurring_transactions'
+  | 'cloud_sync'
+  | 'app_lock'
+  | 'csv_export'
+  | 'splitwise'
+  | 'sms_parsing'
+  | 'multi_currency'
+  | 'widget'
+  | 'analytics_full_history';
+
+export interface UserProfile {
+  uid: string;
+  displayName: string;
+  phone: string;
+  email?: string;
+  membership: MembershipTier;
+  trialUsed: boolean;
+  trialExpiry?: number;
+  membershipExpiry?: number;
+  referralCode: string;
+  referredBy?: string;
+  createdAt: number;
+}
+
+// ---------------------------------------------------------------------------
+// Category types
+// ---------------------------------------------------------------------------
+
+export interface AppCategory {
+  id: string;
+  name: string;
+  emoji: string;
+  type: 'expense' | 'income';
+  color: string;
+  isDefault: boolean;
+  sortOrder: number;
+  created_at: number;
+}

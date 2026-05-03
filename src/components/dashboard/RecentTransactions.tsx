@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { Text, TouchableOpacity, View } from 'react-native';
 import {
   DiningIcon,
@@ -6,9 +6,11 @@ import {
   ShoppingIcon,
   TransportIcon,
 } from '../../icons/Icons';
+import { useAccounts } from '../../store/accountsStore';
 import { useTransactions } from '../../store/transactionsStore';
 import { Transaction } from '../../types';
 import { formatAmount } from '../../utils/formatters';
+import EditTransactionModal from '../common/EditTransactionModal';
 import { styles } from './RecentTransactions.styles';
 
 const getCategoryIcon = (category: string) => {
@@ -88,32 +90,42 @@ const formatDateLabel = (date: string): string => {
     .toUpperCase();
 };
 
-const TransactionItem: React.FC<{ transaction: Transaction }> = React.memo(
-  ({ transaction }) => (
-    <View style={styles.transactionCard}>
-      <View
-        style={[styles.iconWrapper, getCategoryIconStyle(transaction.category)]}
-      >
-        {getCategoryIcon(transaction.category)}
-      </View>
-      <View style={styles.textGroup}>
-        <Text style={styles.title}>{transaction.title}</Text>
-        <Text style={styles.subtitle}>
-          {transaction.subtitle}
-          {' \u2022 '}
-          {transaction.time}
+interface TransactionItemProps {
+  transaction: Transaction;
+  onPress: (transaction: Transaction) => void;
+}
+
+const TransactionItem: React.FC<TransactionItemProps> = React.memo(
+  ({ transaction, onPress }) => (
+    <TouchableOpacity activeOpacity={0.7} onPress={() => onPress(transaction)}>
+      <View style={styles.transactionCard}>
+        <View
+          style={[
+            styles.iconWrapper,
+            getCategoryIconStyle(transaction.category),
+          ]}
+        >
+          {getCategoryIcon(transaction.category)}
+        </View>
+        <View style={styles.textGroup}>
+          <Text style={styles.title}>{transaction.title}</Text>
+          <Text style={styles.subtitle}>
+            {transaction.subtitle}
+            {' \u2022 '}
+            {transaction.time}
+          </Text>
+        </View>
+        <Text
+          style={
+            transaction.type === 'income'
+              ? styles.amountIncome
+              : styles.amountExpense
+          }
+        >
+          {formatAmount(transaction.amount)}
         </Text>
       </View>
-      <Text
-        style={
-          transaction.type === 'income'
-            ? styles.amountIncome
-            : styles.amountExpense
-        }
-      >
-        {formatAmount(transaction.amount)}
-      </Text>
-    </View>
+    </TouchableOpacity>
   ),
 );
 
@@ -123,7 +135,63 @@ interface RecentTransactionsProps {
 
 const RecentTransactions: React.FC<RecentTransactionsProps> = React.memo(
   ({ onSeeAll }) => {
-    const { state } = useTransactions();
+    const { state, dispatch: txDispatch } = useTransactions();
+    const { dispatch: acctDispatch } = useAccounts();
+
+    const [selectedTransaction, setSelectedTransaction] =
+      useState<Transaction | null>(null);
+    const [editModalVisible, setEditModalVisible] = useState(false);
+
+    const handleTransactionPress = useCallback((transaction: Transaction) => {
+      setSelectedTransaction(transaction);
+      setEditModalVisible(true);
+    }, []);
+
+    const handleEditClose = useCallback(() => {
+      setEditModalVisible(false);
+      setSelectedTransaction(null);
+    }, []);
+
+    const handleDelete = useCallback(
+      (transaction: Transaction) => {
+        // Reverse the balance impact before deleting
+        if (
+          transaction.type !== 'transfer' &&
+          transaction.account_id &&
+          transaction.account_type
+        ) {
+          const reverseDelta = -transaction.amount;
+          if (transaction.account_type === 'bank') {
+            acctDispatch({
+              type: 'ADJUST_BANK_BALANCE',
+              payload: { id: transaction.account_id, delta: reverseDelta },
+            });
+          } else if (transaction.account_type === 'cash') {
+            acctDispatch({
+              type: 'ADJUST_CASH_BALANCE',
+              payload: { id: transaction.account_id, delta: reverseDelta },
+            });
+          } else if (transaction.account_type === 'card') {
+            acctDispatch({
+              type: 'ADJUST_CARD_BALANCE',
+              payload: { id: transaction.account_id, delta: reverseDelta },
+            });
+          } else if (transaction.account_type === 'investment') {
+            acctDispatch({
+              type: 'ADJUST_INVESTMENT_BALANCE',
+              payload: { id: transaction.account_id, delta: reverseDelta },
+            });
+          }
+        }
+        txDispatch({
+          type: 'DELETE_TRANSACTION',
+          payload: { id: transaction.id },
+        });
+        setEditModalVisible(false);
+        setSelectedTransaction(null);
+      },
+      [txDispatch, acctDispatch],
+    );
 
     // Take the 10 most recent transactions (already sorted by created_at DESC)
     const recent = useMemo(
@@ -176,10 +244,20 @@ const RecentTransactions: React.FC<RecentTransactionsProps> = React.memo(
                 <TransactionItem
                   key={transaction.id}
                   transaction={transaction}
+                  onPress={handleTransactionPress}
                 />
               ))}
             </View>
           ) : null,
+        )}
+
+        {selectedTransaction && (
+          <EditTransactionModal
+            visible={editModalVisible}
+            transaction={selectedTransaction}
+            onClose={handleEditClose}
+            onDelete={handleDelete}
+          />
         )}
       </View>
     );

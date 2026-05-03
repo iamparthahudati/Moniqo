@@ -6,14 +6,14 @@ import React, {
   useMemo,
   useState,
 } from 'react';
-import { generateId, initDatabase } from '../db/database';
 import {
-  AppCategory,
-  deleteCategory as dbDeleteCategory,
-  getAllCategories,
-  insertCategory,
-  seedCategoriesIfEmpty,
-} from '../db/repositories/categoryRepository';
+  addCategory as fsAddCategory,
+  deleteCategory as fsDeleteCategory,
+  seedDefaultCategories,
+  subscribeToCategories,
+} from '../services/firestoreService';
+import { AppCategory } from '../types';
+import { useAuth } from './authStore';
 
 interface CategoriesContextValue {
   expenseCategories: AppCategory[];
@@ -30,46 +30,48 @@ export function CategoriesProvider({
   children: React.ReactNode;
 }): React.JSX.Element {
   const [categories, setCategories] = useState<AppCategory[]>([]);
+  const { user } = useAuth();
+  const uid = user?.uid ?? null;
 
   useEffect(() => {
-    try {
-      initDatabase();
-      seedCategoriesIfEmpty();
-      const rows = getAllCategories();
-      setCategories(rows);
-    } catch (error) {
-      console.error(
-        '[CategoriesProvider] Failed to initialise categories:',
-        error,
-      );
+    if (!uid) {
+      setCategories([]);
+      return;
     }
-  }, []);
+
+    seedDefaultCategories(uid).catch(err =>
+      console.error('[CategoriesProvider] seedDefaultCategories failed:', err),
+    );
+
+    const unsubscribe = subscribeToCategories(uid, setCategories);
+    return () => {
+      unsubscribe();
+    };
+  }, [uid]);
 
   const addCategory = useCallback(
     (cat: Omit<AppCategory, 'id' | 'created_at'>) => {
-      const newCategory: AppCategory = {
-        ...cat,
-        id: generateId(),
-        created_at: Date.now(),
-      };
-      try {
-        insertCategory(newCategory);
-        setCategories(prev => [...prev, newCategory]);
-      } catch (error) {
-        console.error('[CategoriesProvider] Failed to add category:', error);
+      if (!uid) {
+        return;
       }
+      fsAddCategory(uid, { ...cat, created_at: Date.now() }).catch(err =>
+        console.error('[CategoriesProvider] Failed to add category:', err),
+      );
     },
-    [],
+    [uid],
   );
 
-  const deleteCategory = useCallback((id: string) => {
-    try {
-      dbDeleteCategory(id);
-      setCategories(prev => prev.filter(c => c.id !== id));
-    } catch (error) {
-      console.error('[CategoriesProvider] Failed to delete category:', error);
-    }
-  }, []);
+  const deleteCategory = useCallback(
+    (id: string) => {
+      if (!uid) {
+        return;
+      }
+      fsDeleteCategory(uid, id).catch(err =>
+        console.error('[CategoriesProvider] Failed to delete category:', err),
+      );
+    },
+    [uid],
+  );
 
   const value = useMemo<CategoriesContextValue>(
     () => ({

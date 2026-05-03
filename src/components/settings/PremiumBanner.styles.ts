@@ -2,6 +2,8 @@ import { StyleSheet } from 'react-native';
 import { Colors } from '../../theme/colors';
 import { Radius, Shadow, Spacing } from '../../theme/spacing';
 
+const DARK_SLATE = '#1E293B';
+
 export const styles = StyleSheet.create({
   card: {
     marginHorizontal: Spacing.base,
@@ -12,6 +14,10 @@ export const styles = StyleSheet.create({
   },
   gradient: {
     backgroundColor: Colors.primary,
+    padding: Spacing.base,
+  },
+  gradientDark: {
+    backgroundColor: DARK_SLATE,
     padding: Spacing.base,
   },
   topRow: {
@@ -33,18 +39,6 @@ export const styles = StyleSheet.create({
     color: Colors.white,
     letterSpacing: 1,
   },
-  comingSoonBadge: {
-    backgroundColor: 'rgba(255,215,0,0.25)',
-    borderRadius: Radius.full,
-    paddingHorizontal: Spacing.sm,
-    paddingVertical: 3,
-  },
-  comingSoonText: {
-    fontSize: 10,
-    fontWeight: '700',
-    color: '#FFD700',
-    letterSpacing: 0.5,
-  },
   title: {
     fontSize: 18,
     fontWeight: '800',
@@ -54,6 +48,7 @@ export const styles = StyleSheet.create({
   subtitle: {
     fontSize: 13,
     color: 'rgba(255,255,255,0.75)',
+    marginTop: Spacing.xs,
     marginBottom: Spacing.base,
     lineHeight: 18,
   },
@@ -66,13 +61,11 @@ export const styles = StyleSheet.create({
   featureChip: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 5,
     backgroundColor: 'rgba(255,255,255,0.15)',
     borderRadius: Radius.full,
     paddingHorizontal: Spacing.sm,
     paddingVertical: 5,
   },
-  featureEmoji: { fontSize: 13 },
   featureText: { fontSize: 12, fontWeight: '600', color: Colors.white },
   notifyBtn: {
     backgroundColor: Colors.white,
@@ -81,4 +74,44 @@ export const styles = StyleSheet.create({
     alignItems: 'center',
   },
   notifyBtnText: { fontSize: 15, fontWeight: '700', color: Colors.primary },
+  ctaBtn: {
+    backgroundColor: Colors.white,
+    borderRadius: Radius.lg,
+    paddingVertical: Spacing.md,
+    alignItems: 'center',
+  },
+  ctaBtnText: { fontSize: 15, fontWeight: '700', color: Colors.primary },
+  ctaBtnDark: {
+    backgroundColor: 'rgba(255,255,255,0.12)',
+    borderRadius: Radius.lg,
+    paddingVertical: Spacing.md,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.2)',
+  },
+  ctaBtnDarkText: { fontSize: 15, fontWeight: '700', color: Colors.white },
+  checkRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+    marginTop: Spacing.xs,
+  },
+  checkCircle: {
+    width: 22,
+    height: 22,
+    borderRadius: Radius.full,
+    backgroundColor: 'rgba(34,197,94,0.2)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  checkMark: {
+    fontSize: 12,
+    fontWeight: '800',
+    color: '#22C55E',
+  },
+  checkLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: 'rgba(255,255,255,0.9)',
+  },
 });

@@ -1,7 +1,7 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Text, TouchableOpacity, View } from 'react-native';
-import { APP_TITLE } from '../../data/mockData';
 import { BellIcon } from '../../icons/Icons';
+import { useAuth } from '../../store/authStore';
 import { Colors } from '../../theme/colors';
 import { getGreeting } from '../../utils/formatters';
 import { styles } from './DashboardHeader.styles';
@@ -12,6 +12,19 @@ interface DashboardHeaderProps {
 
 const DashboardHeader: React.FC<DashboardHeaderProps> = React.memo(
   ({ onBellPress }) => {
+    const { user } = useAuth();
+
+    const displayName = useMemo(() => {
+      if (user?.displayName) {
+        return user.displayName.split(' ')[0];
+      }
+      if (user?.phoneNumber) {
+        const digits = user.phoneNumber.replace(/\D/g, '');
+        return `...${digits.slice(-4)}`;
+      }
+      return null;
+    }, [user]);
+
     return (
       <View style={styles.container}>
         <View style={styles.avatar}>
@@ -23,7 +36,9 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = React.memo(
         </View>
         <View style={styles.textGroup}>
           <Text style={styles.greeting}>{getGreeting()}</Text>
-          <Text style={styles.title}>{APP_TITLE}</Text>
+          <Text style={styles.title}>
+            {displayName ? displayName : 'Moniqo'}
+          </Text>
         </View>
         <TouchableOpacity
           style={styles.bellButton}

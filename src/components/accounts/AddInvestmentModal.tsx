@@ -94,6 +94,7 @@ const AddInvestmentModal: React.FC<AddInvestmentModalProps> = ({
       amount: isNaN(parsedAmount) ? 0 : parsedAmount,
       icon,
       color,
+      created_at: initial?.created_at ?? Date.now(),
     };
 
     onSave(payload);

@@ -2,14 +2,34 @@ import React, {
   createContext,
   useCallback,
   useContext,
-  useReducer,
+  useEffect,
+  useRef,
+  useState,
 } from 'react';
-import { generateId, initDatabase } from '../db/database';
-import * as bankRepo from '../db/repositories/bankRepository';
-import * as cardRepo from '../db/repositories/cardRepository';
-import * as cashRepo from '../db/repositories/cashRepository';
-import * as investmentRepo from '../db/repositories/investmentRepository';
+import {
+  addBank,
+  addCard,
+  addCash,
+  addInvestment,
+  deleteBank,
+  deleteCard,
+  deleteCash,
+  deleteInvestment,
+  incrementBankBalance,
+  incrementCardDue,
+  incrementCashBalance,
+  incrementInvestmentAmount,
+  subscribeToBanks,
+  subscribeToCards,
+  subscribeToCash,
+  subscribeToInvestments,
+  updateBank,
+  updateCard,
+  updateCash,
+  updateInvestment,
+} from '../services/firestoreService';
 import { BankAccount, CardAccount, CashEntry, Investment } from '../types';
+import { useAuth } from './authStore';
 
 // ── State ─────────────────────────────────────────────────────────────────────
 
@@ -44,7 +64,8 @@ export type AccountsAction =
     };
 
 // ── Reducer ───────────────────────────────────────────────────────────────────
-
+// Kept for reference and potential offline/optimistic-update use.
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function accountsReducer(
   state: AccountsState,
   action: AccountsAction,
@@ -187,116 +208,149 @@ const AccountsContext = createContext<AccountsContextValue | undefined>(
   undefined,
 );
 
-// ── Load initial state from SQLite ────────────────────────────────────────────
+// ── Empty state ───────────────────────────────────────────────────────────────
 
-function loadInitialState(): AccountsState {
-  initDatabase();
-  return {
-    bankAccounts: bankRepo.getAllBanks(),
-    cardAccounts: cardRepo.getAllCards(),
-    investments: investmentRepo.getAllInvestments(),
-    cashEntries: cashRepo.getAllCash(),
-  };
-}
+const EMPTY_STATE: AccountsState = {
+  bankAccounts: [],
+  cardAccounts: [],
+  investments: [],
+  cashEntries: [],
+};
 
 // ── Provider ──────────────────────────────────────────────────────────────────
 
 export function AccountsProvider(props: {
   children: React.ReactNode;
 }): React.JSX.Element {
-  const [state, rawDispatch] = useReducer(
-    accountsReducer,
-    undefined,
-    loadInitialState,
-  );
+  const { user } = useAuth();
+  const uid = user?.uid ?? null;
+
+  const [state, setState] = useState<AccountsState>(EMPTY_STATE);
+
+  // Keep uid in a ref so the dispatch closure always sees the latest value
+  // without needing to be recreated on every uid change.
+  const uidRef = useRef<string | null>(uid);
+  useEffect(() => {
+    uidRef.current = uid;
+  }, [uid]);
+
+  // ── Firestore onSnapshot subscriptions ──────────────────────────────────────
+
+  useEffect(() => {
+    if (!uid) {
+      setState(EMPTY_STATE);
+      return;
+    }
+
+    const unsubBanks = subscribeToBanks(uid, bankAccounts =>
+      setState(prev => ({ ...prev, bankAccounts })),
+    );
+
+    const unsubCards = subscribeToCards(uid, cardAccounts =>
+      setState(prev => ({ ...prev, cardAccounts })),
+    );
+
+    const unsubCash = subscribeToCash(uid, cashEntries =>
+      setState(prev => ({ ...prev, cashEntries })),
+    );
+
+    const unsubInvestments = subscribeToInvestments(uid, investments =>
+      setState(prev => ({ ...prev, investments })),
+    );
+
+    return () => {
+      unsubBanks();
+      unsubCards();
+      unsubCash();
+      unsubInvestments();
+    };
+  }, [uid]);
+
+  // ── Dispatch — maps actions to Firestore writes (fire-and-forget) ────────────
 
   const dispatch = useCallback((action: AccountsAction) => {
-    // Persist to SQLite, generating IDs for new entities
+    const currentUid = uidRef.current;
+    if (!currentUid) {
+      return; // guest mode — no-op
+    }
+
     switch (action.type) {
+      // Bank
       case 'ADD_BANK': {
-        const payload = {
-          ...action.payload,
-          id: action.payload.id || generateId(),
-          created_at: action.payload.created_at ?? Date.now(),
-        };
-        bankRepo.insertBank(payload);
-        rawDispatch({ type: 'ADD_BANK', payload });
-        return;
+        const { id: _id, ...rest } = action.payload;
+        addBank(currentUid, rest);
+        break;
       }
       case 'UPDATE_BANK':
-        bankRepo.updateBank(action.payload);
+        updateBank(currentUid, action.payload);
         break;
       case 'DELETE_BANK':
-        bankRepo.deleteBank(action.payload.id);
+        deleteBank(currentUid, action.payload.id);
         break;
       case 'ADJUST_BANK_BALANCE':
-        bankRepo.updateBankBalance(action.payload.id, action.payload.delta);
-        break;
-
-      case 'ADD_CARD': {
-        const payload = {
-          ...action.payload,
-          id: action.payload.id || generateId(),
-          created_at: action.payload.created_at ?? Date.now(),
-        };
-        cardRepo.insertCard(payload);
-        rawDispatch({ type: 'ADD_CARD', payload });
-        return;
-      }
-      case 'UPDATE_CARD':
-        cardRepo.updateCard(action.payload);
-        break;
-      case 'DELETE_CARD':
-        cardRepo.deleteCard(action.payload.id);
-        break;
-      case 'ADJUST_CARD_BALANCE':
-        cardRepo.updateCardDue(action.payload.id, action.payload.delta);
-        break;
-
-      case 'ADD_INVESTMENT': {
-        const payload = {
-          ...action.payload,
-          id: action.payload.id || generateId(),
-          created_at: action.payload.created_at ?? Date.now(),
-        };
-        investmentRepo.insertInvestment(payload);
-        rawDispatch({ type: 'ADD_INVESTMENT', payload });
-        return;
-      }
-      case 'UPDATE_INVESTMENT':
-        investmentRepo.updateInvestment(action.payload);
-        break;
-      case 'DELETE_INVESTMENT':
-        investmentRepo.deleteInvestment(action.payload.id);
-        break;
-      case 'ADJUST_INVESTMENT_BALANCE':
-        investmentRepo.updateInvestmentAmount(
+        incrementBankBalance(
+          currentUid,
           action.payload.id,
           action.payload.delta,
         );
         break;
 
+      // Card
+      case 'ADD_CARD': {
+        const { id: _id, ...rest } = action.payload;
+        addCard(currentUid, rest);
+        break;
+      }
+      case 'UPDATE_CARD':
+        updateCard(currentUid, action.payload);
+        break;
+      case 'DELETE_CARD':
+        deleteCard(currentUid, action.payload.id);
+        break;
+      case 'ADJUST_CARD_BALANCE':
+        incrementCardDue(currentUid, action.payload.id, action.payload.delta);
+        break;
+
+      // Cash
       case 'ADD_CASH': {
-        const payload = {
-          ...action.payload,
-          id: action.payload.id || generateId(),
-          created_at: action.payload.created_at ?? Date.now(),
-        };
-        cashRepo.insertCash(payload);
-        rawDispatch({ type: 'ADD_CASH', payload });
-        return;
+        const { id: _id, ...rest } = action.payload;
+        addCash(currentUid, rest);
+        break;
       }
       case 'UPDATE_CASH':
-        cashRepo.updateCash(action.payload);
+        updateCash(currentUid, action.payload);
         break;
       case 'DELETE_CASH':
-        cashRepo.deleteCash(action.payload.id);
+        deleteCash(currentUid, action.payload.id);
         break;
       case 'ADJUST_CASH_BALANCE':
-        cashRepo.updateCashBalance(action.payload.id, action.payload.delta);
+        incrementCashBalance(
+          currentUid,
+          action.payload.id,
+          action.payload.delta,
+        );
+        break;
+
+      // Investment
+      case 'ADD_INVESTMENT': {
+        const { id: _id, ...rest } = action.payload;
+        addInvestment(currentUid, rest);
+        break;
+      }
+      case 'UPDATE_INVESTMENT':
+        updateInvestment(currentUid, action.payload);
+        break;
+      case 'DELETE_INVESTMENT':
+        deleteInvestment(currentUid, action.payload.id);
+        break;
+      case 'ADJUST_INVESTMENT_BALANCE':
+        incrementInvestmentAmount(
+          currentUid,
+          action.payload.id,
+          action.payload.delta,
+        );
         break;
     }
-    rawDispatch(action);
   }, []);
 
   return React.createElement(

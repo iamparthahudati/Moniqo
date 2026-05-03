@@ -12,7 +12,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import EditTransactionModal from '../components/common/EditTransactionModal';
 import ModalHeader from '../components/ui/ModalHeader';
-import type { AppCategory } from '../db/repositories/categoryRepository';
+import type { AppCategory } from '../types';
 import { useAccounts } from '../store/accountsStore';
 import { useCategories } from '../store/categoriesStore';
 import { useTransactions } from '../store/transactionsStore';

@@ -16,7 +16,7 @@ import {
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import type { AppCategory } from '../../db/repositories/categoryRepository';
+import type { AppCategory } from '../../types';
 import { useAccounts } from '../../store/accountsStore';
 import { useCategories } from '../../store/categoriesStore';
 import { useTransactions } from '../../store/transactionsStore';

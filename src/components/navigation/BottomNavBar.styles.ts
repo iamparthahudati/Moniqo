@@ -27,7 +27,7 @@ export const styles = StyleSheet.create({
     textTransform: 'uppercase',
   },
   tabLabelActive: {
-    color: Colors.navActive,
+    color: Colors.primary,
   },
   tabLabelInactive: {
     color: Colors.navInactive,

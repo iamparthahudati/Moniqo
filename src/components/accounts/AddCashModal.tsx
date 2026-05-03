@@ -68,6 +68,7 @@ const AddCashModal: React.FC<AddCashModalProps> = ({
       label: trimmedLabel,
       sublabel: sublabel.trim(),
       amount: isNaN(parsedAmount) ? 0 : parsedAmount,
+      created_at: initial?.created_at ?? Date.now(),
     };
 
     onSave(payload);

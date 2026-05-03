@@ -98,6 +98,7 @@ const AddBankModal: React.FC<AddBankModalProps> = ({
       icon,
       color,
       status,
+      created_at: initial?.created_at ?? Date.now(),
     };
 
     onSave(payload);

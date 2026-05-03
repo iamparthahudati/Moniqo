@@ -3,7 +3,7 @@ import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import IconCircle from '../components/ui/IconCircle';
 import ScreenHeader from '../components/ui/ScreenHeader';
 import TabSwitcher from '../components/ui/TabSwitcher';
-import * as analyticsRepo from '../db/repositories/analyticsRepository';
+import { useCategories } from '../store/categoriesStore';
 import { useTransactions } from '../store/transactionsStore';
 import {
   AnalyticsPeriod,
@@ -11,6 +11,7 @@ import {
   SpendingCategory,
   Transaction,
 } from '../types';
+import * as analytics from '../utils/analytics';
 import { formatShort } from '../utils/formatters';
 import { styles } from './AnalyticsScreen.styles';
 
@@ -337,7 +338,7 @@ const AnalyticsScreen: React.FC = () => {
   const [offset, setOffset] = useState(0); // 0 = current, -1 = previous, etc.
 
   const { state: txState } = useTransactions();
-  const txCount = txState.transactions.length;
+  const { expenseCategories } = useCategories();
 
   // Reset offset when period changes
   const handlePeriodChange = (p: AnalyticsPeriod) => {
@@ -357,46 +358,50 @@ const AnalyticsScreen: React.FC = () => {
   const chartData = useMemo(() => {
     switch (period) {
       case 'Week':
-        return analyticsRepo.getDailyTotals(from, to);
+        return analytics.getDailyTotals(txState.transactions, from, to);
       case 'Month':
-        return analyticsRepo.getWeeklyTotals(
+        return analytics.getWeeklyTotals(
+          txState.transactions,
           anchor.getFullYear(),
           anchor.getMonth() + 1,
         );
       case 'Year':
-        return analyticsRepo.getMonthlyTotals(anchor.getFullYear());
+        return analytics.getMonthlyTotals(
+          txState.transactions,
+          anchor.getFullYear(),
+        );
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [period, from, to, txCount]);
+  }, [period, from, to, txState.transactions]);
 
   const income = useMemo(
-    () => analyticsRepo.getIncomeTotalForRange(from, to),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [from, to, txCount],
+    () => analytics.getIncomeTotalForRange(txState.transactions, from, to),
+    [from, to, txState.transactions],
   );
 
   const expense = useMemo(
-    () => analyticsRepo.getExpenseTotalForRange(from, to),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [from, to, txCount],
+    () => analytics.getExpenseTotalForRange(txState.transactions, from, to),
+    [from, to, txState.transactions],
   );
 
   const savingsRate = useMemo(
-    () => analyticsRepo.getSavingsRate(from, to),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [from, to, txCount],
+    () => analytics.getSavingsRate(txState.transactions, from, to),
+    [from, to, txState.transactions],
   );
 
   const categories = useMemo(
-    () => analyticsRepo.getSpendingByCategory(from, to),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [from, to, txCount],
+    () =>
+      analytics.getSpendingByCategory(
+        txState.transactions,
+        from,
+        to,
+        expenseCategories,
+      ),
+    [from, to, txState.transactions, expenseCategories],
   );
 
   const topExpenses = useMemo(
-    () => analyticsRepo.getTopExpenses(3, from, to),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [from, to, txCount],
+    () => analytics.getTopExpenses(txState.transactions, 3, from, to),
+    [from, to, txState.transactions],
   );
 
   const savingsSubtext = useMemo(() => {

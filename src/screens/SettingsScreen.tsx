@@ -2,22 +2,56 @@ import React from 'react';
 import { Alert, ScrollView, View } from 'react-native';
 import CategoryManager from '../components/settings/CategoryManager';
 import PremiumBanner from '../components/settings/PremiumBanner';
+import ProfileCard from '../components/settings/ProfileCard';
 import {
   SettingGroup,
   SettingRowData,
 } from '../components/settings/SettingRow';
 import ScreenHeader from '../components/ui/ScreenHeader';
+import useNotifications from '../hooks/useNotifications';
 import { useToggle } from '../hooks/useToggle';
+import { signOut } from '../services/authService';
+import { useMembership } from '../store/membershipStore';
 import { styles } from './SettingsScreen.styles';
 
 // ── Settings screen ───────────────────────────────────────────────────────────
 
-const SettingsScreen: React.FC = () => {
+interface SettingsScreenProps {
+  onUpgradePress: () => void;
+}
+
+const SettingsScreen: React.FC<SettingsScreenProps> = ({ onUpgradePress }) => {
+  const { canAccess } = useMembership();
+
   // Notification toggles
   const [txAlerts, toggleTxAlerts] = useToggle(true);
   const [monthlyReport, toggleMonthlyReport] = useToggle(true);
   const [budgetWarnings, toggleBudgetWarnings] = useToggle(false);
   const [weeklyDigest, toggleWeeklyDigest] = useToggle(false);
+
+  const { enableMonthlyReport, enableWeeklyDigest } = useNotifications();
+
+  const handleTxAlerts = () => {
+    toggleTxAlerts();
+  };
+
+  const handleMonthlyReport = () => {
+    if (!monthlyReport) {
+      enableMonthlyReport().catch(() => {});
+    }
+    toggleMonthlyReport();
+  };
+
+  const handleBudgetWarnings = () => {
+    toggleBudgetWarnings();
+  };
+
+  const handleWeeklyDigest = () => {
+    if (!weeklyDigest) {
+      enableWeeklyDigest().catch(() => {});
+    }
+    toggleWeeklyDigest();
+  };
 
   // ── Row definitions ─────────────────────────────────────────────────────────
 
@@ -70,7 +104,7 @@ const SettingsScreen: React.FC = () => {
       label: 'Transaction Alerts',
       type: 'toggle',
       toggleValue: txAlerts,
-      onToggle: toggleTxAlerts,
+      onToggle: handleTxAlerts,
     },
     {
       id: 'monthly',
@@ -79,7 +113,7 @@ const SettingsScreen: React.FC = () => {
       label: 'Monthly Report',
       type: 'toggle',
       toggleValue: monthlyReport,
-      onToggle: toggleMonthlyReport,
+      onToggle: handleMonthlyReport,
     },
     {
       id: 'budget',
@@ -88,7 +122,7 @@ const SettingsScreen: React.FC = () => {
       label: 'Budget Warnings',
       type: 'toggle',
       toggleValue: budgetWarnings,
-      onToggle: toggleBudgetWarnings,
+      onToggle: handleBudgetWarnings,
     },
     {
       id: 'weekly',
@@ -97,7 +131,7 @@ const SettingsScreen: React.FC = () => {
       label: 'Weekly Digest',
       type: 'toggle',
       toggleValue: weeklyDigest,
-      onToggle: toggleWeeklyDigest,
+      onToggle: handleWeeklyDigest,
     },
   ];
 
@@ -138,7 +172,20 @@ const SettingsScreen: React.FC = () => {
       label: 'Face ID / Biometrics',
       type: 'value',
       value: 'Off',
-      onPress: () => Alert.alert('Biometrics', 'Biometric lock coming soon.'),
+      onPress: () => {
+        if (!canAccess('app_lock')) {
+          Alert.alert(
+            'Premium Required',
+            'App lock is available on Premium Lite and Full plans.',
+            [
+              { text: 'Cancel', style: 'cancel' },
+              { text: 'Upgrade', onPress: onUpgradePress },
+            ],
+          );
+          return;
+        }
+        Alert.alert('Biometrics', 'Biometric lock coming soon.');
+      },
     },
     {
       id: 'passcode',
@@ -146,7 +193,20 @@ const SettingsScreen: React.FC = () => {
       iconBg: 'rgba(249,115,22,0.1)',
       label: 'App Passcode',
       type: 'chevron',
-      onPress: () => Alert.alert('Passcode', 'Passcode setup coming soon.'),
+      onPress: () => {
+        if (!canAccess('app_lock')) {
+          Alert.alert(
+            'Premium Required',
+            'App lock is available on Premium Lite and Full plans.',
+            [
+              { text: 'Cancel', style: 'cancel' },
+              { text: 'Upgrade', onPress: onUpgradePress },
+            ],
+          );
+          return;
+        }
+        Alert.alert('Biometrics', 'Biometric lock coming soon.');
+      },
     },
   ];
 
@@ -157,7 +217,20 @@ const SettingsScreen: React.FC = () => {
       iconBg: 'rgba(34,197,94,0.1)',
       label: 'Export Data',
       type: 'chevron',
-      onPress: () => Alert.alert('Export', 'Data export coming soon.'),
+      onPress: () => {
+        if (!canAccess('csv_export')) {
+          Alert.alert(
+            'Premium Full Required',
+            'CSV export is available on Premium Full plan.',
+            [
+              { text: 'Cancel', style: 'cancel' },
+              { text: 'Upgrade', onPress: onUpgradePress },
+            ],
+          );
+          return;
+        }
+        Alert.alert('Export', 'Data export coming soon.');
+      },
     },
     {
       id: 'backup',
@@ -244,7 +317,20 @@ const SettingsScreen: React.FC = () => {
       onPress: () =>
         Alert.alert('Sign Out', 'Are you sure you want to sign out?', [
           { text: 'Cancel', style: 'cancel' },
-          { text: 'Sign Out', style: 'destructive', onPress: () => {} },
+          {
+            text: 'Sign Out',
+            style: 'destructive',
+            onPress: async () => {
+              try {
+                await signOut();
+              } catch {
+                Alert.alert(
+                  'Sign Out Failed',
+                  'Something went wrong. Please try again.',
+                );
+              }
+            },
+          },
         ]),
     },
     {
@@ -276,8 +362,12 @@ const SettingsScreen: React.FC = () => {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
       >
+        {/* Profile */}
+        <ProfileCard />
+
         {/* Premium */}
-        <PremiumBanner />
+        <View style={styles.groupSpacing} />
+        <PremiumBanner onUpgradePress={onUpgradePress} />
 
         {/* Categories */}
         <View style={styles.groupSpacing} />
@@ -306,6 +396,10 @@ const SettingsScreen: React.FC = () => {
         {/* About */}
         <View style={styles.groupSpacing} />
         <SettingGroup title="About" rows={aboutRows} />
+
+        {/* Account */}
+        <View style={styles.groupSpacing} />
+        <SettingGroup title="Account" rows={dangerRows} />
 
         <View style={styles.groupSpacing} />
       </ScrollView>

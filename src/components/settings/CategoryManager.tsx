@@ -8,9 +8,10 @@ import {
   TouchableWithoutFeedback,
   View,
 } from 'react-native';
-import { AppCategory } from '../../db/repositories/categoryRepository';
 import { useCategories } from '../../store/categoriesStore';
+import { useMembership } from '../../store/membershipStore';
 import { Colors } from '../../theme/colors';
+import { AppCategory } from '../../types';
 import IconCircle from '../ui/IconCircle';
 import TabSwitcher from '../ui/TabSwitcher';
 import { styles } from './CategoryManager.styles';
@@ -56,6 +57,12 @@ const EMOJI_OPTIONS = [
 const CategoryManager: React.FC = () => {
   const { expenseCategories, incomeCategories, addCategory, deleteCategory } =
     useCategories();
+  const { canAccess } = useMembership();
+
+  const customCount = [...expenseCategories, ...incomeCategories].filter(
+    c => !c.isDefault,
+  ).length;
+  const atLimit = !canAccess('categories_unlimited') && customCount >= 5;
 
   const [activeTab, setActiveTab] = useState<CategoryType>('expense');
   const [modalVisible, setModalVisible] = useState(false);
@@ -105,11 +112,19 @@ const CategoryManager: React.FC = () => {
   }, [newName, selectedEmoji, modalType, addCategory]);
 
   const openModal = useCallback(() => {
+    if (atLimit) {
+      Alert.alert(
+        'Upgrade Required',
+        'Free plan includes up to 5 custom categories. Upgrade to Premium Lite or Full for unlimited categories.',
+        [{ text: 'OK' }],
+      );
+      return;
+    }
     setModalType(activeTab);
     setNewName('');
     setSelectedEmoji(EMOJI_OPTIONS[0]);
     setModalVisible(true);
-  }, [activeTab]);
+  }, [activeTab, atLimit]);
 
   return (
     <View style={styles.wrapper}>
@@ -159,12 +174,14 @@ const CategoryManager: React.FC = () => {
 
         {/* Add row */}
         <TouchableOpacity
-          style={styles.addRow}
+          style={[styles.addRow, atLimit && { opacity: 0.5 }]}
           onPress={openModal}
           activeOpacity={0.7}
         >
           <View style={styles.addCircle}>
-            <Text style={styles.addCircleText}>{'+'}</Text>
+            <Text style={styles.addCircleText}>
+              {atLimit ? '\uD83D\uDD12' : '+'}
+            </Text>
           </View>
           <Text style={styles.addLabel}>
             Add {activeTab === 'expense' ? 'Expense' : 'Income'} Category
