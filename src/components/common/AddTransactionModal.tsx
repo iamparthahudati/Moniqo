@@ -6,6 +6,7 @@ import React, {
   useState,
 } from 'react';
 import {
+  Alert,
   Modal,
   ScrollView,
   StatusBar,
@@ -26,6 +27,7 @@ import {
   NoteIcon,
 } from '../../icons/Icons';
 import { useAccounts } from '../../store/accountsStore';
+import { useAuth } from '../../store/authStore';
 import { useCategories } from '../../store/categoriesStore';
 import { useTransactions } from '../../store/transactionsStore';
 import { Colors } from '../../theme/colors';
@@ -783,6 +785,7 @@ const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
   initialType = 'expense',
 }) => {
   const insets = useSafeAreaInsets();
+  const { isGuest } = useAuth();
   const { state: accountsState, dispatch: acctDispatch } = useAccounts();
   const { dispatch: txDispatch } = useTransactions();
   const { expenseCategories, incomeCategories } = useCategories();
@@ -840,6 +843,13 @@ const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
   }, [defaultAccount]);
 
   const handleSave = useCallback(() => {
+    if (isGuest) {
+      Alert.alert(
+        'Sign in required',
+        'Create a free account to save your transactions.',
+      );
+      return;
+    }
     const numAmount = parseFloat(amount);
     if (!numAmount || numAmount <= 0) {
       return;
@@ -910,6 +920,7 @@ const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
     resetForm();
     onClose();
   }, [
+    isGuest,
     amount,
     txType,
     selectedCategory,

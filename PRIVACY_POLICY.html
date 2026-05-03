@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Privacy Policy — Moniqo</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: #f9f9f9;
+      color: #1a1a1a;
+      line-height: 1.7;
+      padding: 24px 16px 64px;
+    }
+    .container { max-width: 760px; margin: 0 auto; background: #fff; border-radius: 12px; padding: 40px 48px; box-shadow: 0 2px 12px rgba(0,0,0,0.08); }
+    h1 { font-size: 28px; font-weight: 700; margin-bottom: 4px; color: #111; }
+    .meta { font-size: 14px; color: #777; margin-bottom: 36px; }
+    h2 { font-size: 18px; font-weight: 600; margin-top: 36px; margin-bottom: 10px; color: #111; border-left: 4px solid #4F46E5; padding-left: 12px; }
+    p { margin-bottom: 14px; font-size: 15px; color: #333; }
+    ul { margin: 10px 0 14px 20px; }
+    li { font-size: 15px; color: #333; margin-bottom: 6px; }
+    a { color: #4F46E5; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    .highlight { background: #f0f0ff; border-radius: 8px; padding: 16px 20px; margin: 16px 0; }
+    @media (max-width: 600px) {
+      .container { padding: 24px 20px; }
+      h1 { font-size: 22px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+
+    <h1>Privacy Policy</h1>
+    <p class="meta">App: <strong>Moniqo</strong> &nbsp;|&nbsp; Developer: <strong>Partha Hudati</strong> &nbsp;|&nbsp; Effective Date: <strong>May 3, 2026</strong> &nbsp;|&nbsp; Last Updated: <strong>May 3, 2026</strong></p>
+
+    <p>This Privacy Policy explains how Moniqo ("we", "our", or "the app") collects, uses, stores, and protects your personal information when you use our personal finance management application. By using Moniqo, you agree to the practices described in this policy.</p>
+
+    <h2>1. Information We Collect</h2>
+
+    <p><strong>a) Account Information</strong></p>
+    <ul>
+      <li><strong>Google Sign-In:</strong> If you sign in with Google, we receive your name, email address, and profile photo from Google.</li>
+      <li><strong>Phone Authentication:</strong> If you sign in with your phone number, we collect your phone number via Firebase Authentication (OTP-based).</li>
+      <li><strong>Guest Mode:</strong> If you use the app without signing in, no personal identity information is collected.</li>
+    </ul>
+
+    <p><strong>b) Financial Data</strong></p>
+    <ul>
+      <li>Bank account names, balances, and types (bank, credit card, investment, cash) — entered manually by you.</li>
+      <li>Income and expense transactions including amount, category, date, and notes — entered manually by you.</li>
+      <li>Budget limits per category — entered manually by you.</li>
+      <li>Custom categories with names, emoji, and colors — created by you.</li>
+    </ul>
+    <p>We do not connect to your actual bank accounts. All financial data is entered manually by you.</p>
+
+    <p><strong>c) Usage & Diagnostic Data</strong></p>
+    <ul>
+      <li><strong>Firebase Analytics:</strong> Anonymous screen view events and app usage patterns (no personally identifiable information).</li>
+      <li><strong>Firebase Crashlytics:</strong> Crash reports and error logs to help us fix bugs. These may include device model, OS version, and app version.</li>
+    </ul>
+
+    <p><strong>d) Purchase Information</strong></p>
+    <ul>
+      <li>If you subscribe to a premium plan or make a one-time purchase, the transaction is processed entirely by Google Play. We do not collect or store your payment card details.</li>
+      <li>We store your subscription status (Free / Premium Lite / Premium Full) in your user profile on Firebase Firestore to unlock premium features.</li>
+    </ul>
+
+    <h2>2. How We Use Your Information</h2>
+    <ul>
+      <li>To provide core app functionality — account tracking, transaction management, budgets, and analytics.</li>
+      <li>To authenticate you securely and sync your data across devices (signed-in users only).</li>
+      <li>To display your subscription tier and unlock premium features accordingly.</li>
+      <li>To send optional notifications — monthly spending reports and weekly digests (only if you grant notification permission).</li>
+      <li>To diagnose crashes and improve app stability via Crashlytics.</li>
+      <li>To understand how features are used (anonymously) via Firebase Analytics.</li>
+    </ul>
+
+    <h2>3. Data Sharing</h2>
+    <p>We do <strong>not</strong> sell, rent, or share your personal data with third parties for advertising or marketing purposes.</p>
+    <p>Your data is shared only with the following service providers, solely to operate the app:</p>
+    <ul>
+      <li><strong>Google Firebase</strong> (Authentication, Firestore, Analytics, Crashlytics) — <a href="https://firebase.google.com/support/privacy" target="_blank">Firebase Privacy Policy</a></li>
+      <li><strong>Google Play Billing</strong> — for processing in-app purchases and subscriptions. <a href="https://policies.google.com/privacy" target="_blank">Google Privacy Policy</a></li>
+    </ul>
+
+    <h2>4. Data Storage & Security</h2>
+    <ul>
+      <li>Your financial data (accounts, transactions, budgets, categories) is stored in <strong>Google Cloud Firestore</strong>, accessible only to your authenticated user account.</li>
+      <li>Firestore security rules enforce that only you can read or write your own data.</li>
+      <li>All data is encrypted in transit (TLS/HTTPS) and encrypted at rest by Firebase.</li>
+      <li>Guest mode data is stored locally on your device only and is not uploaded to any server.</li>
+    </ul>
+
+    <h2>5. Data Retention</h2>
+    <ul>
+      <li>Your data is retained as long as your account is active.</li>
+      <li>If you delete your account, all associated data (transactions, accounts, budgets) is permanently deleted from our Firestore database.</li>
+      <li>Anonymous analytics and crash logs may be retained by Firebase per their own retention policies.</li>
+    </ul>
+
+    <h2>6. Your Rights & Choices</h2>
+    <ul>
+      <li><strong>Access:</strong> All your financial data is visible to you within the app at all times.</li>
+      <li><strong>Deletion:</strong> You can delete individual transactions, accounts, or budgets at any time within the app. To request full account and data deletion, contact us at the email below.</li>
+      <li><strong>Notifications:</strong> You can disable notifications at any time in the app settings or in your device notification settings.</li>
+      <li><strong>Sign out:</strong> You can sign out at any time. Signed-out users can continue using the app in Guest mode.</li>
+      <li><strong>Export:</strong> Premium Full users can export their transaction data as a CSV file.</li>
+    </ul>
+
+    <h2>7. Children's Privacy</h2>
+    <p>Moniqo is not directed at children under the age of 13. We do not knowingly collect personal information from children under 13. If you believe a child has provided us with personal information, please contact us and we will delete it promptly.</p>
+
+    <h2>8. SMS Permission (Android — Premium Full)</h2>
+    <p>Moniqo's Premium Full plan includes an optional SMS auto-parsing feature that reads bank transaction SMSes to automatically log expenses. This feature:</p>
+    <ul>
+      <li>Requires explicit user permission before activation.</li>
+      <li>Processes SMS content locally on your device only.</li>
+      <li>Does not upload your SMS messages to any server.</li>
+      <li>Can be revoked at any time in device settings.</li>
+    </ul>
+
+    <h2>9. Biometric Data</h2>
+    <p>The app lock feature (Premium Lite+) uses your device's built-in biometric authentication (fingerprint or face recognition). Moniqo does not access, collect, or store your biometric data — authentication is handled entirely by your device's operating system.</p>
+
+    <h2>10. Third-Party Links</h2>
+    <p>The app may contain links to third-party services (e.g., Splitwise). We are not responsible for the privacy practices of those services. We encourage you to review their privacy policies before using them.</p>
+
+    <h2>11. Changes to This Policy</h2>
+    <p>We may update this Privacy Policy from time to time. When we do, we will update the "Last Updated" date at the top of this page. Continued use of the app after changes constitutes your acceptance of the updated policy. For significant changes, we will notify you within the app.</p>
+
+    <h2>12. Contact Us</h2>
+    <div class="highlight">
+      <p>If you have any questions, concerns, or requests regarding this Privacy Policy or your data, please contact us:</p>
+      <p><strong>Developer:</strong> Partha Hudati<br />
+      <strong>Email:</strong> <a href="mailto:iamparthahudati@gmail.com">iamparthahudati@gmail.com</a></p>
+    </div>
+
+  </div>
+</body>
+</html>
