@@ -14,7 +14,6 @@ import {
 // Constants
 // ---------------------------------------------------------------------------
 
-const TRIAL_DURATION_MS = 3 * 24 * 60 * 60 * 1000; // 3 days
 const REFERRAL_REWARD_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
 
 const COL = {
@@ -282,9 +281,8 @@ export async function ensureUserProfile(
       displayName,
       phone,
       ...(email !== undefined ? { email } : {}),
-      membership: 'premium_full',
-      trialUsed: true,
-      trialExpiry: now + TRIAL_DURATION_MS,
+      membership: 'free',
+      trialUsed: false,
       referralCode: generateReferralCode(uid),
       createdAt: now,
     };

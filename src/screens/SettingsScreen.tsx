@@ -1,5 +1,5 @@
 import React from 'react';
-import { Alert, ScrollView, View } from 'react-native';
+import { Alert, Linking, ScrollView, View } from 'react-native';
 import CategoryManager from '../components/settings/CategoryManager';
 import PremiumBanner from '../components/settings/PremiumBanner';
 import ProfileCard from '../components/settings/ProfileCard';
@@ -11,8 +11,10 @@ import ScreenHeader from '../components/ui/ScreenHeader';
 import useNotifications from '../hooks/useNotifications';
 import { useToggle } from '../hooks/useToggle';
 import { signOut } from '../services/authService';
-import { useMembership } from '../store/membershipStore';
 import { styles } from './SettingsScreen.styles';
+
+const PRIVACY_POLICY_URL = 'https://moniqo-cc889.web.app/';
+const TERMS_URL = 'https://moniqo-cc889.web.app/TERMS_OF_SERVICE.html';
 
 // ── Settings screen ───────────────────────────────────────────────────────────
 
@@ -21,8 +23,6 @@ interface SettingsScreenProps {
 }
 
 const SettingsScreen: React.FC<SettingsScreenProps> = ({ onUpgradePress }) => {
-  const { canAccess } = useMembership();
-
   // Notification toggles
   const [txAlerts, toggleTxAlerts] = useToggle(true);
   const [monthlyReport, toggleMonthlyReport] = useToggle(true);
@@ -172,20 +172,7 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ onUpgradePress }) => {
       label: 'Face ID / Biometrics',
       type: 'value',
       value: 'Off',
-      onPress: () => {
-        if (!canAccess('app_lock')) {
-          Alert.alert(
-            'Premium Required',
-            'App lock is available on Premium Lite and Full plans.',
-            [
-              { text: 'Cancel', style: 'cancel' },
-              { text: 'Upgrade', onPress: onUpgradePress },
-            ],
-          );
-          return;
-        }
-        Alert.alert('Biometrics', 'Biometric lock coming soon.');
-      },
+      onPress: () => Alert.alert('Biometrics', 'Biometric lock coming soon.'),
     },
     {
       id: 'passcode',
@@ -193,20 +180,7 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ onUpgradePress }) => {
       iconBg: 'rgba(249,115,22,0.1)',
       label: 'App Passcode',
       type: 'chevron',
-      onPress: () => {
-        if (!canAccess('app_lock')) {
-          Alert.alert(
-            'Premium Required',
-            'App lock is available on Premium Lite and Full plans.',
-            [
-              { text: 'Cancel', style: 'cancel' },
-              { text: 'Upgrade', onPress: onUpgradePress },
-            ],
-          );
-          return;
-        }
-        Alert.alert('Biometrics', 'Biometric lock coming soon.');
-      },
+      onPress: () => Alert.alert('App Passcode', 'Passcode lock coming soon.'),
     },
   ];
 
@@ -217,20 +191,7 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ onUpgradePress }) => {
       iconBg: 'rgba(34,197,94,0.1)',
       label: 'Export Data',
       type: 'chevron',
-      onPress: () => {
-        if (!canAccess('csv_export')) {
-          Alert.alert(
-            'Premium Full Required',
-            'CSV export is available on Premium Full plan.',
-            [
-              { text: 'Cancel', style: 'cancel' },
-              { text: 'Upgrade', onPress: onUpgradePress },
-            ],
-          );
-          return;
-        }
-        Alert.alert('Export', 'Data export coming soon.');
-      },
+      onPress: () => Alert.alert('Export', 'Data export coming soon.'),
     },
     {
       id: 'backup',
@@ -258,7 +219,10 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ onUpgradePress }) => {
       iconBg: 'rgba(43,63,232,0.1)',
       label: 'Privacy Policy',
       type: 'chevron',
-      onPress: () => Alert.alert('Privacy Policy', 'Opens in browser.'),
+      onPress: () =>
+        Linking.openURL(PRIVACY_POLICY_URL).catch(() =>
+          Alert.alert('Error', 'Could not open the privacy policy.'),
+        ),
     },
     {
       id: 'terms',
@@ -266,7 +230,10 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ onUpgradePress }) => {
       iconBg: 'rgba(139,92,246,0.1)',
       label: 'Terms of Service',
       type: 'chevron',
-      onPress: () => Alert.alert('Terms', 'Opens in browser.'),
+      onPress: () =>
+        Linking.openURL(TERMS_URL).catch(() =>
+          Alert.alert('Error', 'Could not open the terms of service.'),
+        ),
     },
   ];
 

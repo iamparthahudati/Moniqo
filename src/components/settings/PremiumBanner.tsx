@@ -8,10 +8,8 @@ interface Props {
 }
 
 const FREE_CHIPS = [
-  'Unlimited Budgets',
-  'Cloud Sync',
-  'CSV Export',
-  'Splitwise',
+  'Remove All Ads',
+  'Support Development',
 ];
 
 const PremiumBanner: React.FC<Props> = ({ onUpgradePress }) => {
@@ -31,8 +29,8 @@ const PremiumBanner: React.FC<Props> = ({ onUpgradePress }) => {
 
           <Text style={styles.title}>Premium Full — Trial</Text>
           <Text style={styles.subtitle}>
-            {trialDaysLeft} {trialDaysLeft === 1 ? 'day' : 'days'} left in your
-            free trial. Upgrade to keep access.
+            {trialDaysLeft} {trialDaysLeft === 1 ? 'day' : 'days'} left
+            ad-free. Upgrade to stay Premium.
           </Text>
 
           <TouchableOpacity
@@ -116,9 +114,9 @@ const PremiumBanner: React.FC<Props> = ({ onUpgradePress }) => {
           </View>
         </View>
 
-        <Text style={styles.title}>Unlock Pro Features</Text>
+        <Text style={styles.title}>Enjoying Moniqo?</Text>
         <Text style={styles.subtitle}>
-          Get unlimited budgets, cloud sync, CSV export and more.
+          Go Premium to remove all ads and support the app.
         </Text>
 
         <View style={styles.featureRow}>

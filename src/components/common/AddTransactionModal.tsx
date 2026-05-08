@@ -29,6 +29,7 @@ import {
 import { useAccounts } from '../../store/accountsStore';
 import { useAuth } from '../../store/authStore';
 import { useCategories } from '../../store/categoriesStore';
+import { useInterstitialAd } from '../../hooks/useInterstitialAd';
 import { useTransactions } from '../../store/transactionsStore';
 import { Colors } from '../../theme/colors';
 import { Radius, Spacing } from '../../theme/spacing';
@@ -789,6 +790,7 @@ const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
   const { state: accountsState, dispatch: acctDispatch } = useAccounts();
   const { dispatch: txDispatch } = useTransactions();
   const { expenseCategories, incomeCategories } = useCategories();
+  const { recordTransaction } = useInterstitialAd();
 
   const [txType, setTxType] = useState<TransactionType>(initialType);
   const [amount, setAmount] = useState('');
@@ -919,6 +921,7 @@ const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
 
     resetForm();
     onClose();
+    recordTransaction();
   }, [
     isGuest,
     amount,
@@ -933,6 +936,7 @@ const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
     acctDispatch,
     resetForm,
     onClose,
+    recordTransaction,
   ]);
 
   const handleClose = useCallback(() => {

@@ -15,28 +15,6 @@ import { useAuth } from './authStore';
 // Feature access matrix
 // ---------------------------------------------------------------------------
 
-const PREMIUM_LITE_FEATURES = new Set<PremiumFeature>([
-  'budget_unlimited',
-  'categories_unlimited',
-  'recurring_transactions',
-  'cloud_sync',
-  'app_lock',
-]);
-
-const PREMIUM_FULL_FEATURES = new Set<PremiumFeature>([
-  'budget_unlimited',
-  'categories_unlimited',
-  'recurring_transactions',
-  'cloud_sync',
-  'app_lock',
-  'csv_export',
-  'splitwise',
-  'sms_parsing',
-  'multi_currency',
-  'widget',
-  'analytics_full_history',
-]);
-
 function resolveEffectiveTier(profile: UserProfile | null): {
   tier: MembershipTier;
   isTrialActive: boolean;
@@ -67,6 +45,16 @@ function resolveEffectiveTier(profile: UserProfile | null): {
     ? Math.ceil((profile.trialExpiry! - now) / (1000 * 60 * 60 * 24))
     : 0;
 
+  // Trial was used but has expired, and no paid membershipExpiry is set.
+  // Handles existing users created before membershipExpiry was added to ensureUserProfile.
+  if (
+    profile.trialUsed === true &&
+    !isTrialActive &&
+    profile.membershipExpiry === undefined
+  ) {
+    return { tier: 'free', isTrialActive: false, trialDaysLeft: 0 };
+  }
+
   // Trial counts as premium_full
   const tier: MembershipTier = isTrialActive
     ? 'premium_full'
@@ -80,15 +68,11 @@ function buildCanAccess(
   isTrialActive: boolean,
 ): (feature: PremiumFeature) => boolean {
   return (feature: PremiumFeature): boolean => {
-    // Trial grants full access
-    if (isTrialActive || tier === 'premium_full') {
-      return PREMIUM_FULL_FEATURES.has(feature);
+    // Ad removal is the only paid feature — everything else is free for everyone
+    if (feature === 'zero_ads') {
+      return isTrialActive || tier === 'premium_lite' || tier === 'premium_full';
     }
-    if (tier === 'premium_lite') {
-      return PREMIUM_LITE_FEATURES.has(feature);
-    }
-    // free tier — no gated features accessible
-    return false;
+    return true;
   };
 }
 
@@ -162,10 +146,10 @@ export function MembershipProvider({
 
   const { tier, isTrialActive, trialDaysLeft } = resolveEffectiveTier(profile);
 
-  const canAccess = useCallback(buildCanAccess(tier, isTrialActive), [
-    tier,
-    isTrialActive,
-  ]);
+  const canAccess = useCallback(
+    (feature: PremiumFeature) => buildCanAccess(tier, isTrialActive)(feature),
+    [tier, isTrialActive],
+  );
 
   const value: MembershipContextValue = {
     profile,
