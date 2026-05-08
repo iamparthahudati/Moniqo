@@ -12,6 +12,7 @@ import {
   TouchableWithoutFeedback,
   View,
 } from 'react-native';
+import { BannerAdComponent } from '../components/ads/BannerAdComponent';
 import ScreenHeader from '../components/ui/ScreenHeader';
 import { PlusIcon } from '../icons/Icons';
 import { Budget, useBudgets } from '../store/budgetStore';
@@ -658,6 +659,7 @@ const BudgetScreen: React.FC<BudgetScreenProps> = ({ onUpgradePress }) => {
           showsVerticalScrollIndicator={false}
         />
       )}
+      <BannerAdComponent />
 
       <AddBudgetModal
         visible={modalVisible}

@@ -1,5 +1,6 @@
 import React from 'react';
 import { ScrollView, View } from 'react-native';
+import { BannerAdComponent } from '../components/ads/BannerAdComponent';
 import DashboardHeader from '../components/common/DashboardHeader';
 import BalanceCard from '../components/dashboard/BalanceCard';
 import ConnectedAccounts from '../components/dashboard/ConnectedAccounts';
@@ -24,6 +25,7 @@ const DashboardScreen: React.FC<DashboardScreenProps> = ({ onSeeAll }) => {
         <ConnectedAccounts />
         <RecentTransactions onSeeAll={onSeeAll} />
       </ScrollView>
+      <BannerAdComponent />
     </View>
   );
 };

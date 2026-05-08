@@ -25,6 +25,7 @@ import PaywallScreen from './src/screens/PaywallScreen';
 import SettingsScreen from './src/screens/SettingsScreen';
 import TransactionHistoryScreen from './src/screens/TransactionHistoryScreen';
 import WelcomeScreen from './src/screens/WelcomeScreen';
+import { initializeAds } from './src/services/adService';
 import { logScreenView } from './src/services/firebase';
 import { AccountsProvider } from './src/store/accountsStore';
 import { AuthProvider, useAuth } from './src/store/authStore';
@@ -234,6 +235,10 @@ function AuthGate() {
 // Root app
 // ---------------------------------------------------------------------------
 function App() {
+  useEffect(() => {
+    initializeAds().catch(() => {});
+  }, []);
+
   return (
     <ErrorBoundary>
       <SafeAreaProvider>

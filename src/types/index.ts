@@ -137,7 +137,8 @@ export type PremiumFeature =
   | 'sms_parsing'
   | 'multi_currency'
   | 'widget'
-  | 'analytics_full_history';
+  | 'analytics_full_history'
+  | 'zero_ads';
 
 export interface UserProfile {
   uid: string;

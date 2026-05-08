@@ -170,13 +170,20 @@ export function useIAP(
         await initConnection();
         if (!mounted) return;
 
-        setState(prev => ({ ...prev, connected: true }));
-
         // Fetch subscriptions and one-time products
-        await Promise.all([
+        const [fetchedSubs, fetchedProducts] = await Promise.all([
           fetchProducts({ skus: SUBSCRIPTION_SKUS, type: 'subs' }),
           fetchProducts({ skus: ONETIME_SKUS, type: 'in-app' }),
         ]);
+
+        if (!mounted) return;
+
+        setState(prev => ({
+          ...prev,
+          connected: true,
+          subscriptions: fetchedSubs as ProductSubscription[],
+          products: fetchedProducts as Product[],
+        }));
 
         // Purchase success listener
         purchaseListenerRef.current = purchaseUpdatedListener(

@@ -9,6 +9,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { BannerAdComponent } from '../components/ads/BannerAdComponent';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import EditTransactionModal from '../components/common/EditTransactionModal';
 import ModalHeader from '../components/ui/ModalHeader';
@@ -462,6 +463,7 @@ const TransactionHistoryScreen: React.FC<TransactionHistoryScreenProps> = ({
           keyboardShouldPersistTaps="handled"
           keyboardDismissMode="on-drag"
         />
+        <BannerAdComponent />
       </View>
 
       {/* Edit transaction modal */}

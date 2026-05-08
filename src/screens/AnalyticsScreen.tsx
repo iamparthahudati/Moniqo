@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import { BannerAdComponent } from '../components/ads/BannerAdComponent';
 import IconCircle from '../components/ui/IconCircle';
 import ScreenHeader from '../components/ui/ScreenHeader';
 import TabSwitcher from '../components/ui/TabSwitcher';
@@ -446,6 +447,7 @@ const AnalyticsScreen: React.FC = () => {
         <CategoryBreakdown categories={categories} />
         <TopTransactions expenses={topExpenses} />
       </ScrollView>
+      <BannerAdComponent />
     </View>
   );
 };
