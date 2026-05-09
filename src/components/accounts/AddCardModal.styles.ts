@@ -45,13 +45,8 @@ export const styles = StyleSheet.create({
     color: Colors.textPrimary,
     letterSpacing: -0.2,
   },
-  closeBtn: {
-    width: 32,
-    height: 32,
-    borderRadius: Radius.full,
+  closeBtnBg: {
     backgroundColor: Colors.background,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   closeBtnText: {
     fontSize: 16,
@@ -108,18 +103,4 @@ export const styles = StyleSheet.create({
   },
 
   // ── Save button ───────────────────────────────────────────────────────────
-  saveBtn: {
-    backgroundColor: Colors.primary,
-    borderRadius: Radius.lg,
-    paddingVertical: Spacing.base + 2,
-    alignItems: 'center',
-    justifyContent: 'center',
-    ...Shadow.md,
-  },
-  saveBtnText: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: Colors.white,
-    letterSpacing: 0.3,
-  },
 });

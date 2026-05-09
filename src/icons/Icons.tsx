@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Image, StyleSheet, Text, View } from 'react-native';
 
 interface IconProps {
   size?: number;
@@ -167,16 +167,11 @@ export const BackIcon: React.FC<IconProps> = ({
   size = 22,
   color = '#0F172A',
 }) => (
-  <View style={[styles.container, { width: size, height: size }]}>
-    <Text
-      style={[
-        styles.textIcon,
-        { color, fontSize: size, fontWeight: '400', lineHeight: size },
-      ]}
-    >
-      {'\u2190'}
-    </Text>
-  </View>
+  <Image
+    source={require('../assets/left-arrow.png')}
+    style={{ width: size, height: size, tintColor: color }}
+    resizeMode="contain"
+  />
 );
 
 export const CalendarIcon: React.FC<IconProps> = ({

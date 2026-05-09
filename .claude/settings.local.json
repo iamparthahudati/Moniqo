@@ -1,0 +1,19 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(& \"$env:ANDROID_HOME\\\\platform-tools\\\\adb.exe\" devices 2>&1)",
+      "PowerShell(echo $env:ANDROID_HOME; ls \"$env:ANDROID_HOME\\\\platforms\" 2>&1; ls \"$env:ANDROID_HOME\\\\build-tools\" 2>&1)",
+      "PowerShell(ls \"$env:USERPROFILE\\\\.android\\\\avd\" 2>&1)",
+      "PowerShell(Get-ChildItem -Path \"f:\\\\PlayStore\\\\Moniqo\\\\src\\\\components\\\\dashboard\\\\\" -Recurse | ForEach-Object { $path = $_.FullName; if \\($_.PSIsContainer\\) { $path + ' [DIR]' } else { $path } } | Sort-Object)",
+      "Bash(Get-ChildItem -Path \"f:\\\\PlayStore\\\\Moniqo\\\\src\\\\components\\\\settings\\\\\" -File | Select-Object Name, FullName | Sort-Object Name)",
+      "PowerShell(Get-ChildItem -Path \"f:\\\\PlayStore\\\\Moniqo\\\\src\\\\components\\\\settings\\\\\" -File | Select-Object Name, @{Name=\"FullPath\"; Expression={$_.FullName}} | Sort-Object Name | Format-Table -AutoSize)",
+      "Bash(Get-ChildItem \"f:\\\\PlayStore\\\\Moniqo\\\\src\\\\components\\\\settings\" -Recurse)",
+      "Bash(Select-Object FullName, PSIsContainer)",
+      "Bash(Get-ChildItem -Path \"f:\\\\PlayStore\\\\Moniqo\\\\src\\\\components\\\\\" -Recurse -Name)",
+      "Bash(git commit -m ' *)",
+      "Bash(node -e \"const p = require\\('./package.json'\\); console.log\\('RN:', p.dependencies['react-native']\\); console.log\\('React:', p.dependencies['react']\\);\")",
+      "Bash(Get-ChildItem -Path \"f:\\\\PlayStore\\\\Moniqo\" -Recurse -Filter \"left-arrow.png\")",
+      "Bash(Select-Object -ExpandProperty FullName)"
+    ]
+  }
+}

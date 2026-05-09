@@ -741,11 +741,10 @@ export function subscribeToTransactions(
 
 export async function addTransaction(
   uid: string,
-  tx: Omit<Transaction, 'id'>,
+  tx: Transaction,
 ): Promise<void> {
   try {
-    const ref = subCol(uid, COL.TRANSACTIONS).doc();
-    await ref.set({ ...tx, id: ref.id });
+    await subCol(uid, COL.TRANSACTIONS).doc(tx.id).set(tx);
   } catch (error) {
     console.error('[firestoreService] addTransaction failed:', error);
     throw error;
@@ -914,4 +913,31 @@ export async function deleteBudget(uid: string, id: string): Promise<void> {
     console.error('[firestoreService] deleteBudget failed:', error);
     throw error;
   }
+}
+
+// ---------------------------------------------------------------------------
+// Account Deletion
+// ---------------------------------------------------------------------------
+
+export async function deleteAllUserData(uid: string): Promise<void> {
+  const allCollections = [
+    COL.BANK,
+    COL.CARD,
+    COL.CASH,
+    COL.INVESTMENT,
+    COL.TRANSACTIONS,
+    COL.CATEGORIES,
+    COL_BUDGETS,
+  ];
+
+  for (const col of allCollections) {
+    const snapshot = await subCol(uid, col).get();
+    if (!snapshot.empty) {
+      const batch = firestore().batch();
+      snapshot.docs.forEach(doc => batch.delete(doc.ref));
+      await batch.commit();
+    }
+  }
+
+  await userDoc(uid).delete();
 }
