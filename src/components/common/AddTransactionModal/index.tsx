@@ -39,7 +39,9 @@ import type {
   CashEntry,
   Investment,
 } from '../../../types';
+import Button from '../../ui/Button';
 import ModalHeader from '../../ui/ModalHeader';
+import ToggleButton from '../../ui/ToggleButton';
 import { styles } from './styles';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -338,13 +340,11 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({
             </>
           )}
         </View>
-        <TouchableOpacity
-          style={sharedStyles.confirmBtn}
+        <Button
+          title="Confirm"
           onPress={handleConfirm}
-          activeOpacity={0.85}
-        >
-          <Text style={sharedStyles.confirmText}>Confirm</Text>
-        </TouchableOpacity>
+          style={sharedStyles.confirmBtnOverride}
+        />
       </View>
     </View>
   );
@@ -728,14 +728,9 @@ const sharedStyles = StyleSheet.create({
     alignSelf: 'center',
     marginBottom: 4,
   },
-  confirmBtn: {
-    backgroundColor: Colors.primary,
-    borderRadius: Radius.lg,
-    paddingVertical: Spacing.base,
-    alignItems: 'center',
+  confirmBtnOverride: {
     marginBottom: Spacing.sm,
   },
-  confirmText: { fontSize: 16, fontWeight: '700', color: Colors.white },
 });
 
 // ── Category chip ─────────────────────────────────────────────────────────────
@@ -1040,46 +1035,18 @@ const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
             {/* ── Type toggle ── */}
             <View style={styles.typeToggleWrapper}>
               <View style={styles.typeToggle}>
-                <TouchableOpacity
-                  style={[
-                    styles.typeBtn,
-                    isExpense ? styles.typeBtnActive : styles.typeBtnInactive,
-                  ]}
+                <ToggleButton
+                  label="Expense"
+                  active={isExpense}
                   onPress={() => handleSetTxType('expense')}
-                  activeOpacity={0.8}
-                >
-                  <Text
-                    style={[
-                      styles.typeBtnText,
-                      isExpense
-                        ? styles.typeBtnTextActive
-                        : styles.typeBtnTextInactive,
-                    ]}
-                  >
-                    Expense
-                  </Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[
-                    styles.typeBtn,
-                    !isExpense
-                      ? styles.typeBtnActiveIncome
-                      : styles.typeBtnInactive,
-                  ]}
+                  activeColor={Colors.expenseRed}
+                />
+                <ToggleButton
+                  label="Income"
+                  active={!isExpense}
                   onPress={() => handleSetTxType('income')}
-                  activeOpacity={0.8}
-                >
-                  <Text
-                    style={[
-                      styles.typeBtnText,
-                      !isExpense
-                        ? styles.typeBtnTextActive
-                        : styles.typeBtnTextInactive,
-                    ]}
-                  >
-                    Income
-                  </Text>
-                </TouchableOpacity>
+                  activeColor={Colors.incomeGreen}
+                />
               </View>
             </View>
 
@@ -1197,13 +1164,11 @@ const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
 
             {/* ── Submit ── */}
             <View style={styles.submitSection}>
-              <TouchableOpacity
-                style={styles.submitBtn}
+              <Button
+                title="Add Transaction"
                 onPress={handleSave}
-                activeOpacity={0.85}
-              >
-                <Text style={styles.submitBtnText}>Add Transaction</Text>
-              </TouchableOpacity>
+                shadow
+              />
             </View>
           </ScrollView>
         </View>

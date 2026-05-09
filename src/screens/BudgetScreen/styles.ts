@@ -10,13 +10,8 @@ export const styles = StyleSheet.create({
 
   // ── Add button ──────────────────────────────────────────────────────────────
 
-  addButton: {
-    width: 36,
-    height: 36,
-    borderRadius: Radius.full,
+  addButtonBg: {
     backgroundColor: Colors.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
 
   // ── List ────────────────────────────────────────────────────────────────────
@@ -265,13 +260,8 @@ export const styles = StyleSheet.create({
     fontWeight: '700',
     color: Colors.textPrimary,
   },
-  sheetCloseBtn: {
-    width: 32,
-    height: 32,
-    borderRadius: Radius.full,
+  sheetCloseBtnBg: {
     backgroundColor: Colors.background,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   sheetCloseText: {
     fontSize: 18,
@@ -409,22 +399,7 @@ export const styles = StyleSheet.create({
   },
 
   // Set budget button
-  setBudgetBtn: {
+  setBudgetBtnMargin: {
     marginHorizontal: Spacing.base,
-    backgroundColor: Colors.primary,
-    borderRadius: Radius.lg,
-    paddingVertical: Spacing.base,
-    alignItems: 'center',
-    justifyContent: 'center',
-    ...Shadow.sm,
-  },
-  setBudgetBtnDisabled: {
-    opacity: 0.45,
-  },
-  setBudgetBtnText: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: Colors.white,
-    letterSpacing: 0.2,
   },
 });

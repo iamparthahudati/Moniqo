@@ -11,6 +11,7 @@ const Colors = {
   textMuted: '#94A3B8',
   border: '#E2E8F0',
   incomeGreen: '#22C55E',
+  errorRed: '#EF4444',
   trialBg: '#EEF1FD',
   recommendedBg: '#2B3FE8',
   freeBadgeBg: '#F1F5F9',
@@ -389,5 +390,40 @@ export const styles = StyleSheet.create({
     color: Colors.textMuted,
     marginTop: 8,
     lineHeight: 18,
+  },
+
+  // ── Purchase button containers ─────────────────────────────────────────────
+  purchaseButtonsContainer: {
+    gap: 8,
+    marginTop: 4,
+  },
+  buttonDisabled: {
+    opacity: 0.6,
+  },
+  lifetimeButton: {
+    borderColor: Colors.incomeGreen,
+  },
+  lifetimeButtonText: {
+    color: Colors.incomeGreen,
+  },
+
+  // ── Error & restore ────────────────────────────────────────────────────────
+  errorText: {
+    color: Colors.errorRed,
+    fontSize: 13,
+    textAlign: 'center',
+    marginTop: 8,
+    marginHorizontal: 16,
+  },
+  restoreButton: {
+    marginTop: 4,
+  },
+  restoreButtonText: {
+    textDecorationLine: 'underline',
+    fontSize: 13,
+    color: Colors.textMuted,
+  },
+  restoreIndicator: {
+    marginTop: 4,
   },
 });

@@ -1,5 +1,6 @@
 import React from 'react';
-import { Text, TouchableOpacity, View } from 'react-native';
+import { Text, View } from 'react-native';
+import Button from '../../ui/Button';
 import { useMembership } from '../../../store/membershipStore';
 import { styles } from './styles';
 
@@ -33,13 +34,12 @@ const PremiumBanner: React.FC<Props> = ({ onUpgradePress }) => {
             ad-free. Upgrade to stay Premium.
           </Text>
 
-          <TouchableOpacity
-            style={styles.ctaBtn}
+          <Button
+            variant="white"
+            title="Upgrade Now"
             onPress={onUpgradePress}
             activeOpacity={0.85}
-          >
-            <Text style={styles.ctaBtnText}>Upgrade Now</Text>
-          </TouchableOpacity>
+          />
         </View>
       </View>
     );
@@ -62,13 +62,12 @@ const PremiumBanner: React.FC<Props> = ({ onUpgradePress }) => {
             You have access to cloud sync, unlimited budgets and more.
           </Text>
 
-          <TouchableOpacity
-            style={styles.ctaBtnDark}
+          <Button
+            variant="ghost-dark"
+            title="Upgrade to Full"
             onPress={onUpgradePress}
             activeOpacity={0.85}
-          >
-            <Text style={styles.ctaBtnDarkText}>Upgrade to Full</Text>
-          </TouchableOpacity>
+          />
         </View>
       </View>
     );
@@ -127,13 +126,12 @@ const PremiumBanner: React.FC<Props> = ({ onUpgradePress }) => {
           ))}
         </View>
 
-        <TouchableOpacity
-          style={styles.ctaBtn}
+        <Button
+          variant="white"
+          title="View Plans"
           onPress={onUpgradePress}
           activeOpacity={0.85}
-        >
-          <Text style={styles.ctaBtnText}>View Plans</Text>
-        </TouchableOpacity>
+        />
       </View>
     </View>
   );

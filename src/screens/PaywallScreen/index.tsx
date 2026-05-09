@@ -6,14 +6,16 @@ import {
   ScrollView,
   StatusBar,
   Text,
-  TouchableOpacity,
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import Button from '../../components/ui/Button';
+import IconButton from '../../components/ui/IconButton';
 import { useIAP } from '../../hooks/useIAP';
 import { useAuth } from '../../store/authStore';
 import { useMembership } from '../../store/membershipStore';
 import type { MembershipTier } from '../../types/index';
+import { Colors } from '../../theme/colors';
 import { styles } from './styles';
 
 // ── Types ──────────────────────────────────────────────────────────────────
@@ -42,6 +44,19 @@ const FULL_SKUS = {
   annual: 'moniqo_full_annual',
   lifetime: 'moniqo_full_lifetime',
 } as const;
+
+// ── Button configs ─────────────────────────────────────────────────────────
+
+const LITE_BUTTON_CONFIGS = [
+  { sku: LITE_SKUS.monthly, label: 'Monthly' },
+  { sku: LITE_SKUS.annual, label: 'Annual' },
+] as const;
+
+const FULL_BUTTON_CONFIGS = [
+  { sku: FULL_SKUS.monthly, label: 'Monthly', isLifetime: false },
+  { sku: FULL_SKUS.annual, label: 'Annual', isLifetime: false },
+  { sku: FULL_SKUS.lifetime, label: 'Lifetime', isLifetime: true },
+] as const;
 
 // ── Static tier data ───────────────────────────────────────────────────────
 
@@ -150,36 +165,19 @@ const TierCard: React.FC<TierCardProps> = ({
 
     if (tier.id === 'premium_lite') {
       return (
-        <View style={{ gap: 8, marginTop: 4 }}>
-          {(
-            [
-              { sku: LITE_SKUS.monthly, label: 'Monthly' },
-              { sku: LITE_SKUS.annual, label: 'Annual' },
-            ] as const
-          ).map(({ sku, label }) => {
+        <View style={styles.purchaseButtonsContainer}>
+          {LITE_BUTTON_CONFIGS.map(({ sku, label }) => {
             const isPurchasing = purchasing === sku;
             return (
-              <TouchableOpacity
+              <Button
                 key={sku}
-                style={[
-                  styles.ctaButton,
-                  styles.ctaButtonLite,
-                  isDisabled && { opacity: 0.6 },
-                ]}
+                variant="outline"
+                title={`${label}  ${getPrice(sku)}`}
                 onPress={() => onPurchase(sku)}
                 disabled={isDisabled}
-                activeOpacity={0.8}
-              >
-                {isPurchasing ? (
-                  <ActivityIndicator size="small" color="#2B3FE8" />
-                ) : (
-                  <Text
-                    style={[styles.ctaButtonText, styles.ctaButtonTextLite]}
-                  >
-                    {`${label}  ${getPrice(sku)}`}
-                  </Text>
-                )}
-              </TouchableOpacity>
+                loading={isPurchasing}
+                style={(isPurchasing || isDisabled) ? styles.buttonDisabled : undefined}
+              />
             );
           })}
         </View>
@@ -188,47 +186,34 @@ const TierCard: React.FC<TierCardProps> = ({
 
     if (tier.id === 'premium_full') {
       return (
-        <View style={{ gap: 8, marginTop: 4 }}>
-          {(
-            [
-              { sku: FULL_SKUS.monthly, label: 'Monthly', isLifetime: false },
-              { sku: FULL_SKUS.annual, label: 'Annual', isLifetime: false },
-              { sku: FULL_SKUS.lifetime, label: 'Lifetime', isLifetime: true },
-            ] as const
-          ).map(({ sku, label, isLifetime }) => {
+        <View style={styles.purchaseButtonsContainer}>
+          {FULL_BUTTON_CONFIGS.map(({ sku, label, isLifetime }) => {
             const isPurchasing = purchasing === sku;
+            if (isLifetime) {
+              return (
+                <Button
+                  key={sku}
+                  variant="outline"
+                  title={`${label}  ${getPrice(sku)}`}
+                  onPress={() => onPurchase(sku)}
+                  disabled={isDisabled}
+                  loading={isPurchasing}
+                  style={isPurchasing || isDisabled ? { ...styles.lifetimeButton, ...styles.buttonDisabled } : styles.lifetimeButton}
+                  textStyle={styles.lifetimeButtonText}
+                />
+              );
+            }
             return (
-              <TouchableOpacity
+              <Button
                 key={sku}
-                style={[
-                  styles.ctaButton,
-                  isLifetime && {
-                    backgroundColor: 'transparent',
-                    borderWidth: 2,
-                    borderColor: '#22C55E',
-                  },
-                  isDisabled && { opacity: 0.6 },
-                ]}
+                variant="primary"
+                title={`${label}  ${getPrice(sku)}`}
                 onPress={() => onPurchase(sku)}
                 disabled={isDisabled}
-                activeOpacity={0.8}
-              >
-                {isPurchasing ? (
-                  <ActivityIndicator
-                    size="small"
-                    color={isLifetime ? '#22C55E' : '#FFFFFF'}
-                  />
-                ) : (
-                  <Text
-                    style={[
-                      styles.ctaButtonText,
-                      isLifetime && { color: '#22C55E' },
-                    ]}
-                  >
-                    {`${label}  ${getPrice(sku)}`}
-                  </Text>
-                )}
-              </TouchableOpacity>
+                loading={isPurchasing}
+                shadow
+                style={(isPurchasing || isDisabled) ? styles.buttonDisabled : undefined}
+              />
             );
           })}
         </View>
@@ -247,7 +232,6 @@ const TierCard: React.FC<TierCardProps> = ({
       )}
 
       <View style={styles.cardBody}>
-        {/* Header row */}
         <View style={styles.cardHeaderRow}>
           <View style={styles.tierNameRow}>
             <Text style={styles.tierName}>{tier.name}</Text>
@@ -261,7 +245,6 @@ const TierCard: React.FC<TierCardProps> = ({
 
         <View style={styles.divider} />
 
-        {/* Feature list */}
         <View style={styles.featureList}>
           {tier.features.map((feature, index) => (
             <FeatureRow
@@ -273,7 +256,6 @@ const TierCard: React.FC<TierCardProps> = ({
           ))}
         </View>
 
-        {/* Purchase buttons */}
         {renderPurchaseButtons()}
       </View>
     </View>
@@ -315,16 +297,15 @@ const PaywallScreen: React.FC<PaywallScreenProps> = ({ visible, onClose }) => {
       <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.modal}>
-          {/* Header */}
           <View style={styles.header}>
-            <TouchableOpacity
-              style={styles.closeButton}
+            <IconButton
               onPress={onClose}
-              activeOpacity={0.7}
+              size={36}
+              style={styles.closeButton}
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
             >
               <Text style={styles.closeButtonText}>{'<'}</Text>
-            </TouchableOpacity>
+            </IconButton>
             <Text style={styles.headerTitle}>Upgrade Moniqo</Text>
             <View style={styles.headerSpacer} />
           </View>
@@ -334,7 +315,6 @@ const PaywallScreen: React.FC<PaywallScreenProps> = ({ visible, onClose }) => {
             showsVerticalScrollIndicator={false}
             bounces={false}
           >
-            {/* Trial banner */}
             {isTrialActive && (
               <View style={styles.trialBanner}>
                 <View style={styles.trialDot} />
@@ -346,7 +326,6 @@ const PaywallScreen: React.FC<PaywallScreenProps> = ({ visible, onClose }) => {
               </View>
             )}
 
-            {/* Guest prompt */}
             {isGuest ? (
               <View style={styles.guestPrompt}>
                 <View style={styles.guestIcon}>
@@ -358,13 +337,11 @@ const PaywallScreen: React.FC<PaywallScreenProps> = ({ visible, onClose }) => {
                     'Create an account or sign in to unlock Premium features and keep your data safe across devices.'
                   }
                 </Text>
-                <TouchableOpacity
-                  style={styles.guestSignInButton}
+                <Button
+                  title="Sign In / Register"
                   onPress={handleSignIn}
-                  activeOpacity={0.8}
-                >
-                  <Text style={styles.guestSignInText}>Sign In / Register</Text>
-                </TouchableOpacity>
+                  style={styles.guestSignInButton}
+                />
               </View>
             ) : (
               <>
@@ -381,46 +358,21 @@ const PaywallScreen: React.FC<PaywallScreenProps> = ({ visible, onClose }) => {
                   />
                 ))}
 
-                {/* IAP error */}
                 {iapState.error ? (
-                  <Text
-                    style={{
-                      color: '#EF4444',
-                      fontSize: 13,
-                      textAlign: 'center',
-                      marginTop: 8,
-                      marginHorizontal: 16,
-                    }}
-                  >
-                    {iapState.error}
-                  </Text>
+                  <Text style={styles.errorText}>{iapState.error}</Text>
                 ) : null}
 
-                {/* Restore purchases */}
-                <TouchableOpacity
+                <Button
+                  variant="ghost"
+                  title={iapState.restoring ? '' : 'Restore Purchases'}
                   onPress={restore}
                   disabled={iapState.restoring}
-                  activeOpacity={0.7}
-                  style={{
-                    alignItems: 'center',
-                    paddingVertical: 12,
-                    marginTop: 4,
-                  }}
-                >
-                  {iapState.restoring ? (
-                    <ActivityIndicator size="small" color="#94A3B8" />
-                  ) : (
-                    <Text
-                      style={{
-                        color: '#94A3B8',
-                        fontSize: 13,
-                        textDecorationLine: 'underline',
-                      }}
-                    >
-                      Restore Purchases
-                    </Text>
-                  )}
-                </TouchableOpacity>
+                  style={styles.restoreButton}
+                  textStyle={styles.restoreButtonText}
+                />
+                {iapState.restoring && (
+                  <ActivityIndicator size="small" color={Colors.textMuted} style={styles.restoreIndicator} />
+                )}
 
                 <Text style={styles.footerNote}>
                   {

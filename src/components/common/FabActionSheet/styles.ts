@@ -73,8 +73,7 @@ export const styles = StyleSheet.create({
     marginHorizontal: Spacing.base,
     marginBottom: Spacing.base,
   },
-  cancelBtn: {
-    alignItems: 'center',
+  cancelBtnOverride: {
     paddingVertical: Spacing.base,
     marginBottom: Spacing.sm,
   },
@@ -82,5 +81,6 @@ export const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '600',
     color: Colors.textSecondary,
+    textDecorationLine: 'none',
   },
 });

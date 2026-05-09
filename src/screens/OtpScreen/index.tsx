@@ -1,6 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
 import {
-  ActivityIndicator,
   Alert,
   KeyboardAvoidingView,
   Platform,
@@ -11,6 +10,8 @@ import {
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import Button from '../../components/ui/Button';
+import IconButton from '../../components/ui/IconButton';
 import { BackIcon } from '../../icons/Icons';
 import { confirmOtp, sendOtp } from '../../services/authService';
 import { Colors } from '../../theme/colors';
@@ -128,13 +129,9 @@ export default function OtpScreen({
       <View
         style={[styles.content, { paddingTop: Math.max(insets.top + 16, 48) }]}
       >
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={onBack}
-          activeOpacity={0.7}
-        >
+        <IconButton onPress={onBack} style={styles.backButtonMargin}>
           <BackIcon size={20} color={Colors.textPrimary} />
-        </TouchableOpacity>
+        </IconButton>
 
         <Text style={styles.heading}>Verify your number</Text>
         <Text style={styles.subheading}>
@@ -176,21 +173,12 @@ export default function OtpScreen({
           ))}
         </View>
 
-        <TouchableOpacity
-          style={[
-            styles.verifyButton,
-            isVerifyDisabled && styles.verifyButtonDisabled,
-          ]}
+        <Button
+          title="Verify"
           onPress={handleVerify}
           disabled={isVerifyDisabled}
-          activeOpacity={0.8}
-        >
-          {loading ? (
-            <ActivityIndicator color="#FFFFFF" />
-          ) : (
-            <Text style={styles.verifyButtonText}>Verify</Text>
-          )}
-        </TouchableOpacity>
+          loading={loading}
+        />
 
         <View style={styles.resendRow}>
           <Text style={styles.resendText}>Didn't receive the code?</Text>

@@ -9,6 +9,8 @@ import {
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import Button from '../ui/Button';
+import IconButton from '../ui/IconButton';
 import { Colors } from '../../theme/colors';
 import { Spacing } from '../../theme/spacing';
 import { AccountColor, BankAccount } from '../../types';
@@ -125,14 +127,14 @@ const AddBankModal: React.FC<AddBankModalProps> = ({
             <Text style={styles.titleText}>
               {isEditMode ? 'Edit Bank Account' : 'Add Bank Account'}
             </Text>
-            <TouchableOpacity
-              style={styles.closeBtn}
+            <IconButton
               onPress={handleClose}
-              activeOpacity={0.7}
+              size={32}
+              style={styles.closeBtnBg}
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
             >
               <Text style={styles.closeBtnText}>x</Text>
-            </TouchableOpacity>
+            </IconButton>
           </View>
 
           {/* ── Form ── */}
@@ -282,15 +284,11 @@ const AddBankModal: React.FC<AddBankModalProps> = ({
             </View>
 
             {/* Save button */}
-            <TouchableOpacity
-              style={styles.saveBtn}
+            <Button
+              title={isEditMode ? 'Save Changes' : 'Add Account'}
               onPress={handleSave}
-              activeOpacity={0.85}
-            >
-              <Text style={styles.saveBtnText}>
-                {isEditMode ? 'Save Changes' : 'Add Account'}
-              </Text>
-            </TouchableOpacity>
+              shadow
+            />
           </ScrollView>
         </View>
       </View>

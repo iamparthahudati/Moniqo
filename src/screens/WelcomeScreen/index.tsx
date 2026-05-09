@@ -3,9 +3,9 @@ import {
   ActivityIndicator,
   Alert,
   Text,
-  TouchableOpacity,
   View,
 } from 'react-native';
+import Button from '../../components/ui/Button';
 import { signInWithGoogle } from '../../services/authService';
 import { styles } from './styles';
 
@@ -45,23 +45,14 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
       </View>
 
       <View style={styles.actionsSection}>
-        <TouchableOpacity
-          style={styles.googleButton}
+        <Button
+          variant="outline"
+          title={googleLoading ? '' : 'Continue with Google'}
           onPress={handleGoogleSignIn}
           disabled={googleLoading}
-          activeOpacity={0.75}
-        >
-          {googleLoading ? (
-            <ActivityIndicator size="small" color="#EA4335" />
-          ) : (
-            <>
-              <View style={styles.googleIcon}>
-                <Text style={styles.googleIconText}>G</Text>
-              </View>
-              <Text style={styles.googleButtonText}>Continue with Google</Text>
-            </>
-          )}
-        </TouchableOpacity>
+          loading={googleLoading}
+          style={styles.googleButtonOverride}
+        />
 
         <View style={styles.dividerRow}>
           <View style={styles.dividerLine} />
@@ -69,23 +60,18 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
           <View style={styles.dividerLine} />
         </View>
 
-        <TouchableOpacity
-          style={styles.phoneButton}
+        <Button
+          variant="primary"
+          title="Continue with Phone"
           onPress={onPhonePress}
           activeOpacity={0.85}
-        >
-          <Text style={styles.phoneButtonText}>Continue with Phone</Text>
-        </TouchableOpacity>
+        />
 
-        <TouchableOpacity
-          style={styles.guestButton}
+        <Button
+          variant="ghost"
+          title="Continue as Guest"
           onPress={onGuestPress}
-          activeOpacity={0.7}
-        >
-          <Text style={[styles.guestText, styles.guestUnderline]}>
-            Continue as Guest
-          </Text>
-        </TouchableOpacity>
+        />
 
         <Text style={styles.footer}>
           By continuing, you agree to our Terms of Service and Privacy Policy.

@@ -13,6 +13,8 @@ import {
   View,
 } from 'react-native';
 import { BannerAdComponent } from '../../components/ads/BannerAdComponent';
+import Button from '../../components/ui/Button';
+import IconButton from '../../components/ui/IconButton';
 import ScreenHeader from '../../components/ui/ScreenHeader';
 import { PlusIcon } from '../../icons/Icons';
 import { Budget, useBudgets } from '../../store/budgetStore';
@@ -376,13 +378,14 @@ const AddBudgetModal = React.memo<AddBudgetModalProps>(
                       ? 'Select Category'
                       : 'Set Budget Amount'}
                   </Text>
-                  <TouchableOpacity
-                    style={styles.sheetCloseBtn}
+                  <IconButton
                     onPress={handleClose}
+                    size={32}
+                    style={styles.sheetCloseBtnBg}
                     hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                   >
                     <Text style={styles.sheetCloseText}>{'×'}</Text>
-                  </TouchableOpacity>
+                  </IconButton>
                 </View>
 
                 {step === 'category' ? (
@@ -465,17 +468,12 @@ const AddBudgetModal = React.memo<AddBudgetModalProps>(
                       </Text>
                     )}
 
-                    <TouchableOpacity
-                      style={[
-                        styles.setBudgetBtn,
-                        isSubmitDisabled && styles.setBudgetBtnDisabled,
-                      ]}
+                    <Button
+                      title="Set Budget"
                       onPress={handleSubmit}
                       disabled={isSubmitDisabled}
-                      activeOpacity={0.8}
-                    >
-                      <Text style={styles.setBudgetBtnText}>Set Budget</Text>
-                    </TouchableOpacity>
+                      style={[styles.setBudgetBtnMargin, isSubmitDisabled && { opacity: 0.45 }]}
+                    />
                   </View>
                 )}
               </Animated.View>
@@ -625,20 +623,18 @@ const BudgetScreen: React.FC<BudgetScreenProps> = ({ onUpgradePress }) => {
 
   const AddButton = useMemo(
     () => (
-      <TouchableOpacity
-        style={[styles.addButton, isAtFreeLimit && { opacity: 0.55 }]}
+      <IconButton
         onPress={handleAddPress}
-        activeOpacity={0.8}
+        size={36}
+        style={[styles.addButtonBg, isAtFreeLimit && { opacity: 0.55 }]}
         hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
       >
         {isAtFreeLimit ? (
-          <Text style={{ fontSize: 16, color: Colors.white }}>
-            {'🔒'}
-          </Text>
+          <Text style={{ fontSize: 16, color: Colors.white }}>{'🔒'}</Text>
         ) : (
           <PlusIcon size={20} color={Colors.white} />
         )}
-      </TouchableOpacity>
+      </IconButton>
     ),
     [isAtFreeLimit, handleAddPress],
   );

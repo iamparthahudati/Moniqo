@@ -58,30 +58,6 @@ export const styles = StyleSheet.create({
     borderRadius: Radius.full,
     padding: 4,
   },
-  typeBtn: {
-    paddingHorizontal: Spacing.xl,
-    paddingVertical: Spacing.sm + 2,
-    borderRadius: Radius.full,
-  },
-  typeBtnActive: {
-    backgroundColor: Colors.expenseRed,
-  },
-  typeBtnActiveIncome: {
-    backgroundColor: Colors.incomeGreen,
-  },
-  typeBtnInactive: {
-    backgroundColor: 'transparent',
-  },
-  typeBtnText: {
-    fontSize: 15,
-    fontWeight: '600',
-  },
-  typeBtnTextActive: {
-    color: Colors.white,
-  },
-  typeBtnTextInactive: {
-    color: Colors.textSecondary,
-  },
 
   // ── Amount section ────────────────────────────────────────────────────────
   amountSection: {
@@ -274,19 +250,5 @@ export const styles = StyleSheet.create({
   submitSection: {
     paddingHorizontal: Spacing.base,
     paddingTop: Spacing.xl,
-  },
-  submitBtn: {
-    backgroundColor: Colors.primary,
-    borderRadius: Radius.lg,
-    paddingVertical: Spacing.base + 2,
-    alignItems: 'center',
-    justifyContent: 'center',
-    ...Shadow.md,
-  },
-  submitBtnText: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: Colors.white,
-    letterSpacing: 0.3,
   },
 });

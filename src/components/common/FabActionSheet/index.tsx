@@ -7,6 +7,7 @@ import {
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import Button from '../../ui/Button';
 import { styles } from './styles';
 
 export type FabAction = 'expense' | 'income' | 'transfer';
@@ -91,13 +92,13 @@ const FabActionSheet: React.FC<FabActionSheetProps> = ({
               </View>
 
               <View style={styles.divider} />
-              <TouchableOpacity
-                style={styles.cancelBtn}
+              <Button
+                variant="ghost"
+                title="Cancel"
                 onPress={onClose}
-                activeOpacity={0.7}
-              >
-                <Text style={styles.cancelText}>Cancel</Text>
-              </TouchableOpacity>
+                style={styles.cancelBtnOverride}
+                textStyle={styles.cancelText}
+              />
             </View>
           </TouchableWithoutFeedback>
         </View>

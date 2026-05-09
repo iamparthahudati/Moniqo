@@ -11,13 +11,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     paddingTop: 48,
   },
-  backButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: Colors.surface,
-    alignItems: 'center',
-    justifyContent: 'center',
+  backButtonMargin: {
     marginBottom: 32,
   },
   heading: {
@@ -67,20 +61,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 16,
   },
-  continueButton: {
-    backgroundColor: Colors.primary,
-    borderRadius: 14,
-    paddingVertical: 16,
-    alignItems: 'center',
+  continueButtonMargin: {
     marginTop: 32,
-  },
-  continueButtonDisabled: {
-    backgroundColor: '#A5B4FC',
-  },
-  continueButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#FFFFFF',
   },
   note: {
     fontSize: 12,

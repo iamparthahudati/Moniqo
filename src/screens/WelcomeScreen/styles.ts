@@ -40,33 +40,8 @@ export const styles = StyleSheet.create({
     width: '100%',
     gap: 12,
   },
-  googleButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: Colors.surface,
-    borderRadius: 14,
-    paddingVertical: 16,
-    gap: 12,
-    borderWidth: 1,
+  googleButtonOverride: {
     borderColor: '#E5E7EB',
-  },
-  googleButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: Colors.textPrimary,
-  },
-  phoneButton: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: Colors.primary,
-    borderRadius: 14,
-    paddingVertical: 16,
-  },
-  phoneButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#FFFFFF',
   },
   dividerRow: {
     flexDirection: 'row',
@@ -83,35 +58,11 @@ export const styles = StyleSheet.create({
     fontSize: 13,
     color: Colors.textSecondary,
   },
-  guestButton: {
-    alignItems: 'center',
-    paddingVertical: 8,
-  },
-  guestText: {
-    fontSize: 14,
-    color: Colors.textSecondary,
-  },
-  guestUnderline: {
-    textDecorationLine: 'underline',
-  },
   footer: {
     fontSize: 11,
     color: Colors.textSecondary,
     textAlign: 'center',
     lineHeight: 16,
-  },
-  googleIcon: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    backgroundColor: '#EA4335',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  googleIconText: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: '#FFFFFF',
   },
   logoLetter: {
     fontSize: 32,

@@ -1,14 +1,14 @@
 import React, { useState } from 'react';
 import {
-  ActivityIndicator,
   Alert,
   KeyboardAvoidingView,
   Platform,
   Text,
   TextInput,
-  TouchableOpacity,
   View,
 } from 'react-native';
+import Button from '../../components/ui/Button';
+import IconButton from '../../components/ui/IconButton';
 import { BackIcon } from '../../icons/Icons';
 import { sendOtp } from '../../services/authService';
 import styles from './styles';
@@ -54,13 +54,9 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onBack, onOtpSent }) => {
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       <View style={styles.content}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={onBack}
-          activeOpacity={0.7}
-        >
+        <IconButton onPress={onBack} style={styles.backButtonMargin}>
           <BackIcon size={20} color="#1A1D2E" />
-        </TouchableOpacity>
+        </IconButton>
 
         <Text style={styles.heading}>Enter your number</Text>
         <Text style={styles.subheading}>
@@ -84,21 +80,13 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onBack, onOtpSent }) => {
           />
         </View>
 
-        <TouchableOpacity
-          style={[
-            styles.continueButton,
-            isDisabled && styles.continueButtonDisabled,
-          ]}
+        <Button
+          title="Continue"
           onPress={handleContinue}
           disabled={isDisabled}
-          activeOpacity={0.8}
-        >
-          {loading ? (
-            <ActivityIndicator color="#FFFFFF" />
-          ) : (
-            <Text style={styles.continueButtonText}>Continue</Text>
-          )}
-        </TouchableOpacity>
+          loading={loading}
+          style={styles.continueButtonMargin}
+        />
 
         <Text style={styles.note}>
           By continuing, you agree to our Terms of Service and Privacy Policy.
