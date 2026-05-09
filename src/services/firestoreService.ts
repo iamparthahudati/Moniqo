@@ -915,3 +915,30 @@ export async function deleteBudget(uid: string, id: string): Promise<void> {
     throw error;
   }
 }
+
+// ---------------------------------------------------------------------------
+// Account Deletion
+// ---------------------------------------------------------------------------
+
+export async function deleteAllUserData(uid: string): Promise<void> {
+  const allCollections = [
+    COL.BANK,
+    COL.CARD,
+    COL.CASH,
+    COL.INVESTMENT,
+    COL.TRANSACTIONS,
+    COL.CATEGORIES,
+    COL_BUDGETS,
+  ];
+
+  for (const col of allCollections) {
+    const snapshot = await subCol(uid, col).get();
+    if (!snapshot.empty) {
+      const batch = firestore().batch();
+      snapshot.docs.forEach(doc => batch.delete(doc.ref));
+      await batch.commit();
+    }
+  }
+
+  await userDoc(uid).delete();
+}

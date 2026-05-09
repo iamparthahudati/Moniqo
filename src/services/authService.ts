@@ -48,3 +48,14 @@ export async function signOut(): Promise<void> {
 export function getCurrentUser(): FirebaseAuthTypes.User | null {
   return auth().currentUser;
 }
+
+export async function deleteAuthUser(): Promise<void> {
+  const user = auth().currentUser;
+  if (!user) throw new Error('No authenticated user.');
+  await user.delete();
+  try {
+    await GoogleSignin.signOut();
+  } catch {
+    // best-effort Google session cleanup
+  }
+}
