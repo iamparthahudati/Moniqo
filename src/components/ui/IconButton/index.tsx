@@ -1,10 +1,6 @@
 import React from 'react';
-import {
-  StyleSheet,
-  TouchableOpacity,
-  ViewStyle,
-} from 'react-native';
-import { Colors } from '../../theme/colors';
+import { TouchableOpacity, ViewStyle } from 'react-native';
+import { styles } from './style';
 
 interface IconButtonProps {
   onPress: () => void;
@@ -38,13 +34,5 @@ const IconButton: React.FC<IconButtonProps> = ({
     </TouchableOpacity>
   );
 };
-
-const styles = StyleSheet.create({
-  base: {
-    backgroundColor: Colors.surface,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});
 
 export default IconButton;

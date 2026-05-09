@@ -1,6 +1,7 @@
 import React from 'react';
-import { StyleSheet, View, ViewStyle } from 'react-native';
-import { Radius } from '../../theme/spacing';
+import { View, ViewStyle } from 'react-native';
+import { Radius } from '../../../theme/spacing';
+import { styles } from './style';
 
 interface IconCircleProps {
   size?: number;
@@ -32,13 +33,5 @@ const IconCircle: React.FC<IconCircleProps> = ({
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  base: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    overflow: 'hidden',
-  } as ViewStyle,
-});
 
 export default React.memo(IconCircle);

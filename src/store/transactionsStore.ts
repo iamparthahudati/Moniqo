@@ -114,10 +114,17 @@ export function TransactionsProvider(props: {
 
       switch (action.type) {
         case 'ADD_TRANSACTION': {
-          const { id: _id, ...rest } = action.payload;
-          addTransaction(currentUid, rest).catch(e =>
-            console.error('[TransactionsStore] addTransaction failed:', e),
-          );
+          setState(prev => ({
+            transactions: [action.payload, ...prev.transactions],
+          }));
+          addTransaction(currentUid, action.payload).catch(e => {
+            console.error('[TransactionsStore] addTransaction failed:', e);
+            setState(prev => ({
+              transactions: prev.transactions.filter(
+                t => t.id !== action.payload.id,
+              ),
+            }));
+          });
           break;
         }
         case 'UPDATE_TRANSACTION':

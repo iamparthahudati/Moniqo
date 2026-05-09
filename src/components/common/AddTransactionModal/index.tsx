@@ -18,7 +18,8 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import type { AppCategory } from '../../../types';
+import { addTransaction } from '../../../services/firestoreService';
+import type { AppCategory, Transaction } from '../../../types';
 import {
   BankIcon,
   CalendarIcon,
@@ -30,7 +31,6 @@ import { useAccounts } from '../../../store/accountsStore';
 import { useAuth } from '../../../store/authStore';
 import { useCategories } from '../../../store/categoriesStore';
 import { useInterstitialAd } from '../../../hooks/useInterstitialAd';
-import { useTransactions } from '../../../store/transactionsStore';
 import { Colors } from '../../../theme/colors';
 import { Radius, Spacing } from '../../../theme/spacing';
 import type {
@@ -781,9 +781,8 @@ const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
   initialType = 'expense',
 }) => {
   const insets = useSafeAreaInsets();
-  const { isGuest } = useAuth();
+  const { user, isGuest } = useAuth();
   const { state: accountsState, dispatch: acctDispatch } = useAccounts();
-  const { dispatch: txDispatch } = useTransactions();
   const { expenseCategories, incomeCategories } = useCategories();
   const { recordTransaction } = useInterstitialAd();
 
@@ -796,6 +795,7 @@ const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [datePickerVisible, setDatePickerVisible] = useState(false);
   const [accountPickerVisible, setAccountPickerVisible] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   const { bankAccounts, cardAccounts, investments, cashEntries } =
     accountsState;
@@ -839,12 +839,19 @@ const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
     setSelectedDate(new Date());
   }, [defaultAccount]);
 
-  const handleSave = useCallback(() => {
+  const handleSave = useCallback(async () => {
+    if (isSaving) {
+      return;
+    }
     if (isGuest) {
       Alert.alert(
         'Sign in required',
         'Create a free account to save your transactions.',
       );
+      return;
+    }
+    const uid = user?.uid;
+    if (!uid) {
       return;
     }
     const numAmount = parseFloat(amount);
@@ -873,25 +880,32 @@ const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
         ? 'investment'
         : 'cash';
 
-    txDispatch({
-      type: 'ADD_TRANSACTION',
-      payload: {
-        id: Date.now().toString(36) + Math.random().toString(36).slice(2),
-        title,
-        subtitle: note || title,
-        amount: finalAmount,
-        type: txType,
-        category: selectedCategory,
-        account_id: accountId,
-        account_type: accountType,
-        date: isoDate,
-        time: timeStr,
-        note: note || undefined,
-        created_at: Date.now(),
-      },
-    });
+    const tx: Transaction = {
+      id: Date.now().toString(36) + Math.random().toString(36).slice(2),
+      title,
+      subtitle: note || title,
+      amount: finalAmount,
+      type: txType,
+      category: selectedCategory,
+      account_id: accountId,
+      account_type: accountType,
+      date: isoDate,
+      time: timeStr,
+      note: note || undefined,
+      created_at: Date.now(),
+    };
 
-    // Adjust account balance
+    setIsSaving(true);
+    try {
+      await addTransaction(uid, tx);
+    } catch {
+      setIsSaving(false);
+      Alert.alert('Error', 'Could not save transaction. Please try again.');
+      return;
+    }
+    setIsSaving(false);
+
+    // Adjust account balance only after the transaction is confirmed saved
     if (selectedAccount?.kind === 'bank') {
       acctDispatch({
         type: 'ADJUST_BANK_BALANCE',
@@ -918,7 +932,9 @@ const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
     onClose();
     recordTransaction();
   }, [
+    isSaving,
     isGuest,
+    user,
     amount,
     txType,
     selectedCategory,
@@ -927,7 +943,6 @@ const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
     selectedDate,
     expenseCategories,
     incomeCategories,
-    txDispatch,
     acctDispatch,
     resetForm,
     onClose,
@@ -1020,7 +1035,7 @@ const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
       <StatusBar barStyle="dark-content" backgroundColor={Colors.surface} />
 
       <View style={styles.modalRoot}>
-        <View style={[styles.overlay, { paddingTop: insets.top }]}>
+        <View style={styles.overlay}>
           <ModalHeader
             title="Add Transaction"
             onBack={handleClose}
@@ -1167,6 +1182,8 @@ const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
               <Button
                 title="Add Transaction"
                 onPress={handleSave}
+                loading={isSaving}
+                disabled={isSaving}
                 shadow
               />
             </View>

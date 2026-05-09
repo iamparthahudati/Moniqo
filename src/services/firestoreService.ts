@@ -741,11 +741,10 @@ export function subscribeToTransactions(
 
 export async function addTransaction(
   uid: string,
-  tx: Omit<Transaction, 'id'>,
+  tx: Transaction,
 ): Promise<void> {
   try {
-    const ref = subCol(uid, COL.TRANSACTIONS).doc();
-    await ref.set({ ...tx, id: ref.id });
+    await subCol(uid, COL.TRANSACTIONS).doc(tx.id).set(tx);
   } catch (error) {
     console.error('[firestoreService] addTransaction failed:', error);
     throw error;

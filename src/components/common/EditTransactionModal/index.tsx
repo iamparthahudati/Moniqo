@@ -542,7 +542,7 @@ const EditTransactionModal: React.FC<EditTransactionModalProps> = ({
     >
       <StatusBar barStyle="dark-content" backgroundColor={Colors.surface} />
 
-      <View style={[modalStyles.root, { paddingTop: insets.top }]}>
+      <View style={modalStyles.root}>
         <ModalHeader
           title="Edit Transaction"
           onBack={onClose}

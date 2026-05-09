@@ -11,6 +11,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Button from '../../components/ui/Button';
 import IconButton from '../../components/ui/IconButton';
+import { BackIcon } from '../../icons/Icons';
 import { useIAP } from '../../hooks/useIAP';
 import { useAuth } from '../../store/authStore';
 import { useMembership } from '../../store/membershipStore';
@@ -304,7 +305,7 @@ const PaywallScreen: React.FC<PaywallScreenProps> = ({ visible, onClose }) => {
               style={styles.closeButton}
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
             >
-              <Text style={styles.closeButtonText}>{'<'}</Text>
+              <BackIcon size={20} color={Colors.textPrimary} />
             </IconButton>
             <Text style={styles.headerTitle}>Upgrade Moniqo</Text>
             <View style={styles.headerSpacer} />

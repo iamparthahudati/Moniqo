@@ -1,30 +1,9 @@
-import React from 'react';
-import {
-  ActivityIndicator,
-  StyleSheet,
-  Text,
-  TextStyle,
-  TouchableOpacity,
-  ViewStyle,
-} from 'react-native';
-import { Colors } from '../../theme/colors';
-import { Radius } from '../../theme/spacing';
+import { StyleSheet, TextStyle, ViewStyle } from 'react-native';
+import { Colors } from '../../../theme/colors';
+import { Radius } from '../../../theme/spacing';
+import { ButtonVariant } from '.';
 
-export type ButtonVariant = 'primary' | 'outline' | 'ghost' | 'white' | 'ghost-dark';
-
-interface ButtonProps {
-  title: string;
-  onPress: () => void;
-  variant?: ButtonVariant;
-  disabled?: boolean;
-  loading?: boolean;
-  shadow?: boolean;
-  style?: ViewStyle;
-  textStyle?: TextStyle;
-  activeOpacity?: number;
-}
-
-function getTextStyle(variant: ButtonVariant): TextStyle {
+export function getTextStyle(variant: ButtonVariant): TextStyle {
   switch (variant) {
     case 'outline':
       return styles.outlineText;
@@ -39,7 +18,7 @@ function getTextStyle(variant: ButtonVariant): TextStyle {
   }
 }
 
-function getContainerStyle(variant: ButtonVariant): ViewStyle {
+export function getContainerStyle(variant: ButtonVariant): ViewStyle {
   switch (variant) {
     case 'outline':
       return styles.outline;
@@ -54,48 +33,7 @@ function getContainerStyle(variant: ButtonVariant): ViewStyle {
   }
 }
 
-const Button: React.FC<ButtonProps> = ({
-  title,
-  onPress,
-  variant = 'primary',
-  disabled = false,
-  loading = false,
-  shadow = false,
-  style,
-  textStyle,
-  activeOpacity,
-}) => {
-  const isPrimary = variant === 'primary';
-  const opacity = activeOpacity ?? (variant === 'ghost' || variant === 'ghost-dark' ? 0.7 : 0.8);
-
-  return (
-    <TouchableOpacity
-      style={[
-        styles.base,
-        getContainerStyle(variant),
-        isPrimary && disabled && styles.primaryDisabled,
-        isPrimary && shadow && styles.primaryShadow,
-        style,
-      ]}
-      onPress={onPress}
-      disabled={disabled || loading}
-      activeOpacity={opacity}
-    >
-      {loading ? (
-        <ActivityIndicator
-          color={variant === 'outline' ? Colors.primary : Colors.white}
-          size="small"
-        />
-      ) : (
-        <Text style={[styles.label, getTextStyle(variant), textStyle]}>
-          {title}
-        </Text>
-      )}
-    </TouchableOpacity>
-  );
-};
-
-const styles = StyleSheet.create({
+export const styles = StyleSheet.create({
   base: {
     borderRadius: Radius.lg,
     paddingVertical: 16,
@@ -166,5 +104,3 @@ const styles = StyleSheet.create({
     fontSize: 15,
   },
 });
-
-export default Button;

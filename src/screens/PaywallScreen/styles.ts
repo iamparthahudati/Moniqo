@@ -45,12 +45,6 @@ export const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  closeButtonText: {
-    fontSize: 18,
-    color: Colors.textPrimary,
-    lineHeight: 20,
-    fontWeight: '500',
-  },
   headerTitle: {
     flex: 1,
     textAlign: 'center',
