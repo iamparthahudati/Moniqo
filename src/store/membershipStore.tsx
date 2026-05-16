@@ -4,15 +4,36 @@ import React, {
   useCallback,
   useContext,
   useEffect,
-  useRef,
   useState,
 } from 'react';
-import { subscribeToUserProfile } from '../services/firestoreService';
+import { AuthApiService, AuthUser } from '../services/authApiService';
 import { MembershipTier, PremiumFeature, UserProfile } from '../types';
 import { useAuth } from './authStore';
 
 // ---------------------------------------------------------------------------
-// Feature access matrix
+// Map PHP API response → internal UserProfile
+// PHP stores membership_expiry and trial_expiry as Unix seconds;
+// UserProfile uses milliseconds for consistency with created_at.
+// ---------------------------------------------------------------------------
+
+function mapApiUser(u: AuthUser): UserProfile {
+  return {
+    uid:              u.id,
+    displayName:      u.display_name,
+    phone:            u.phone,
+    email:            u.email,
+    membership:       u.membership,
+    trialUsed:        u.trial_used ?? false,
+    trialExpiry:      u.trial_expiry ? u.trial_expiry * 1000 : undefined,
+    membershipExpiry: u.membership_expiry ? u.membership_expiry * 1000 : undefined,
+    referralCode:     u.referral_code,
+    referredBy:       u.referred_by,
+    createdAt:        u.created_at,
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Feature access
 // ---------------------------------------------------------------------------
 
 function resolveEffectiveTier(profile: UserProfile | null): {
@@ -26,40 +47,26 @@ function resolveEffectiveTier(profile: UserProfile | null): {
 
   const now = Date.now();
 
-  // Check if membership has expired
-  if (
-    profile.membershipExpiry !== undefined &&
-    profile.membershipExpiry < now
-  ) {
+  // Paid plan has a set expiry and it has passed → downgrade to free
+  if (profile.membershipExpiry !== undefined && profile.membershipExpiry < now) {
     return { tier: 'free', isTrialActive: false, trialDaysLeft: 0 };
   }
 
-  // Check if trial is active
+  // Server is authoritative: if the user holds a paid tier (and it hasn't expired above),
+  // return it directly. Lifetime plans have no membershipExpiry — that's intentional.
+  if (profile.membership === 'premium_lite' || profile.membership === 'premium_full') {
+    return { tier: profile.membership, isTrialActive: false, trialDaysLeft: 0 };
+  }
+
+  // Free user — check whether an active trial grants premium_full access
   const isTrialActive =
-    profile.membership === 'premium_full' &&
-    profile.trialUsed === true &&
-    profile.trialExpiry !== undefined &&
-    profile.trialExpiry > now;
+    profile.trialExpiry !== undefined && profile.trialExpiry > now;
 
   const trialDaysLeft = isTrialActive
     ? Math.ceil((profile.trialExpiry! - now) / (1000 * 60 * 60 * 24))
     : 0;
 
-  // Trial was used but has expired, and no paid membershipExpiry is set.
-  // Handles existing users created before membershipExpiry was added to ensureUserProfile.
-  if (
-    profile.trialUsed === true &&
-    !isTrialActive &&
-    profile.membershipExpiry === undefined
-  ) {
-    return { tier: 'free', isTrialActive: false, trialDaysLeft: 0 };
-  }
-
-  // Trial counts as premium_full
-  const tier: MembershipTier = isTrialActive
-    ? 'premium_full'
-    : profile.membership;
-
+  const tier: MembershipTier = isTrialActive ? 'premium_full' : 'free';
   return { tier, isTrialActive, trialDaysLeft };
 }
 
@@ -68,7 +75,6 @@ function buildCanAccess(
   isTrialActive: boolean,
 ): (feature: PremiumFeature) => boolean {
   return (feature: PremiumFeature): boolean => {
-    // Ad removal is the only paid feature — everything else is free for everyone
     if (feature === 'zero_ads') {
       return isTrialActive || tier === 'premium_lite' || tier === 'premium_full';
     }
@@ -87,6 +93,7 @@ interface MembershipContextValue {
   trialDaysLeft: number;
   isLoading: boolean;
   canAccess: (feature: PremiumFeature) => boolean;
+  refreshProfile: () => Promise<void>;
 }
 
 const MembershipContext = createContext<MembershipContextValue>({
@@ -96,53 +103,55 @@ const MembershipContext = createContext<MembershipContextValue>({
   trialDaysLeft: 0,
   isLoading: true,
   canAccess: () => false,
+  refreshProfile: async () => {},
 });
 
 // ---------------------------------------------------------------------------
 // Provider
 // ---------------------------------------------------------------------------
 
-interface MembershipProviderProps {
-  children: ReactNode;
-}
-
-export function MembershipProvider({
-  children,
-}: MembershipProviderProps): React.JSX.Element {
+export function MembershipProvider({ children }: { children: ReactNode }): React.JSX.Element {
   const { user, isGuest } = useAuth();
 
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
-  const unsubscribeRef = useRef<(() => void) | null>(null);
+  const fetchProfile = useCallback(async () => {
+    try {
+      const apiUser = await AuthApiService.getProfile();
+      setProfile(mapApiUser(apiUser));
+    } catch {
+      // Network error — keep whatever profile we had
+    }
+  }, []);
 
   useEffect(() => {
-    if (unsubscribeRef.current) {
-      unsubscribeRef.current();
-      unsubscribeRef.current = null;
-    }
-
     if (!user || isGuest) {
       setProfile(null);
       setIsLoading(false);
       return;
     }
 
-    setIsLoading(true);
-
-    // subscribeToUserProfile calls onChange(null) on error internally
-    const unsubscribe = subscribeToUserProfile(user.uid, snapshot => {
-      setProfile(snapshot);
-      setIsLoading(false);
+    // Seed from MMKV immediately so premium users aren't shown as free
+    // while the API call is in flight or if it fails
+    setProfile(prev => prev ?? {
+      uid:          user.id,
+      displayName:  user.display_name,
+      phone:        user.phone,
+      membership:   user.membership,
+      trialUsed:    user.trial_used ?? false,
+      referralCode: user.referral_code ?? '',
+      createdAt:    user.created_at ?? 0,
     });
 
-    unsubscribeRef.current = unsubscribe;
+    setIsLoading(true);
+    fetchProfile().finally(() => setIsLoading(false));
+  }, [user, isGuest, fetchProfile]);
 
-    return () => {
-      unsubscribe();
-      unsubscribeRef.current = null;
-    };
-  }, [user, isGuest]);
+  const refreshProfile = useCallback(async () => {
+    if (!user || isGuest) return;
+    await fetchProfile();
+  }, [user, isGuest, fetchProfile]);
 
   const { tier, isTrialActive, trialDaysLeft } = resolveEffectiveTier(profile);
 
@@ -151,17 +160,9 @@ export function MembershipProvider({
     [tier, isTrialActive],
   );
 
-  const value: MembershipContextValue = {
-    profile,
-    tier,
-    isTrialActive,
-    trialDaysLeft,
-    isLoading,
-    canAccess,
-  };
-
   return (
-    <MembershipContext.Provider value={value}>
+    <MembershipContext.Provider
+      value={{ profile, tier, isTrialActive, trialDaysLeft, isLoading, canAccess, refreshProfile }}>
       {children}
     </MembershipContext.Provider>
   );
@@ -172,9 +173,5 @@ export function MembershipProvider({
 // ---------------------------------------------------------------------------
 
 export function useMembership(): MembershipContextValue {
-  const context = useContext(MembershipContext);
-  if (context === undefined) {
-    throw new Error('useMembership must be used within a MembershipProvider');
-  }
-  return context;
+  return useContext(MembershipContext);
 }

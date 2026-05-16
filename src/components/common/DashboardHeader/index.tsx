@@ -15,11 +15,11 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = React.memo(
     const { user } = useAuth();
 
     const displayName = useMemo(() => {
-      if (user?.displayName) {
-        return user.displayName.split(' ')[0];
+      if (user?.display_name) {
+        return user.display_name.split(' ')[0];
       }
-      if (user?.phoneNumber) {
-        const digits = user.phoneNumber.replace(/\D/g, '');
+      if (user?.phone) {
+        const digits = user.phone.replace(/\D/g, '');
         return `...${digits.slice(-4)}`;
       }
       return null;

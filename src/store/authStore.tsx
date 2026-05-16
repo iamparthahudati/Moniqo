@@ -1,4 +1,3 @@
-import auth, { FirebaseAuthTypes } from '@react-native-firebase/auth';
 import React, {
   createContext,
   ReactNode,
@@ -7,20 +6,19 @@ import React, {
   useEffect,
   useState,
 } from 'react';
-import { configureGoogleSignIn } from '../services/authService';
-import { ensureUserProfile } from '../services/firestoreService';
-
-type AuthUser = FirebaseAuthTypes.User | null;
-type GuestMode = boolean;
+import { AuthApiService, AuthUser } from '../services/authApiService';
+import { StorageService } from '../services/storageService';
 
 interface AuthState {
-  user: AuthUser;
+  user: AuthUser | null;
   isGuest: boolean;
   isLoading: boolean;
 }
 
 interface AuthContextValue extends AuthState {
   setGuest: (v: boolean) => void;
+  setUser: (user: AuthUser | null) => void;
+  signOut: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextValue>({
@@ -28,57 +26,53 @@ const AuthContext = createContext<AuthContextValue>({
   isGuest: false,
   isLoading: true,
   setGuest: () => {},
+  setUser: () => {},
+  signOut: async () => {},
 });
 
-interface AuthProviderProps {
-  children: ReactNode;
-}
-
-export function AuthProvider({
-  children,
-}: AuthProviderProps): React.JSX.Element {
-  const [user, setUser] = useState<AuthUser>(null);
-  const [isGuest, setIsGuest] = useState<GuestMode>(false);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
+export function AuthProvider({ children }: { children: ReactNode }): React.JSX.Element {
+  const [user, setUserState] = useState<AuthUser | null>(null);
+  const [isGuest, setIsGuest] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    configureGoogleSignIn();
+    // Restore session from MMKV if token exists
+    if (StorageService.isLoggedIn()) {
+      setUserState({
+        id:           StorageService.getUserId() ?? '',
+        phone:        StorageService.getUserPhone() ?? '',
+        display_name: '',
+        membership:   (StorageService.getMembership() ?? 'free') as AuthUser['membership'],
+        trial_used:   false,
+        referral_code: '',
+        created_at:   0,
+      });
+    }
+    setIsLoading(false);
   }, []);
 
-  useEffect(() => {
-    const unsubscribe = auth().onAuthStateChanged((firebaseUser: AuthUser) => {
-      if (firebaseUser) {
-        ensureUserProfile(
-          firebaseUser.uid,
-          firebaseUser.displayName ?? '',
-          firebaseUser.phoneNumber ?? '',
-          firebaseUser.email ?? undefined,
-        ).catch(console.error);
-      }
-      setUser(firebaseUser);
-      setIsLoading(false);
-    });
+  const setUser = useCallback((u: AuthUser | null) => setUserState(u), []);
 
-    return () => {
-      unsubscribe();
-    };
-  }, []);
+  const setGuest = useCallback((v: boolean) => setIsGuest(v), []);
 
-  const setGuest = useCallback((v: boolean) => {
-    setIsGuest(v);
+  const signOut = useCallback(async () => {
+    try {
+      await AuthApiService.logout();
+    } finally {
+      setUserState(null);
+      setIsGuest(false);
+    }
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, isGuest, isLoading, setGuest }}>
+    <AuthContext.Provider value={{ user, isGuest, isLoading, setGuest, setUser, signOut }}>
       {children}
     </AuthContext.Provider>
   );
 }
 
 export function useAuth(): AuthContextValue {
-  const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
+  return useContext(AuthContext);
 }
+
+export type { AuthUser };

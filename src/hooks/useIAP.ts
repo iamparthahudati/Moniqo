@@ -17,8 +17,8 @@ import {
   requestPurchase,
   restorePurchases,
 } from 'react-native-iap';
-import { updateMembership } from '../services/firestoreService';
-import type { MembershipTier } from '../types';
+import { MembershipApiService, MembershipSku } from '../services/membershipApiService';
+import { ErrorReportService } from '../services/errorReportService';
 
 // ---------------------------------------------------------------------------
 // SKU constants
@@ -35,35 +35,15 @@ export const ONETIME_SKUS: string[] = ['moniqo_full_lifetime'];
 
 export const ALL_SKUS: string[] = [...SUBSCRIPTION_SKUS, ...ONETIME_SKUS];
 
-// ---------------------------------------------------------------------------
-// SKU → tier + expiry mapping
-// ---------------------------------------------------------------------------
-
-interface SkuMapping {
-  tier: MembershipTier;
-  days?: number; // undefined = lifetime
-}
-
-const SKU_MAP: Record<string, SkuMapping> = {
-  moniqo_lite_monthly: { tier: 'premium_lite', days: 31 },
-  moniqo_lite_annual: { tier: 'premium_lite', days: 366 },
-  moniqo_full_monthly: { tier: 'premium_full', days: 31 },
-  moniqo_full_annual: { tier: 'premium_full', days: 366 },
-  moniqo_full_lifetime: { tier: 'premium_full', days: undefined },
-};
+const VALID_SKUS = new Set<string>([...SUBSCRIPTION_SKUS, ...ONETIME_SKUS]);
 
 const FALLBACK_PRICES: Record<string, string> = {
-  moniqo_lite_monthly: '₹49/mo',
-  moniqo_lite_annual: '₹399/yr',
-  moniqo_full_monthly: '₹149/mo',
-  moniqo_full_annual: '₹999/yr',
+  moniqo_lite_monthly:  '₹49/mo',
+  moniqo_lite_annual:   '₹399/yr',
+  moniqo_full_monthly:  '₹149/mo',
+  moniqo_full_annual:   '₹999/yr',
   moniqo_full_lifetime: '₹2,499',
 };
-
-function resolveExpiryMs(days: number | undefined): number | undefined {
-  if (days === undefined) return undefined;
-  return Date.now() + days * 24 * 60 * 60 * 1000;
-}
 
 // ---------------------------------------------------------------------------
 // State interface
@@ -79,18 +59,16 @@ export interface IAPState {
 }
 
 const INITIAL_STATE: IAPState = {
-  connected: false,
+  connected:     false,
   subscriptions: [],
-  products: [],
-  purchasing: null,
-  restoring: false,
-  error: null,
+  products:      [],
+  purchasing:    null,
+  restoring:     false,
+  error:         null,
 };
 
 // ---------------------------------------------------------------------------
-// Helper — extract offerToken from a subscription for Android
-// Google Play Billing v5+ requires an offerToken to initiate a subscription purchase.
-// We pick the first available offer token from the subscription's offers list.
+// Helper — extract offerToken for Android (Google Play Billing v5+)
 // ---------------------------------------------------------------------------
 
 function getOfferTokenForSku(
@@ -105,18 +83,14 @@ function getOfferTokenForSku(
       (s as { productId?: string }).productId;
     return id === sku;
   });
-
   if (!sub) return undefined;
 
-  // react-native-iap v14 exposes subscriptionOffers on Android
-  const offers = (
-    sub as { subscriptionOffers?: Array<{ offerToken?: string }> }
-  ).subscriptionOffers;
+  const offers = (sub as { subscriptionOffers?: Array<{ offerToken?: string }> })
+    .subscriptionOffers;
   if (offers && offers.length > 0 && offers[0].offerToken) {
     return offers[0].offerToken;
   }
 
-  // Fallback: oneTimePurchaseOfferDetailsAndroid
   const oneTime = (
     sub as { oneTimePurchaseOfferDetailsAndroid?: { offerToken?: string } }
   ).oneTimePurchaseOfferDetailsAndroid;
@@ -141,22 +115,15 @@ export function useIAP(
   const [state, setState] = useState<IAPState>(INITIAL_STATE);
 
   const purchaseListenerRef = useRef<{ remove(): void } | null>(null);
-  const errorListenerRef = useRef<{ remove(): void } | null>(null);
+  const errorListenerRef    = useRef<{ remove(): void } | null>(null);
 
-  // Stable refs so listener callbacks always see the latest uid / onSuccess / state
-  const uidRef = useRef(uid);
+  const uidRef       = useRef(uid);
   const onSuccessRef = useRef(onSuccess);
-  const stateRef = useRef(state);
+  const stateRef     = useRef(state);
 
-  useEffect(() => {
-    uidRef.current = uid;
-  }, [uid]);
-  useEffect(() => {
-    onSuccessRef.current = onSuccess;
-  }, [onSuccess]);
-  useEffect(() => {
-    stateRef.current = state;
-  }, [state]);
+  useEffect(() => { uidRef.current = uid; }, [uid]);
+  useEffect(() => { onSuccessRef.current = onSuccess; }, [onSuccess]);
+  useEffect(() => { stateRef.current = state; }, [state]);
 
   // -------------------------------------------------------------------------
   // Mount / unmount
@@ -170,7 +137,6 @@ export function useIAP(
         await initConnection();
         if (!mounted) return;
 
-        // Fetch subscriptions and one-time products
         const [fetchedSubs, fetchedProducts] = await Promise.all([
           fetchProducts({ skus: SUBSCRIPTION_SKUS, type: 'subs' }),
           fetchProducts({ skus: ONETIME_SKUS, type: 'in-app' }),
@@ -180,54 +146,68 @@ export function useIAP(
 
         setState(prev => ({
           ...prev,
-          connected: true,
+          connected:     true,
           subscriptions: fetchedSubs as ProductSubscription[],
-          products: fetchedProducts as Product[],
+          products:      fetchedProducts as Product[],
         }));
 
         // Purchase success listener
         purchaseListenerRef.current = purchaseUpdatedListener(
           async (purchase: Purchase) => {
+            const sku = purchase.productId as MembershipSku;
+            const token =
+              (purchase as { purchaseToken?: string }).purchaseToken ??
+              (purchase as { transactionReceipt?: string }).transactionReceipt ??
+              '';
+
             try {
+              // Finish the transaction first — this acknowledges it with Google Play
               await finishTransaction({ purchase, isConsumable: false });
-
-              const mapping = SKU_MAP[purchase.productId];
-              if (mapping && uidRef.current) {
-                const expiryMs = resolveExpiryMs(mapping.days);
-                await updateMembership(uidRef.current, mapping.tier, expiryMs);
-              }
-
-              setState(prev => ({ ...prev, purchasing: null, error: null }));
-              onSuccessRef.current?.();
             } catch (err) {
-              const message =
-                err instanceof Error
-                  ? err.message
-                  : 'Purchase completion failed';
-              setState(prev => ({ ...prev, purchasing: null, error: message }));
+              const msg = err instanceof Error ? err.message : 'finishTransaction failed';
+              ErrorReportService.reportIapPurchaseFailed(sku ?? 'unknown', 'FINISH_TRANSACTION_FAILED', msg);
+            }
+
+            // Mark success immediately — the user has paid, don't hold them hostage to the API
+            setState(prev => ({ ...prev, purchasing: null, error: null }));
+            onSuccessRef.current?.();
+
+            // Sync with PHP backend in the background (fire-and-forget)
+            if (sku && token) {
+              MembershipApiService.upgrade(sku, token).catch(err => {
+                const msg = err instanceof Error ? err.message : 'Membership API sync failed';
+                ErrorReportService.reportIapApiSyncFailed(sku, msg);
+              });
             }
           },
         );
 
         // Purchase error listener
-        errorListenerRef.current = purchaseErrorListener(
-          (error: PurchaseError) => {
-            // Code 2 = user cancelled — don't show as error
-            const cancelled =
-              (error as { code?: number | string }).code === 2 ||
-              (error as { code?: number | string }).code === 'E_USER_CANCELLED';
-            setState(prev => ({
-              ...prev,
-              purchasing: null,
-              error: cancelled ? null : error.message ?? 'Purchase failed',
-            }));
-          },
-        );
+        errorListenerRef.current = purchaseErrorListener((error: PurchaseError) => {
+          const code = (error as { code?: number | string }).code;
+          const cancelled = code === 2 || code === 'E_USER_CANCELLED';
+
+          if (!cancelled) {
+            // Report non-cancellation errors to admin panel
+            ErrorReportService.reportIapPurchaseFailed(
+              stateRef.current.purchasing ?? 'unknown',
+              String(code ?? 'UNKNOWN'),
+              error.message ?? 'Purchase failed',
+            );
+          }
+
+          setState(prev => ({
+            ...prev,
+            purchasing: null,
+            error: cancelled ? null : (error.message ?? 'Purchase failed'),
+          }));
+        });
+
       } catch (err) {
         if (!mounted) return;
-        const message =
-          err instanceof Error ? err.message : 'Failed to connect to store';
+        const message = err instanceof Error ? err.message : 'Failed to connect to store';
         setState(prev => ({ ...prev, error: message }));
+        ErrorReportService.reportIapConnectionFailed(message);
       }
     };
 
@@ -254,35 +234,28 @@ export function useIAP(
       const isSub = SUBSCRIPTION_SKUS.includes(sku);
 
       if (isSub) {
-        // Android requires offerToken for Google Play Billing v5+
-        const offerToken = getOfferTokenForSku(
-          stateRef.current.subscriptions,
-          sku,
-        );
-
+        const offerToken = getOfferTokenForSku(stateRef.current.subscriptions, sku);
         await requestPurchase({
           type: 'subs',
           request: {
-            apple: { sku },
-            google: {
-              skus: [sku],
-              ...(offerToken ? { offerToken } : {}),
-            },
+            apple:  { sku },
+            google: { skus: [sku], ...(offerToken ? { offerToken } : {}) },
           },
         });
       } else {
         await requestPurchase({
           type: 'in-app',
           request: {
-            apple: { sku },
+            apple:  { sku },
             google: { skus: [sku] },
           },
         });
       }
-      // purchasing is cleared inside purchaseUpdatedListener on success
+      // purchasing cleared inside purchaseUpdatedListener on success
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Purchase failed';
       setState(prev => ({ ...prev, purchasing: null, error: message }));
+      ErrorReportService.reportIapPurchaseFailed(sku, 'REQUEST_PURCHASE_FAILED', message);
     }
   };
 
@@ -300,10 +273,16 @@ export function useIAP(
       const purchases = await getAvailablePurchases();
 
       for (const p of purchases) {
-        const mapping = SKU_MAP[p.productId];
-        if (mapping && uidRef.current) {
-          const expiryMs = resolveExpiryMs(mapping.days);
-          await updateMembership(uidRef.current, mapping.tier, expiryMs);
+        const sku = p.productId as MembershipSku;
+        const token =
+          (p as { purchaseToken?: string }).purchaseToken ??
+          (p as { transactionReceipt?: string }).transactionReceipt ??
+          '';
+        if (VALID_SKUS.has(sku) && token) {
+          MembershipApiService.upgrade(sku, token).catch(err => {
+            const msg = err instanceof Error ? err.message : 'Restore API sync failed';
+            ErrorReportService.reportIapApiSyncFailed(sku, msg);
+          });
         }
       }
 
@@ -312,6 +291,7 @@ export function useIAP(
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Restore failed';
       setState(prev => ({ ...prev, restoring: false, error: message }));
+      ErrorReportService.reportIapRestoreFailed(message);
     }
   };
 
@@ -320,7 +300,6 @@ export function useIAP(
   // -------------------------------------------------------------------------
 
   const getPrice = (sku: string): string => {
-    // react-native-iap v14 uses `id` and `displayPrice` on ProductCommon
     const sub = state.subscriptions.find(
       s =>
         (s as { id?: string; productId?: string }).id === sku ||
@@ -328,8 +307,8 @@ export function useIAP(
     );
     if (sub) {
       const price =
-        (sub as { displayPrice?: string; localizedPrice?: string })
-          .displayPrice ?? (sub as { localizedPrice?: string }).localizedPrice;
+        (sub as { displayPrice?: string; localizedPrice?: string }).displayPrice ??
+        (sub as { localizedPrice?: string }).localizedPrice;
       if (price) return price;
     }
 
@@ -340,8 +319,7 @@ export function useIAP(
     );
     if (product) {
       const price =
-        (product as { displayPrice?: string; localizedPrice?: string })
-          .displayPrice ??
+        (product as { displayPrice?: string; localizedPrice?: string }).displayPrice ??
         (product as { localizedPrice?: string }).localizedPrice;
       if (price) return price;
     }

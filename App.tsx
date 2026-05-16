@@ -19,8 +19,6 @@ import AccountsScreen from './src/screens/AccountScreen';
 import AnalyticsScreen from './src/screens/AnalyticsScreen';
 import BudgetScreen from './src/screens/BudgetScreen';
 import DashboardScreen from './src/screens/DashboardScreen';
-import LoginScreen from './src/screens/LoginScreen';
-import OtpScreen from './src/screens/OtpScreen';
 import PaywallScreen from './src/screens/PaywallScreen';
 import SettingsScreen from './src/screens/SettingsScreen';
 import TransactionHistoryScreen from './src/screens/TransactionHistoryScreen';
@@ -36,10 +34,6 @@ import { TransactionsProvider } from './src/store/transactionsStore';
 import { Colors } from './src/theme/colors';
 import { TabName } from './src/types';
 
-// ---------------------------------------------------------------------------
-// Auth flow screen names
-// ---------------------------------------------------------------------------
-type AuthScreen = 'welcome' | 'login' | 'otp';
 
 // ---------------------------------------------------------------------------
 // Main app content — shown after authentication
@@ -165,10 +159,6 @@ function AuthGate() {
   const { user, isGuest, isLoading, setGuest } = useAuth();
   const { setup } = useNotifications();
 
-  const [authScreen, setAuthScreen] = useState<AuthScreen>('welcome');
-  const [pendingConfirmation, setPendingConfirmation] = useState<any>(null);
-  const [pendingPhone, setPendingPhone] = useState('');
-
   // Request notification permissions once the user is authenticated
   useEffect(() => {
     if (user || isGuest) {
@@ -176,12 +166,10 @@ function AuthGate() {
     }
   }, [user, isGuest, setup]);
 
-  // Still resolving Firebase auth state
   if (isLoading) {
     return null;
   }
 
-  // Authenticated or guest — show the main app
   if (user || isGuest) {
     return (
       <CategoriesProvider>
@@ -196,36 +184,8 @@ function AuthGate() {
     );
   }
 
-  // Auth screens
-  if (authScreen === 'login') {
-    return (
-      <LoginScreen
-        onBack={() => setAuthScreen('welcome')}
-        onOtpSent={(confirmation, phoneNumber) => {
-          setPendingConfirmation(confirmation);
-          setPendingPhone(phoneNumber);
-          setAuthScreen('otp');
-        }}
-      />
-    );
-  }
-
-  if (authScreen === 'otp') {
-    return (
-      <OtpScreen
-        phoneNumber={pendingPhone}
-        confirmation={pendingConfirmation}
-        onBack={() => setAuthScreen('login')}
-        onSuccess={() => {
-          // onAuthStateChanged in AuthProvider will update user automatically
-        }}
-      />
-    );
-  }
-
   return (
     <WelcomeScreen
-      onPhonePress={() => setAuthScreen('login')}
       onGuestPress={() => setGuest(true)}
     />
   );

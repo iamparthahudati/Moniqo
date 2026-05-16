@@ -13,13 +13,21 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Button from '../../components/ui/Button';
 import IconButton from '../../components/ui/IconButton';
 import { BackIcon } from '../../icons/Icons';
-import { confirmOtp, sendOtp } from '../../services/authService';
+import { AuthApiService } from '../../services/authApiService';
+import { SyncApiService } from '../../services/syncApiService';
+import { BankRepository } from '../../db/repositories/bankRepository';
+import { CardRepository } from '../../db/repositories/cardRepository';
+import { CashRepository } from '../../db/repositories/cashRepository';
+import { InvestmentRepository } from '../../db/repositories/investmentRepository';
+import { TransactionsRepository } from '../../db/repositories/transactionsRepository';
+import { CategoriesRepository } from '../../db/repositories/categoriesRepository';
+import { BudgetRepository } from '../../db/repositories/budgetRepository';
+import { useAuth } from '../../store/authStore';
 import { Colors } from '../../theme/colors';
 import styles from './styles';
 
 interface OtpScreenProps {
   phoneNumber: string;
-  confirmation: any;
   onBack: () => void;
   onSuccess: () => void;
 }
@@ -28,16 +36,14 @@ const OTP_LENGTH = 6;
 
 export default function OtpScreen({
   phoneNumber,
-  confirmation,
   onBack,
   onSuccess,
 }: OtpScreenProps) {
+  const { setUser } = useAuth();
   const [otp, setOtp] = useState<string[]>(Array(OTP_LENGTH).fill(''));
   const [loading, setLoading] = useState(false);
   const [focusedIndex, setFocusedIndex] = useState(0);
   const [resendTimer, setResendTimer] = useState(60);
-  const [confirmationResult, setConfirmationResult] =
-    useState<any>(confirmation);
 
   const inputRefs = useRef<TextInputType[]>([]);
   const insets = useSafeAreaInsets();
@@ -87,8 +93,7 @@ export default function OtpScreen({
       return;
     }
     try {
-      const result = await sendOtp(phoneNumber);
-      setConfirmationResult(result);
+      await AuthApiService.sendOtp(phoneNumber);
       setResendTimer(60);
       setOtp(Array(OTP_LENGTH).fill(''));
       inputRefs.current[0]?.focus();
@@ -107,7 +112,71 @@ export default function OtpScreen({
     }
     setLoading(true);
     try {
-      await confirmOtp(confirmationResult, code);
+      // 1. Verify OTP with PHP API — stores JWT tokens in MMKV
+      const user = await AuthApiService.verifyOtp(phoneNumber, code);
+
+      // 2. Initialize all SQLite tables
+      BankRepository.init();
+      CardRepository.init();
+      CashRepository.init();
+      InvestmentRepository.init();
+      TransactionsRepository.init();
+      CategoriesRepository.init();
+      BudgetRepository.init();
+
+      // 3. Pull all cloud data and write into SQLite
+      const syncData = await SyncApiService.pull();
+
+      for (const b of syncData.accounts_bank) {
+        BankRepository.insert({
+          id: b.id, bankName: b.bank_name, accountType: b.account_type,
+          balance: b.balance, color: b.color, icon: b.icon,
+          status: b.status, note: b.note, created_at: b.created_at,
+        });
+      }
+      for (const c of syncData.accounts_card) {
+        CardRepository.insert({
+          id: c.id, cardName: c.card_name, cardType: c.card_type,
+          dueAmount: c.due_amount, dueLabel: c.due_label,
+          color: c.color, note: c.note, created_at: c.created_at,
+        });
+      }
+      for (const cash of syncData.accounts_cash) {
+        CashRepository.insert(cash);
+      }
+      for (const inv of syncData.accounts_investment) {
+        InvestmentRepository.insert({
+          id: inv.id, name: inv.name, amount: inv.amount,
+          icon: inv.icon, color: inv.color, note: inv.note, created_at: inv.created_at,
+        });
+      }
+      for (const tx of syncData.transactions) {
+        TransactionsRepository.insert(tx);
+      }
+      for (const cat of syncData.categories) {
+        CategoriesRepository.insert({
+          id: cat.id, name: cat.name, emoji: cat.emoji, type: cat.type,
+          color: cat.color, isDefault: cat.is_default, sortOrder: cat.sort_order,
+          created_at: cat.created_at,
+        });
+      }
+      for (const bud of syncData.budgets) {
+        BudgetRepository.upsert({
+          id: bud.id, categoryId: bud.category_id,
+          amount: bud.amount, period: bud.period, created_at: bud.created_at,
+        });
+      }
+
+      // 4. Set user in auth store → triggers AuthGate to show main app
+      setUser({
+        id: user.id,
+        phone: user.phone,
+        display_name: user.display_name,
+        membership: user.membership,
+        trial_used: false,
+        referral_code: user.referral_code ?? '',
+        created_at: user.created_at ?? 0,
+      });
       onSuccess();
     } catch (error: any) {
       Alert.alert(

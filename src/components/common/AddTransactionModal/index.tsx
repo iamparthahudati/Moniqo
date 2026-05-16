@@ -18,7 +18,6 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { addTransaction } from '../../../services/firestoreService';
 import type { AppCategory, Transaction } from '../../../types';
 import {
   BankIcon,
@@ -30,6 +29,7 @@ import {
 import { useAccounts } from '../../../store/accountsStore';
 import { useAuth } from '../../../store/authStore';
 import { useCategories } from '../../../store/categoriesStore';
+import { useTransactions } from '../../../store/transactionsStore';
 import { useInterstitialAd } from '../../../hooks/useInterstitialAd';
 import { Colors } from '../../../theme/colors';
 import { Radius, Spacing } from '../../../theme/spacing';
@@ -781,8 +781,9 @@ const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
   initialType = 'expense',
 }) => {
   const insets = useSafeAreaInsets();
-  const { user, isGuest } = useAuth();
+  const { isGuest } = useAuth();
   const { state: accountsState, dispatch: acctDispatch } = useAccounts();
+  const { dispatch: txDispatch } = useTransactions();
   const { expenseCategories, incomeCategories } = useCategories();
   const { recordTransaction } = useInterstitialAd();
 
@@ -839,19 +840,12 @@ const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
     setSelectedDate(new Date());
   }, [defaultAccount]);
 
-  const handleSave = useCallback(async () => {
-    if (isSaving) {
-      return;
-    }
+  const handleSave = useCallback(() => {
     if (isGuest) {
       Alert.alert(
         'Sign in required',
         'Create a free account to save your transactions.',
       );
-      return;
-    }
-    const uid = user?.uid;
-    if (!uid) {
       return;
     }
     const numAmount = parseFloat(amount);
@@ -895,17 +889,9 @@ const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
       created_at: Date.now(),
     };
 
-    setIsSaving(true);
-    try {
-      await addTransaction(uid, tx);
-    } catch {
-      setIsSaving(false);
-      Alert.alert('Error', 'Could not save transaction. Please try again.');
-      return;
-    }
-    setIsSaving(false);
+    txDispatch({ type: 'ADD_TRANSACTION', payload: tx });
 
-    // Adjust account balance only after the transaction is confirmed saved
+    // Adjust account balance after saving the transaction
     if (selectedAccount?.kind === 'bank') {
       acctDispatch({
         type: 'ADJUST_BANK_BALANCE',
@@ -932,9 +918,7 @@ const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
     onClose();
     recordTransaction();
   }, [
-    isSaving,
     isGuest,
-    user,
     amount,
     txType,
     selectedCategory,
@@ -943,6 +927,7 @@ const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
     selectedDate,
     expenseCategories,
     incomeCategories,
+    txDispatch,
     acctDispatch,
     resetForm,
     onClose,
