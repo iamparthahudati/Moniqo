@@ -266,14 +266,20 @@ const TierCard: React.FC<TierCardProps> = ({
 // ── Main screen ────────────────────────────────────────────────────────────
 
 const PaywallScreen: React.FC<PaywallScreenProps> = ({ visible, onClose }) => {
-  const { tier, isTrialActive, trialDaysLeft } = useMembership();
+  const { tier, isTrialActive, trialDaysLeft, refreshProfile } = useMembership();
   const { user, isGuest } = useAuth();
+
+  const onPurchaseSuccess = React.useCallback(async () => {
+    await refreshProfile();
+    onClose();
+  }, [refreshProfile, onClose]);
+
   const {
     state: iapState,
     purchase,
     restore,
     getPrice,
-  } = useIAP(user?.uid ?? null, onClose);
+  } = useIAP(user?.id ?? null, onPurchaseSuccess);
 
   const handleUpgrade = async (sku: string) => {
     if (!user) {

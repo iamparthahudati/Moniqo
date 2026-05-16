@@ -3,17 +3,12 @@ import React, {
   useCallback,
   useContext,
   useEffect,
-  useRef,
   useState,
 } from 'react';
-import {
-  addTransaction,
-  deleteTransaction,
-  subscribeToTransactions,
-  updateTransaction,
-} from '../services/firestoreService';
 import { Transaction } from '../types';
 import { useAuth } from './authStore';
+import { TransactionsRepository } from '../db/repositories/transactionsRepository';
+import apiClient from '../services/apiClient';
 
 // ── State ─────────────────────────────────────────────────────────────────────
 
@@ -28,37 +23,6 @@ export type TransactionsAction =
   | { type: 'UPDATE_TRANSACTION'; payload: Transaction }
   | { type: 'DELETE_TRANSACTION'; payload: { id: string } }
   | { type: 'SET_TRANSACTIONS'; payload: Transaction[] };
-
-// ── Reducer (kept for type-contract parity; state is driven by onSnapshot) ────
-
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-function transactionsReducer(
-  state: TransactionsState,
-  action: TransactionsAction,
-): TransactionsState {
-  switch (action.type) {
-    case 'ADD_TRANSACTION':
-      return {
-        transactions: [action.payload, ...state.transactions],
-      };
-    case 'UPDATE_TRANSACTION':
-      return {
-        transactions: state.transactions.map(t =>
-          t.id === action.payload.id ? action.payload : t,
-        ),
-      };
-    case 'DELETE_TRANSACTION':
-      return {
-        transactions: state.transactions.filter(
-          t => t.id !== action.payload.id,
-        ),
-      };
-    case 'SET_TRANSACTIONS':
-      return { transactions: action.payload };
-    default:
-      return state;
-  }
-}
 
 // ── Context ───────────────────────────────────────────────────────────────────
 
@@ -77,73 +41,67 @@ export function TransactionsProvider(props: {
   children: React.ReactNode;
 }): React.JSX.Element {
   const { user } = useAuth();
-  const uid = user?.uid ?? null;
-
   const [state, setState] = useState<TransactionsState>({ transactions: [] });
 
-  // Keep uid in a ref so the dispatch callback never goes stale
-  const uidRef = useRef(uid);
   useEffect(() => {
-    uidRef.current = uid;
-  }, [uid]);
-
-  useEffect(() => {
-    if (!uid) {
+    if (!user) {
       setState({ transactions: [] });
       return;
     }
+    TransactionsRepository.init();
+    setState({ transactions: TransactionsRepository.getAll() });
+  }, [user]);
 
-    const unsubscribe = subscribeToTransactions(
-      uid,
-      (transactions: Transaction[]) => {
-        setState({ transactions });
-      },
-    );
+  const dispatch = useCallback((action: TransactionsAction) => {
+    switch (action.type) {
 
-    return () => {
-      unsubscribe();
-    };
-  }, [uid]);
-
-  const dispatch = useCallback<React.Dispatch<TransactionsAction>>(
-    (action: TransactionsAction) => {
-      const currentUid = uidRef.current;
-      if (!currentUid) {
-        return;
+      case 'ADD_TRANSACTION': {
+        const tx: Transaction = {
+          ...action.payload,
+          created_at: action.payload.created_at || Date.now(),
+        };
+        TransactionsRepository.insert(tx);
+        setState(prev => ({ transactions: [tx, ...prev.transactions] }));
+        apiClient.post('/transactions', {
+          id: tx.id, title: tx.title, subtitle: tx.subtitle, amount: tx.amount,
+          type: tx.type, category: tx.category, account_id: tx.account_id,
+          account_type: tx.account_type, date: tx.date, time: tx.time,
+          note: tx.note, created_at: tx.created_at,
+        }).catch(() => {});
+        break;
       }
 
-      switch (action.type) {
-        case 'ADD_TRANSACTION': {
-          setState(prev => ({
-            transactions: [action.payload, ...prev.transactions],
-          }));
-          addTransaction(currentUid, action.payload).catch(e => {
-            console.error('[TransactionsStore] addTransaction failed:', e);
-            setState(prev => ({
-              transactions: prev.transactions.filter(
-                t => t.id !== action.payload.id,
-              ),
-            }));
-          });
-          break;
-        }
-        case 'UPDATE_TRANSACTION':
-          updateTransaction(currentUid, action.payload).catch(e =>
-            console.error('[TransactionsStore] updateTransaction failed:', e),
-          );
-          break;
-        case 'DELETE_TRANSACTION':
-          deleteTransaction(currentUid, action.payload.id).catch(e =>
-            console.error('[TransactionsStore] deleteTransaction failed:', e),
-          );
-          break;
-        case 'SET_TRANSACTIONS':
-          // no-op: state is driven by onSnapshot
-          break;
+      case 'UPDATE_TRANSACTION': {
+        TransactionsRepository.update(action.payload);
+        setState(prev => ({
+          transactions: prev.transactions.map(t =>
+            t.id === action.payload.id ? action.payload : t,
+          ),
+        }));
+        apiClient.put(`/transactions/${action.payload.id}`, {
+          title: action.payload.title, subtitle: action.payload.subtitle,
+          amount: action.payload.amount, type: action.payload.type,
+          category: action.payload.category, account_id: action.payload.account_id,
+          account_type: action.payload.account_type, date: action.payload.date,
+          time: action.payload.time, note: action.payload.note,
+        }).catch(() => {});
+        break;
       }
-    },
-    [],
-  );
+
+      case 'DELETE_TRANSACTION': {
+        TransactionsRepository.delete(action.payload.id);
+        setState(prev => ({
+          transactions: prev.transactions.filter(t => t.id !== action.payload.id),
+        }));
+        apiClient.delete(`/transactions/${action.payload.id}`).catch(() => {});
+        break;
+      }
+
+      case 'SET_TRANSACTIONS':
+        setState({ transactions: action.payload });
+        break;
+    }
+  }, []);
 
   return React.createElement(
     TransactionsContext.Provider,

@@ -10,12 +10,12 @@ import {
 import Button from '../../components/ui/Button';
 import IconButton from '../../components/ui/IconButton';
 import { BackIcon } from '../../icons/Icons';
-import { sendOtp } from '../../services/authService';
+import { AuthApiService } from '../../services/authApiService';
 import styles from './styles';
 
 interface LoginScreenProps {
   onBack: () => void;
-  onOtpSent: (confirmation: any, phoneNumber: string) => void;
+  onOtpSent: (phoneNumber: string) => void;
 }
 
 const LoginScreen: React.FC<LoginScreenProps> = ({ onBack, onOtpSent }) => {
@@ -36,8 +36,8 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onBack, onOtpSent }) => {
     setLoading(true);
     try {
       const fullPhone = '+91' + phone;
-      const confirmation = await sendOtp(fullPhone);
-      onOtpSent(confirmation, fullPhone);
+      await AuthApiService.sendOtp(fullPhone);
+      onOtpSent(fullPhone);
     } catch (error: any) {
       Alert.alert(
         'Error',

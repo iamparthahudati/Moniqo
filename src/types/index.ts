@@ -168,3 +168,11 @@ export interface AppCategory {
   sortOrder: number;
   created_at: number;
 }
+
+export interface Budget {
+  id: string;
+  categoryId: string;
+  amount: number;
+  period: 'monthly';
+  created_at: number;
+}

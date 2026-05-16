@@ -1,4 +1,3 @@
-import auth from '@react-native-firebase/auth';
 import React, { useState } from 'react';
 import {
   ActivityIndicator,
@@ -9,6 +8,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { UserApiService } from '../../../services/userApiService';
 import { useAuth } from '../../../store/authStore';
 import { styles } from './styles';
 
@@ -20,11 +20,11 @@ const ProfileCard: React.FC = () => {
   const [saving, setSaving] = useState(false);
   const [localDisplayName, setLocalDisplayName] = useState<string | null>(null);
 
-  const displayName = localDisplayName ?? user?.displayName ?? 'Moniqo User';
-  const identifier = user?.phoneNumber ?? user?.email ?? '';
+  const displayName = localDisplayName ?? user?.display_name ?? 'Moniqo User';
+  const identifier = user?.phone ?? user?.email ?? '';
   const initials = (
-    (localDisplayName ?? user?.displayName)?.[0] ??
-    user?.phoneNumber?.[0] ??
+    (localDisplayName ?? user?.display_name)?.[0] ??
+    user?.phone?.[0] ??
     user?.email?.[0] ??
     'M'
   ).toUpperCase();
@@ -52,11 +52,7 @@ const ProfileCard: React.FC = () => {
 
     setSaving(true);
     try {
-      const currentUser = auth().currentUser;
-      if (!currentUser) {
-        throw new Error('No authenticated user found.');
-      }
-      await currentUser.updateProfile({ displayName: trimmed });
+      await UserApiService.updateProfile({ display_name: trimmed });
       setLocalDisplayName(trimmed);
       setModalVisible(false);
     } catch (error: any) {

@@ -6,13 +6,10 @@ import React, {
   useRef,
   useState,
 } from 'react';
-import {
-  Budget,
-  deleteBudget as fsDeleteBudget,
-  upsertBudget as fsUpsertBudget,
-  subscribeToBudgets,
-} from '../services/firestoreService';
+import { Budget } from '../types';
 import { useAuth } from './authStore';
+import { BudgetRepository } from '../db/repositories/budgetRepository';
+import apiClient from '../services/apiClient';
 
 export type { Budget };
 
@@ -44,46 +41,35 @@ export function BudgetProvider(props: {
   children: React.ReactNode;
 }): React.JSX.Element {
   const { user } = useAuth();
-  const uid = user?.uid ?? null;
-
   const [state, setState] = useState<BudgetState>({ budgets: [] });
   const stateRef = useRef(state);
   stateRef.current = state;
 
   useEffect(() => {
-    if (!uid) {
+    if (!user) {
       setState({ budgets: [] });
       return;
     }
-
-    const unsubscribe = subscribeToBudgets(uid, budgets => {
-      setState({ budgets });
-    });
-
-    return unsubscribe;
-  }, [uid]);
+    BudgetRepository.init();
+    setState({ budgets: BudgetRepository.getAll() });
+  }, [user]);
 
   const dispatch = useCallback(
     (action: BudgetAction) => {
       switch (action.type) {
+
         case 'SET_BUDGETS':
-          // no-op: Firestore subscription drives state
+          setState({ budgets: action.payload });
           break;
 
         case 'UPSERT_BUDGET': {
           const now = Date.now();
           const payload: Budget = {
             ...action.payload,
-            id: action.payload.id || now.toString(36),
+            id:         action.payload.id || now.toString(36),
             created_at: action.payload.created_at || now,
           };
-
-          if (uid) {
-            fsUpsertBudget(uid, payload).catch(e =>
-              console.error('[BudgetStore] upsertBudget failed:', e),
-            );
-          }
-
+          BudgetRepository.upsert(payload);
           setState(prev => {
             const exists = prev.budgets.some(b => b.id === payload.id);
             return {
@@ -92,26 +78,26 @@ export function BudgetProvider(props: {
                 : [...prev.budgets, payload],
             };
           });
+          apiClient.post('/budgets', {
+            category_id: payload.categoryId,
+            amount:      payload.amount,
+            period:      payload.period,
+          }).catch(() => {});
           break;
         }
 
         case 'DELETE_BUDGET': {
           const { id } = action.payload;
-
-          if (uid) {
-            fsDeleteBudget(uid, id).catch(e =>
-              console.error('[BudgetStore] deleteBudget failed:', e),
-            );
-          }
-
+          BudgetRepository.delete(id);
           setState(prev => ({
             budgets: prev.budgets.filter(b => b.id !== id),
           }));
+          apiClient.delete(`/budgets/${id}`).catch(() => {});
           break;
         }
       }
     },
-    [uid],
+    [],
   );
 
   return React.createElement(

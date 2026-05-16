@@ -1,5 +1,6 @@
 import React from 'react';
 import { Alert, Linking, ScrollView, View } from 'react-native';
+import { APP_VERSION, BUILD_NUMBER } from '../../config/version';
 import CategoryManager from '../../components/settings/CategoryManager';
 import PremiumBanner from '../../components/settings/PremiumBanner';
 import ProfileCard from '../../components/settings/ProfileCard';
@@ -10,8 +11,8 @@ import {
 import ScreenHeader from '../../components/ui/ScreenHeader';
 import useNotifications from '../../hooks/useNotifications';
 import { useToggle } from '../../hooks/useToggle';
-import { deleteAuthUser, getCurrentUser, signOut } from '../../services/authService';
-import { deleteAllUserData } from '../../services/firestoreService';
+import { UserApiService } from '../../services/userApiService';
+import { useAuth } from '../../store/authStore';
 import { styles } from './styles';
 
 const PRIVACY_POLICY_URL = 'https://moniqo-cc889.web.app/';
@@ -24,6 +25,8 @@ interface SettingsScreenProps {
 }
 
 const SettingsScreen: React.FC<SettingsScreenProps> = ({ onUpgradePress }) => {
+  const { signOut } = useAuth();
+
   // Notification toggles
   const [txAlerts, toggleTxAlerts] = useToggle(true);
   const [monthlyReport, toggleMonthlyReport] = useToggle(true);
@@ -55,20 +58,11 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ onUpgradePress }) => {
   };
 
   const handleDeleteAccount = async () => {
-    const user = getCurrentUser();
-    if (!user) return;
     try {
-      await deleteAllUserData(user.uid);
-      await deleteAuthUser();
+      await UserApiService.deleteAccount();
+      await signOut();
     } catch (error: any) {
-      if (error?.code === 'auth/requires-recent-login') {
-        Alert.alert(
-          'Re-authentication Required',
-          'For security, please sign out and sign back in before deleting your account.',
-        );
-      } else {
-        Alert.alert('Error', 'Failed to delete account. Please try again.');
-      }
+      Alert.alert('Error', error?.message ?? 'Failed to delete account. Please try again.');
     }
   };
 
@@ -263,7 +257,7 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ onUpgradePress }) => {
       iconBg: 'rgba(148,163,184,0.15)',
       label: 'App Version',
       type: 'value',
-      value: '1.0.0',
+      value: `v${APP_VERSION} (${BUILD_NUMBER})`,
     },
     {
       id: 'rate',

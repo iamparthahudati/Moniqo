@@ -1,4 +1,7 @@
 {
   "name": "Moniqo",
-  "displayName": "Moniqo"
+  "displayName": "Moniqo",
+  "react-native-google-mobile-ads": {
+    "android_app_id": "ca-app-pub-9580571842187950~1676721970"
+  }
 }

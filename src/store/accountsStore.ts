@@ -6,30 +6,21 @@ import React, {
   useRef,
   useState,
 } from 'react';
-import {
-  addBank,
-  addCard,
-  addCash,
-  addInvestment,
-  deleteBank,
-  deleteCard,
-  deleteCash,
-  deleteInvestment,
-  incrementBankBalance,
-  incrementCardDue,
-  incrementCashBalance,
-  incrementInvestmentAmount,
-  subscribeToBanks,
-  subscribeToCards,
-  subscribeToCash,
-  subscribeToInvestments,
-  updateBank,
-  updateCard,
-  updateCash,
-  updateInvestment,
-} from '../services/firestoreService';
 import { BankAccount, CardAccount, CashEntry, Investment } from '../types';
-import { useAuth } from './authStore';
+import { BankRepository } from '../db/repositories/bankRepository';
+import { CardRepository } from '../db/repositories/cardRepository';
+import { CashRepository } from '../db/repositories/cashRepository';
+import { InvestmentRepository } from '../db/repositories/investmentRepository';
+import apiClient from '../services/apiClient';
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+function generateId(): string {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
+    const r = (Math.random() * 16) | 0;
+    return (c === 'x' ? r : (r & 0x3) | 0x8).toString(16);
+  });
+}
 
 // ── State ─────────────────────────────────────────────────────────────────────
 
@@ -50,152 +41,15 @@ export type AccountsAction =
   | { type: 'ADD_CARD'; payload: CardAccount }
   | { type: 'UPDATE_CARD'; payload: CardAccount }
   | { type: 'DELETE_CARD'; payload: { id: string } }
+  | { type: 'ADJUST_CARD_BALANCE'; payload: { id: string; delta: number } }
   | { type: 'ADD_INVESTMENT'; payload: Investment }
   | { type: 'UPDATE_INVESTMENT'; payload: Investment }
   | { type: 'DELETE_INVESTMENT'; payload: { id: string } }
+  | { type: 'ADJUST_INVESTMENT_BALANCE'; payload: { id: string; delta: number } }
   | { type: 'ADD_CASH'; payload: CashEntry }
   | { type: 'UPDATE_CASH'; payload: CashEntry }
   | { type: 'DELETE_CASH'; payload: { id: string } }
-  | { type: 'ADJUST_CASH_BALANCE'; payload: { id: string; delta: number } }
-  | { type: 'ADJUST_CARD_BALANCE'; payload: { id: string; delta: number } }
-  | {
-      type: 'ADJUST_INVESTMENT_BALANCE';
-      payload: { id: string; delta: number };
-    };
-
-// ── Reducer ───────────────────────────────────────────────────────────────────
-// Kept for reference and potential offline/optimistic-update use.
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-function accountsReducer(
-  state: AccountsState,
-  action: AccountsAction,
-): AccountsState {
-  switch (action.type) {
-    // Bank accounts
-    case 'ADD_BANK':
-      return {
-        ...state,
-        bankAccounts: [...state.bankAccounts, action.payload],
-      };
-    case 'UPDATE_BANK':
-      return {
-        ...state,
-        bankAccounts: state.bankAccounts.map(item =>
-          item.id === action.payload.id ? action.payload : item,
-        ),
-      };
-    case 'DELETE_BANK':
-      return {
-        ...state,
-        bankAccounts: state.bankAccounts.filter(
-          item => item.id !== action.payload.id,
-        ),
-      };
-    case 'ADJUST_BANK_BALANCE':
-      return {
-        ...state,
-        bankAccounts: state.bankAccounts.map(item =>
-          item.id === action.payload.id
-            ? { ...item, balance: item.balance + action.payload.delta }
-            : item,
-        ),
-      };
-
-    // Card accounts
-    case 'ADD_CARD':
-      return {
-        ...state,
-        cardAccounts: [...state.cardAccounts, action.payload],
-      };
-    case 'UPDATE_CARD':
-      return {
-        ...state,
-        cardAccounts: state.cardAccounts.map(item =>
-          item.id === action.payload.id ? action.payload : item,
-        ),
-      };
-    case 'DELETE_CARD':
-      return {
-        ...state,
-        cardAccounts: state.cardAccounts.filter(
-          item => item.id !== action.payload.id,
-        ),
-      };
-
-    case 'ADJUST_CARD_BALANCE':
-      return {
-        ...state,
-        cardAccounts: state.cardAccounts.map(item =>
-          item.id === action.payload.id
-            ? { ...item, dueAmount: item.dueAmount + action.payload.delta }
-            : item,
-        ),
-      };
-
-    // Investments
-    case 'ADD_INVESTMENT':
-      return {
-        ...state,
-        investments: [...state.investments, action.payload],
-      };
-    case 'UPDATE_INVESTMENT':
-      return {
-        ...state,
-        investments: state.investments.map(item =>
-          item.id === action.payload.id ? action.payload : item,
-        ),
-      };
-    case 'DELETE_INVESTMENT':
-      return {
-        ...state,
-        investments: state.investments.filter(
-          item => item.id !== action.payload.id,
-        ),
-      };
-    case 'ADJUST_INVESTMENT_BALANCE':
-      return {
-        ...state,
-        investments: state.investments.map(item =>
-          item.id === action.payload.id
-            ? { ...item, amount: item.amount + action.payload.delta }
-            : item,
-        ),
-      };
-
-    // Cash entries
-    case 'ADD_CASH':
-      return {
-        ...state,
-        cashEntries: [...state.cashEntries, action.payload],
-      };
-    case 'UPDATE_CASH':
-      return {
-        ...state,
-        cashEntries: state.cashEntries.map(item =>
-          item.id === action.payload.id ? action.payload : item,
-        ),
-      };
-    case 'DELETE_CASH':
-      return {
-        ...state,
-        cashEntries: state.cashEntries.filter(
-          item => item.id !== action.payload.id,
-        ),
-      };
-    case 'ADJUST_CASH_BALANCE':
-      return {
-        ...state,
-        cashEntries: state.cashEntries.map(item =>
-          item.id === action.payload.id
-            ? { ...item, amount: item.amount + action.payload.delta }
-            : item,
-        ),
-      };
-
-    default:
-      return state;
-  }
-}
+  | { type: 'ADJUST_CASH_BALANCE'; payload: { id: string; delta: number } };
 
 // ── Context ───────────────────────────────────────────────────────────────────
 
@@ -204,11 +58,7 @@ interface AccountsContextValue {
   dispatch: React.Dispatch<AccountsAction>;
 }
 
-const AccountsContext = createContext<AccountsContextValue | undefined>(
-  undefined,
-);
-
-// ── Empty state ───────────────────────────────────────────────────────────────
+const AccountsContext = createContext<AccountsContextValue | undefined>(undefined);
 
 const EMPTY_STATE: AccountsState = {
   bankAccounts: [],
@@ -222,134 +72,246 @@ const EMPTY_STATE: AccountsState = {
 export function AccountsProvider(props: {
   children: React.ReactNode;
 }): React.JSX.Element {
-  const { user } = useAuth();
-  const uid = user?.uid ?? null;
-
   const [state, setState] = useState<AccountsState>(EMPTY_STATE);
 
-  // Keep uid in a ref so the dispatch closure always sees the latest value
-  // without needing to be recreated on every uid change.
-  const uidRef = useRef<string | null>(uid);
+  const stateRef = useRef(state);
+
+  useEffect(() => { stateRef.current = state; }, [state]);
+
+  // Initialize tables and load all accounts from SQLite on mount
   useEffect(() => {
-    uidRef.current = uid;
-  }, [uid]);
+    BankRepository.init();
+    CardRepository.init();
+    CashRepository.init();
+    InvestmentRepository.init();
 
-  // ── Firestore onSnapshot subscriptions ──────────────────────────────────────
-
-  useEffect(() => {
-    if (!uid) {
-      setState(EMPTY_STATE);
-      return;
-    }
-
-    const unsubBanks = subscribeToBanks(uid, bankAccounts =>
-      setState(prev => ({ ...prev, bankAccounts })),
-    );
-
-    const unsubCards = subscribeToCards(uid, cardAccounts =>
-      setState(prev => ({ ...prev, cardAccounts })),
-    );
-
-    const unsubCash = subscribeToCash(uid, cashEntries =>
-      setState(prev => ({ ...prev, cashEntries })),
-    );
-
-    const unsubInvestments = subscribeToInvestments(uid, investments =>
-      setState(prev => ({ ...prev, investments })),
-    );
-
-    return () => {
-      unsubBanks();
-      unsubCards();
-      unsubCash();
-      unsubInvestments();
-    };
-  }, [uid]);
-
-  // ── Dispatch — maps actions to Firestore writes (fire-and-forget) ────────────
+    setState({
+      bankAccounts: BankRepository.getAll(),
+      cardAccounts: CardRepository.getAll(),
+      investments:  InvestmentRepository.getAll(),
+      cashEntries:  CashRepository.getAll(),
+    });
+  }, []);
 
   const dispatch = useCallback((action: AccountsAction) => {
-    const currentUid = uidRef.current;
-    if (!currentUid) {
-      return; // guest mode — no-op
-    }
-
     switch (action.type) {
-      // Bank
+
+      // ── Bank ────────────────────────────────────────────────────────────────
+
       case 'ADD_BANK': {
-        const { id: _id, ...rest } = action.payload;
-        addBank(currentUid, rest);
+        const account: BankAccount = {
+          ...action.payload,
+          id:         action.payload.id || generateId(),
+          created_at: action.payload.created_at || Date.now(),
+        };
+        BankRepository.insert(account);
+        setState(prev => ({ ...prev, bankAccounts: [account, ...prev.bankAccounts] }));
+        apiClient.post('/accounts/bank', {
+          id: account.id, bank_name: account.bankName, account_type: account.accountType,
+          balance: account.balance, color: account.color, icon: account.icon,
+          status: account.status, note: account.note, created_at: account.created_at,
+        }).catch(() => {});
         break;
       }
-      case 'UPDATE_BANK':
-        updateBank(currentUid, action.payload);
+      case 'UPDATE_BANK': {
+        BankRepository.update(action.payload);
+        setState(prev => ({
+          ...prev,
+          bankAccounts: prev.bankAccounts.map(b =>
+            b.id === action.payload.id ? action.payload : b,
+          ),
+        }));
+        apiClient.put(`/accounts/bank/${action.payload.id}`, {
+          bank_name: action.payload.bankName, account_type: action.payload.accountType,
+          balance: action.payload.balance, color: action.payload.color,
+          icon: action.payload.icon, status: action.payload.status, note: action.payload.note,
+        }).catch(() => {});
         break;
-      case 'DELETE_BANK':
-        deleteBank(currentUid, action.payload.id);
+      }
+      case 'DELETE_BANK': {
+        BankRepository.delete(action.payload.id);
+        setState(prev => ({
+          ...prev,
+          bankAccounts: prev.bankAccounts.filter(b => b.id !== action.payload.id),
+        }));
+        apiClient.delete(`/accounts/bank/${action.payload.id}`).catch(() => {});
         break;
-      case 'ADJUST_BANK_BALANCE':
-        incrementBankBalance(
-          currentUid,
-          action.payload.id,
-          action.payload.delta,
-        );
+      }
+      case 'ADJUST_BANK_BALANCE': {
+        BankRepository.adjustBalance(action.payload.id, action.payload.delta);
+        const current = stateRef.current.bankAccounts.find(b => b.id === action.payload.id);
+        const newBalance = (current?.balance ?? 0) + action.payload.delta;
+        setState(prev => ({
+          ...prev,
+          bankAccounts: prev.bankAccounts.map(b =>
+            b.id === action.payload.id ? { ...b, balance: newBalance } : b,
+          ),
+        }));
+        apiClient.put(`/accounts/bank/${action.payload.id}`, { balance: newBalance }).catch(() => {});
         break;
+      }
 
-      // Card
+      // ── Card ────────────────────────────────────────────────────────────────
+
       case 'ADD_CARD': {
-        const { id: _id, ...rest } = action.payload;
-        addCard(currentUid, rest);
+        const account: CardAccount = {
+          ...action.payload,
+          id:         action.payload.id || generateId(),
+          created_at: action.payload.created_at || Date.now(),
+        };
+        CardRepository.insert(account);
+        setState(prev => ({ ...prev, cardAccounts: [account, ...prev.cardAccounts] }));
+        apiClient.post('/accounts/card', {
+          id: account.id, card_name: account.cardName, card_type: account.cardType,
+          due_amount: account.dueAmount, due_label: account.dueLabel,
+          color: account.color, note: account.note, created_at: account.created_at,
+        }).catch(() => {});
         break;
       }
-      case 'UPDATE_CARD':
-        updateCard(currentUid, action.payload);
-        break;
-      case 'DELETE_CARD':
-        deleteCard(currentUid, action.payload.id);
-        break;
-      case 'ADJUST_CARD_BALANCE':
-        incrementCardDue(currentUid, action.payload.id, action.payload.delta);
-        break;
-
-      // Cash
-      case 'ADD_CASH': {
-        const { id: _id, ...rest } = action.payload;
-        addCash(currentUid, rest);
+      case 'UPDATE_CARD': {
+        CardRepository.update(action.payload);
+        setState(prev => ({
+          ...prev,
+          cardAccounts: prev.cardAccounts.map(c =>
+            c.id === action.payload.id ? action.payload : c,
+          ),
+        }));
+        apiClient.put(`/accounts/card/${action.payload.id}`, {
+          card_name: action.payload.cardName, card_type: action.payload.cardType,
+          due_amount: action.payload.dueAmount, due_label: action.payload.dueLabel,
+          color: action.payload.color, note: action.payload.note,
+        }).catch(() => {});
         break;
       }
-      case 'UPDATE_CASH':
-        updateCash(currentUid, action.payload);
+      case 'DELETE_CARD': {
+        CardRepository.delete(action.payload.id);
+        setState(prev => ({
+          ...prev,
+          cardAccounts: prev.cardAccounts.filter(c => c.id !== action.payload.id),
+        }));
+        apiClient.delete(`/accounts/card/${action.payload.id}`).catch(() => {});
         break;
-      case 'DELETE_CASH':
-        deleteCash(currentUid, action.payload.id);
+      }
+      case 'ADJUST_CARD_BALANCE': {
+        CardRepository.adjustDue(action.payload.id, action.payload.delta);
+        const current = stateRef.current.cardAccounts.find(c => c.id === action.payload.id);
+        const newDue = (current?.dueAmount ?? 0) + action.payload.delta;
+        setState(prev => ({
+          ...prev,
+          cardAccounts: prev.cardAccounts.map(c =>
+            c.id === action.payload.id ? { ...c, dueAmount: newDue } : c,
+          ),
+        }));
+        apiClient.put(`/accounts/card/${action.payload.id}`, { due_amount: newDue }).catch(() => {});
         break;
-      case 'ADJUST_CASH_BALANCE':
-        incrementCashBalance(
-          currentUid,
-          action.payload.id,
-          action.payload.delta,
-        );
-        break;
+      }
 
-      // Investment
+      // ── Investment ──────────────────────────────────────────────────────────
+
       case 'ADD_INVESTMENT': {
-        const { id: _id, ...rest } = action.payload;
-        addInvestment(currentUid, rest);
+        const account: Investment = {
+          ...action.payload,
+          id:         action.payload.id || generateId(),
+          created_at: action.payload.created_at || Date.now(),
+        };
+        InvestmentRepository.insert(account);
+        setState(prev => ({ ...prev, investments: [account, ...prev.investments] }));
+        apiClient.post('/accounts/investment', {
+          id: account.id, name: account.name, amount: account.amount,
+          icon: account.icon, color: account.color, note: account.note,
+          created_at: account.created_at,
+        }).catch(() => {});
         break;
       }
-      case 'UPDATE_INVESTMENT':
-        updateInvestment(currentUid, action.payload);
+      case 'UPDATE_INVESTMENT': {
+        InvestmentRepository.update(action.payload);
+        setState(prev => ({
+          ...prev,
+          investments: prev.investments.map(i =>
+            i.id === action.payload.id ? action.payload : i,
+          ),
+        }));
+        apiClient.put(`/accounts/investment/${action.payload.id}`, {
+          name: action.payload.name, amount: action.payload.amount,
+          icon: action.payload.icon, color: action.payload.color, note: action.payload.note,
+        }).catch(() => {});
         break;
-      case 'DELETE_INVESTMENT':
-        deleteInvestment(currentUid, action.payload.id);
+      }
+      case 'DELETE_INVESTMENT': {
+        InvestmentRepository.delete(action.payload.id);
+        setState(prev => ({
+          ...prev,
+          investments: prev.investments.filter(i => i.id !== action.payload.id),
+        }));
+        apiClient.delete(`/accounts/investment/${action.payload.id}`).catch(() => {});
         break;
-      case 'ADJUST_INVESTMENT_BALANCE':
-        incrementInvestmentAmount(
-          currentUid,
-          action.payload.id,
-          action.payload.delta,
-        );
+      }
+      case 'ADJUST_INVESTMENT_BALANCE': {
+        InvestmentRepository.adjustAmount(action.payload.id, action.payload.delta);
+        const current = stateRef.current.investments.find(i => i.id === action.payload.id);
+        const newAmount = (current?.amount ?? 0) + action.payload.delta;
+        setState(prev => ({
+          ...prev,
+          investments: prev.investments.map(i =>
+            i.id === action.payload.id ? { ...i, amount: newAmount } : i,
+          ),
+        }));
+        apiClient.put(`/accounts/investment/${action.payload.id}`, { amount: newAmount }).catch(() => {});
         break;
+      }
+
+      // ── Cash ────────────────────────────────────────────────────────────────
+
+      case 'ADD_CASH': {
+        const entry: CashEntry = {
+          ...action.payload,
+          id:         action.payload.id || generateId(),
+          created_at: action.payload.created_at || Date.now(),
+        };
+        CashRepository.insert(entry);
+        setState(prev => ({ ...prev, cashEntries: [entry, ...prev.cashEntries] }));
+        apiClient.post('/accounts/cash', {
+          id: entry.id, label: entry.label, sublabel: entry.sublabel,
+          amount: entry.amount, created_at: entry.created_at,
+        }).catch(() => {});
+        break;
+      }
+      case 'UPDATE_CASH': {
+        CashRepository.update(action.payload);
+        setState(prev => ({
+          ...prev,
+          cashEntries: prev.cashEntries.map(e =>
+            e.id === action.payload.id ? action.payload : e,
+          ),
+        }));
+        apiClient.put(`/accounts/cash/${action.payload.id}`, {
+          label: action.payload.label, sublabel: action.payload.sublabel,
+          amount: action.payload.amount,
+        }).catch(() => {});
+        break;
+      }
+      case 'DELETE_CASH': {
+        CashRepository.delete(action.payload.id);
+        setState(prev => ({
+          ...prev,
+          cashEntries: prev.cashEntries.filter(e => e.id !== action.payload.id),
+        }));
+        apiClient.delete(`/accounts/cash/${action.payload.id}`).catch(() => {});
+        break;
+      }
+      case 'ADJUST_CASH_BALANCE': {
+        CashRepository.adjustAmount(action.payload.id, action.payload.delta);
+        const current = stateRef.current.cashEntries.find(e => e.id === action.payload.id);
+        const newAmount = (current?.amount ?? 0) + action.payload.delta;
+        setState(prev => ({
+          ...prev,
+          cashEntries: prev.cashEntries.map(e =>
+            e.id === action.payload.id ? { ...e, amount: newAmount } : e,
+          ),
+        }));
+        apiClient.put(`/accounts/cash/${action.payload.id}`, { amount: newAmount }).catch(() => {});
+        break;
+      }
     }
   }, []);
 
@@ -373,21 +335,9 @@ export function useAccounts(): AccountsContextValue {
 // ── Selectors ─────────────────────────────────────────────────────────────────
 
 export function computeTotalBalance(state: AccountsState): number {
-  const bankTotal = state.bankAccounts.reduce(
-    (sum, account) => sum + account.balance,
-    0,
-  );
-  const investmentTotal = state.investments.reduce(
-    (sum, investment) => sum + investment.amount,
-    0,
-  );
-  const cashTotal = state.cashEntries.reduce(
-    (sum, entry) => sum + entry.amount,
-    0,
-  );
-  const cardTotal = state.cardAccounts.reduce(
-    (sum, card) => sum + card.dueAmount,
-    0,
-  );
+  const bankTotal = state.bankAccounts.reduce((sum, a) => sum + a.balance, 0);
+  const investmentTotal = state.investments.reduce((sum, i) => sum + i.amount, 0);
+  const cashTotal = state.cashEntries.reduce((sum, e) => sum + e.amount, 0);
+  const cardTotal = state.cardAccounts.reduce((sum, c) => sum + c.dueAmount, 0);
   return bankTotal + investmentTotal + cashTotal - cardTotal;
 }
